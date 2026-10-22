@@ -1,0 +1,22 @@
+name = "ancient-nest-accounts"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://ancientnest.net"
+TOKEN_TTL_SECONDS = "3600"
+PUBLIC_URL = "https://ancient-nest-accounts.ancientnest-llc.workers.dev"
+EMAIL_FROM = "noreply@ancientnest.net"
+# Set TWILIO_FROM to your SMS-capable Twilio number in E.164 format before enabling SMS.
+DISCORD_CLIENT_ID = "1562796619722793010"
+# Secrets: DISCORD_CLIENT_SECRET and DISCORD_BOT_TOKEN (server only).
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ancientnestaccounts"
+database_id = "a045391c-1896-4169-bd17-04140d1cbb27"
+migrations_dir = "migrations"
+
+[triggers]
+crons = ["* * * * *"]

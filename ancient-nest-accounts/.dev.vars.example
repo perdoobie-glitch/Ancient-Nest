@@ -1,0 +1,12 @@
+# Local development only. Copy to .dev.vars and replace both values.
+JWT_SECRET="replace-with-a-random-secret-at-least-32-bytes-long"
+COORDINATOR_API_KEY="replace-with-the-matchmaking-workers-coordinator-key"
+# Optional provider setup for local integration tests with real delivery:
+# RESEND_API_KEY="..."
+# EMAIL_FROM="noreply@your-verified-domain.example"
+# TWILIO_ACCOUNT_SID="AC..."
+# TWILIO_AUTH_TOKEN="..."
+# TWILIO_FROM="+12345678900"
+# DISCORD_CLIENT_SECRET="..."
+# DISCORD_BOT_TOKEN="..."
+# PUBLIC_URL="https://your-public-development-origin.example"

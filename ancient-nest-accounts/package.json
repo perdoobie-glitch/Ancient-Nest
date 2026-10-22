@@ -1,0 +1,28 @@
+{
+  "name": "ancient-nest-accounts",
+  "version": "10.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test --test-concurrency=1",
+    "test:godot": "node scripts/godot-smoke.mjs",
+    "discord:install": "python3 scripts/install-discord-sdk.py",
+    "check": "node --check src/index.js && wrangler deploy --dry-run",
+    "db:local": "node scripts/migrate.mjs --local",
+    "db:remote": "node scripts/migrate.mjs --remote",
+    "db:list": "wrangler d1 migrations list DB --remote",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "jose": "^6.1.0"
+  },
+  "devDependencies": {
+    "miniflare": "^4.0.0",
+    "wrangler": "^4.0.0",
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

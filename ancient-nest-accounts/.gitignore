@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env*
+coverage/
+.godot/
+godot-client/addons/discord_social_sdk/
+godot-client/addons/keyring/

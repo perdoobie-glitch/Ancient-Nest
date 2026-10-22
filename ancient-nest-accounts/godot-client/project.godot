@@ -1,0 +1,21 @@
+config_version=5
+
+[application]
+config/name="Ancient Nest Account Starter"
+run/main_scene="res://addons/ancient_nest/login.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+
+[autoload]
+AncientNestAuth="*res://addons/ancient_nest/auth.gd"
+AncientNestDiscordVoice="*res://addons/ancient_nest/discord_voice.gd"
+AncientNestVerification="*res://addons/ancient_nest/verification_panel.gd"
+
+[ancient_nest]
+account_api="https://ancient-nest-accounts.ancientnest-llc.workers.dev"
+
+[display]
+window/size/viewport_width=960
+window/size/viewport_height=640
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
