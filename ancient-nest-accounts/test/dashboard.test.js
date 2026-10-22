@@ -7,6 +7,11 @@ import { testScript } from '../src/live-test-page.js';
 
 test('dashboard test-page JavaScript parses as a standalone browser script', () => {
   assert.doesNotThrow(() => new Script(testScript));
+  const codePattern = /if \(!(.+)\.test\(code\)\)/.exec(testScript)[1];
+  const validate = new Script(codePattern).runInNewContext();
+  assert.equal(validate.test("123456"), true);
+  assert.equal(validate.test("12345"), false);
+  assert.equal(validate.test("12a456"), false);
   assert.ok(!testScript.includes('localStorage'));
   assert.ok(!testScript.includes('sessionStorage'));
 });

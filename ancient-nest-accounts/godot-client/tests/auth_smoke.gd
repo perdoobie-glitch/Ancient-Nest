@@ -29,8 +29,10 @@ func _run() -> void:
 	var auth: Node = root.get_node("AncientNestAuth")
 	auth.api_url = api
 	auth.credential_store = store
+	print("AUTH_STAGE: first launch")
 	var result: Dictionary = await auth.restore_session()
 	assert(not result.ok and result.error == "account_required")
+	print("AUTH_STAGE: registration")
 	result = await auth.create_account("GodotPlayer", "test password for godot only", true, "godot@example.com", "+12025550123")
 	assert(result.ok and result.remembered)
 	assert(store.token.length() == 64)
@@ -41,10 +43,12 @@ func _run() -> void:
 	root.add_child(reopened)
 	reopened.api_url = api
 	reopened.credential_store = store
+	print("AUTH_STAGE: restore attempt")
 	result = await reopened.restore_session()
 	assert(result.ok and reopened.current_user.id == user_id)
 	assert(store.token != first_token)
 	var saved_token := store.token
+	print("AUTH_STAGE: background offline behavior")
 	# An unavailable service must not erase the saved refresh token or report logout success.
 	reopened.api_url = "http://127.0.0.1:1"
 	result = await reopened.refresh_session()
@@ -57,16 +61,19 @@ func _run() -> void:
 	assert(result.ok and store.token.is_empty() and reopened.current_user.is_empty())
 	# A revoked saved token is cleared after a definitive HTTP 401.
 	store.token = saved_token
+	print("AUTH_STAGE: restore attempt")
 	result = await reopened.restore_session()
 	assert(not result.ok and result.status == 401 and store.token.is_empty())
 	# A startup outage requires manual login and stops automatic background restoration.
 	result = await reopened.sign_in("GodotPlayer", "test password for godot only", true)
 	assert(result.ok and not store.token.is_empty())
 	reopened.api_url = "http://127.0.0.1:1"
+	print("AUTH_STAGE: restore attempt")
 	result = await reopened.restore_session()
 	assert(not result.ok and store.token.is_empty() and reopened.current_user.is_empty())
 	assert(reopened.get("_refresh_token").is_empty())
 	reopened.api_url = api
+	print("AUTH_STAGE: secure storage failure")
 	# Storage failure must not pretend that this login will survive a restart.
 	store.fail_write = true
 	result = await reopened.sign_in("GodotPlayer", "test password for godot only", true)
@@ -76,6 +83,7 @@ func _run() -> void:
 	assert(result.ok and not result.token.is_empty())
 	result = await reopened.sign_out()
 	assert(result.ok)
+	print("AUTH_STAGE: startup screen")
 	# Exercise the real startup screen, including the failed-auto-login fallback.
 	var ui_store := MemoryStore.new()
 	auth.credential_store = ui_store

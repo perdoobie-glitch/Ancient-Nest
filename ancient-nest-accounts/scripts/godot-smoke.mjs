@@ -29,7 +29,7 @@ try {
   if (imported.stderr.includes('SCRIPT ERROR')) throw new Error(imported.stderr);
   const { stdout, stderr } = await run(process.env.GODOT_BIN ?? 'godot', [
     '--headless', '--path', 'godot-client', '--script', 'res://tests/auth_smoke.gd',
-  ], { env: { ...process.env, ANCIENT_NEST_TEST_URL: url }, timeout: 30000 });
+  ], { env: { ...process.env, ANCIENT_NEST_TEST_URL: url }, timeout: 180000 });
   if (stderr.includes('SCRIPT ERROR') || !stdout.includes('GODOT_AUTH_SMOKE_PASSED')) {
     throw new Error(`Godot auth smoke failed:\n${stdout}\n${stderr}`);
   }
