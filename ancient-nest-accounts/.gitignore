@@ -6,3 +6,6 @@ coverage/
 .godot/
 godot-client/addons/discord_social_sdk/
 godot-client/addons/keyring/
+
+dist/
+__pycache__/

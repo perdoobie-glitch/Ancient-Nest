@@ -30,6 +30,20 @@ Use a mouse, touch, or keyboard. Tab moves between controls; arrow keys change t
 - `assets/main-menu.webp`: generated adaptation of the reference artwork.
 - `docs/main-menu.md`: design notes and implementation status.
 
+## Windows one-click setup and launch
+
+In the full download, double-click **Setup Ancient Nest.cmd** to configure and deploy
+the service. The shortcut installs Node.js if needed, opens Cloudflare login, applies
+migrations, asks securely for missing provider credentials, and checks readiness.
+You need your existing Cloudflare, Resend, Twilio, and Discord accounts for that
+first setup. It preserves existing secrets and does not reset the database.
+
+For players, open **Play Ancient Nest.cmd** in the full download, or extract the
+Windows player ZIP and open **Ancient Nest.exe**. Godot
+and terminal commands are not needed. The full download includes the player folder;
+source checkouts use the [build instructions](ancient-nest-accounts/README.md#windows-shortcuts-and-download).
+This is an account/voice starter; gameplay and live deployment are still outstanding.
+
 ## Godot login and accounts service
 
 The [accounts project](ancient-nest-accounts/README.md) includes a D1-backed Cloudflare

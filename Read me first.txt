@@ -1,0 +1,21 @@
+ANCIENT NEST - WINDOWS SETUP PACKAGE
+
+Owner first-time setup:
+  Open Setup Ancient Nest.cmd. Sign in to Cloudflare when the browser opens,
+  then enter your existing provider credentials when requested.
+  The setup installs Node.js LTS when needed and applies the database migrations.
+  Windows 10/11 and Windows Package Manager are required for automatic Node installation.
+
+Launch:
+  Open Play Ancient Nest.cmd, or Windows Player\Ancient Nest.exe.
+  Keep the Windows Player folder intact. Players do not need Godot or Node.js.
+  Sign in automatically on later starts; any failed restoration requires manual login.
+
+Current status:
+  This is the account and Discord voice starter, not the complete gameplay project.
+  Cloudflare deployment and live email/SMS/Discord verification are still required.
+  The Windows build was exported and its runtime dependencies inspected on Linux.
+  It still needs runtime testing on a real Windows computer. It is unsigned.
+
+Source and deployment details are in README.md and ancient-nest-accounts\README.md.
+Never distribute your provider secrets or Cloudflare credentials with the player folder.

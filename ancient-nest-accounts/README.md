@@ -28,6 +28,40 @@ and Discord credentials are not configured here. Do not create another database.
 Use the URL Wrangler prints after deployment; update `PUBLIC_URL` and the Godot
 `ancient_nest/account_api` setting if it differs from the expected origin.
 
+## Windows shortcuts and download
+
+For the owner: extract the full download and double-click **Setup Ancient Nest.cmd**
+at the repository root. On Windows 10/11 with Windows Package Manager, it installs
+Node.js LTS if needed, installs locked dependencies, opens Cloudflare sign-in when
+required, checks the existing database schema, applies migrations, and deploys the
+Worker. It asks once for the Twilio sender, verified Resend sender, and any missing
+provider secrets. Secrets are hidden during entry, passed to Wrangler through stdin,
+and never saved to a local secret file. Existing Worker secrets are preserved;
+the shared coordinator key must be supplied rather than replaced with a new value.
+Use your existing Discord application and provider accounts before running setup.
+
+The setup window reports success only after both readiness endpoints pass, including
+all provider configuration flags. Readiness does not prove provider delivery or live
+audio. A failed step stops the process and leaves a message in the window. Fix the
+reported issue and open the shortcut again. The public sender configuration is
+saved in local `wrangler.toml`; remote provider secrets stay in Cloudflare.
+
+For players: extract **Ancient-Nest-Windows.zip** and open **Ancient Nest.exe**.
+Keep the extracted DLLs beside it. Godot, Node.js, and terminal commands are not
+needed on a player's PC. This is the account/voice client starter; gameplay has not
+been supplied. The service must be deployed before online accounts can work.
+The Windows export is unsigned and needs testing on an actual Windows computer;
+this workspace builds the executable and verifies archive contents on Linux.
+
+To reproduce the player build, install Godot 4.6.3 with its matching standard export
+templates, run `npm run discord:install`, then `npm run build:windows` (Python 3
+required for the build tools). This creates `dist/Ancient-Nest-Windows.zip` and a
+SHA-256 checksum. The official export-template archive used for this build is
+`Godot_v4.6.3-stable_export_templates.tpz`, SHA-256
+`3fbe2c0e2dec9d537ab9ec97bcf8da91dcf23357fc51f67092dd068d839290a8`.
+Build artifacts and native dependencies are ignored by Git; the full downloadable
+package includes the compiled player folder.
+
 ## Install and deploy
 
 Requires Node.js 22+ and access to the owning Cloudflare account.

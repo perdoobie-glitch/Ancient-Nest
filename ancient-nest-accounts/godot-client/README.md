@@ -5,6 +5,16 @@ Open `project.godot` to try the account screen, or copy `addons/ancient_nest` in
 the existing game. The game's source was not supplied, so its actual startup scene
 has not been edited.
 
+## Windows player download
+
+The exported Windows x86_64 folder opens with **Ancient Nest.exe**; players do not
+need to install Godot. Extract all files and keep the runtime DLLs beside the app.
+The default HTTPS account origin is already configured. Owner setup and deployment
+are required before live sign-in can succeed. This export is the account/voice
+starter and does not contain gameplay. Build it with `npm run build:windows` from
+the accounts directory after installing Godot 4.6.3 export templates and native addons.
+The Windows binary is built and inspected on Linux; live Windows testing remains.
+
 ## Add to the game
 
 1. Deploy the updated accounts Worker after applying all D1 migrations.
