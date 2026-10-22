@@ -4,7 +4,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { build } from 'esbuild';
 import { Miniflare } from 'miniflare';
 import { SignJWT } from 'jose';
-import { pbkdf2Sync } from 'node:crypto';
+import { pbkdf2Sync, generateKeyPairSync, createHash } from 'node:crypto';
 
 const secret = 'a-local-test-secret-with-at-least-32-bytes';
 const coordinator = 'a-local-coordinator-key-with-at-least-32-bytes';
@@ -569,4 +569,54 @@ test('exported legacy passwords and JWT sessions remain usable and upgrade on lo
   assert.equal((await request('/verify', { token })).status, 200);
   await db.prepare('UPDATE users SET banned = 1').run();
   assert.equal((await request('/verify', { token })).status, 401);
+});
+
+test('live service-test page is public, isolated by CSP, and works on its own Worker origin', async () => {
+  for (const [path, type] of [['/setup-test', 'text/html'], ['/setup-test.js', 'text/javascript'], ['/setup-test.css', 'text/css']]) {
+    const response = await request(path);
+    assert.equal(response.status, 200);
+    assert.ok(response.headers.get('Content-Type').startsWith(type));
+    assert.match(response.headers.get('Content-Security-Policy'), /frame-ancestors 'none'/);
+    const text = await response.text();
+    assert.ok(!text.includes(secret));
+    assert.ok(!text.includes(coordinator));
+  }
+  assert.equal((await request('/setup-test', { method: 'POST' })).status, 405);
+  const profile = await register();
+  const verified = await request('/verify', { token: profile.token, headers: { Origin: 'https://accounts.test' } });
+  assert.equal(verified.status, 200);
+  assert.equal(verified.headers.get('Access-Control-Allow-Origin'), 'https://accounts.test');
+  const external = await request('/verify', { token: profile.token, headers: { Origin: 'https://evil.example' } });
+  assert.equal(external.status, 403);
+});
+
+
+test('game assertions bind the account to its RSA game key and are isolated from access tokens', async () => {
+  const account = await register();
+  const { publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const pem = publicKey.export({ type: 'spki', format: 'pem' });
+  const key_hash = createHash('sha256').update(pem).digest('hex');
+  const response = await request('/api/game/assertion', { method: 'POST', token: account.token, data: { public_key: pem } });
+  assert.equal(response.status, 200);
+  const issued = await response.json();
+  assert.equal(issued.key_hash, key_hash);
+  assert.ok(issued.expires_in <= 600);
+  const verify = assertion => request('/api/game/verify', { method: 'POST', data: { assertion, key_hash } });
+  assert.deepEqual(await (await verify(issued.assertion)).json(), { valid: true, account_id: account.user.id, username: account.user.username, key_hash });
+  assert.equal((await verify(account.token)).status, 401);
+  assert.equal((await request('/verify', { token: issued.assertion })).status, 401);
+  assert.equal((await request('/api/game/verify', { method: 'POST', data: { assertion: issued.assertion, key_hash: '0'.repeat(64) } })).status, 401);
+  await request('/logout', { method: 'POST', token: account.token });
+  assert.equal((await verify(issued.assertion)).status, 401);
+});
+
+test('assertion issuance requires a real authenticated RSA public key', async () => {
+  assert.equal((await request('/api/game/assertion', { method: 'POST', data: {} })).status, 401);
+  const account = await register();
+  for (const public_key of ['not a key', '-----BEGIN PUBLIC KEY-----broken-----END PUBLIC KEY-----']) {
+    assert.equal((await request('/api/game/assertion', { method: 'POST', token: account.token, data: { public_key } })).status, 400);
+  }
+  const { publicKey } = generateKeyPairSync('rsa', { modulusLength: 1024 });
+  assert.equal((await request('/api/game/assertion', { method: 'POST', token: account.token,
+    data: { public_key: publicKey.export({ type: 'spki', format: 'pem' }) } })).status, 400);
 });

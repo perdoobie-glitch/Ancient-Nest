@@ -25,7 +25,7 @@ try {
   // --import --quit can abort during first-scan native teardown on Godot 4.6.
   const imported = await run(process.env.GODOT_BIN ?? 'godot', [
     '--headless', '--path', 'godot-client', '--editor', '--quit-after', '90',
-  ], { timeout: 45000 });
+  ], { timeout: 90000 });
   if (imported.stderr.includes('SCRIPT ERROR')) throw new Error(imported.stderr);
   const { stdout, stderr } = await run(process.env.GODOT_BIN ?? 'godot', [
     '--headless', '--path', 'godot-client', '--script', 'res://tests/auth_smoke.gd',

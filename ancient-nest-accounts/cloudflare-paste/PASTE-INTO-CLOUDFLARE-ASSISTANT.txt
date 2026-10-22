@@ -1,0 +1,56 @@
+Deploy Ancient Nest accounts using the existing resources below. Do not deploy the Windows EXE or the Godot project to Workers.
+
+Repository: https://github.com/perdoobie-glitch/Ancient-Nest
+Project folder: ancient-nest-accounts
+Worker name: ancient-nest-accounts
+D1 database: ancientnestaccounts
+D1 ID: a045391c-1896-4169-bd17-04140d1cbb27
+D1 binding: DB
+Discord application ID: 1562796619722793010
+Expected origin: https://ancient-nest-accounts.ancientnest-llc.workers.dev
+
+1. Check that this connection can deploy Workers and execute D1 writes. If it is read-only, say which operation is blocked and stop before claiming deployment. Do not create another database.
+
+2. Save the current Worker version for rollback. Inspect this database's existing tables/columns using:
+https://raw.githubusercontent.com/perdoobie-glitch/Ancient-Nest/main/ancient-nest-accounts/cloudflare-paste/check-existing-database.sql
+Do not delete tables, reset data, rename migrations, or overwrite existing accounts.
+
+3. For an empty database only, execute:
+https://raw.githubusercontent.com/perdoobie-glitch/Ancient-Nest/main/ancient-nest-accounts/cloudflare-paste/database-empty-only.sql
+This creates the complete current schema and records all four migrations. It deliberately stops if users already exists. If users already exists, apply only the pending versioned migrations from the repository after checking existing columns/migration history. Never run the fresh-database SQL over an existing account schema. If no migration executor is available, report that and use the dashboard's D1 Console as described in START-HERE.txt.
+
+4. Deploy the ES-module Worker from this file, preserving existing secrets:
+https://raw.githubusercontent.com/perdoobie-glitch/Ancient-Nest/main/ancient-nest-accounts/cloudflare-paste/worker.js
+It is a complete bundle and requires no npm imports in the dashboard editor.
+Set compatibility date to 2026-08-01. Bind DB to the existing database ID above. Keep workers.dev enabled.
+
+5. Set these public variables:
+ALLOWED_ORIGINS=https://ancientnest.net
+TOKEN_TTL_SECONDS=3600
+PUBLIC_URL=https://ancient-nest-accounts.ancientnest-llc.workers.dev
+EMAIL_FROM=noreply@ancientnest.net (only if this domain/sender is verified in Resend)
+DISCORD_CLIENT_ID=1562796619722793010
+TWILIO_FROM=the owner's actual SMS-capable Twilio E.164 sender number
+Do not use a made-up phone number. Ask the owner to fill missing sender values in Cloudflare settings.
+
+6. Preserve existing secret values. Missing secrets must be entered through Cloudflare's secure secret fields, not this assistant chat:
+JWT_SECRET (a random 32-byte-or-longer value generated securely if it does not already exist)
+COORDINATOR_API_KEY (must match the existing matchmaking Worker; do not generate a replacement unilaterally)
+RESEND_API_KEY
+TWILIO_ACCOUNT_SID
+TWILIO_AUTH_TOKEN
+DISCORD_CLIENT_SECRET
+DISCORD_BOT_TOKEN
+Never print or commit these values. Do not insert placeholders as working credentials.
+
+7. Add a cron trigger: * * * * * (once per minute) for session and team-room cleanup.
+
+8. Verify HTTPS /health, /ready and /discord/ready. Report actual HTTP status and checks. /ready must have ready:true, and all email/SMS/Discord flags must be true for the complete setup. Readiness is a configuration check, not proof of provider delivery or microphone audio.
+
+9. Open this real-delivery test page for the owner:
+https://ancient-nest-accounts.ancientnest-llc.workers.dev/setup-test
+The owner creates/signs into their own account, enters the email/SMS codes they actually receive, tests session refresh, and links their own Discord identity. Do not mark delivery passed unless the owner receives and verifies the codes.
+
+10. Keep ancient-nest-matchmaking and its Durable Object namespace/migrations intact. Do not replace its Worker with this accounts Worker. Do not change its existing ACCOUNT_API blindly: that endpoint is also used for rankings/results. The new identity bridge is POST /api/game/assertion (game bearer token + RSA public_key) and POST /api/game/verify ({assertion,key_hash}); team voice still needs hooks in the current coordinator source. The available coordinator reference is version 9.0, not the deployed 10.2 version, so do not deploy the older coordinator as an update.
+
+11. Give the owner a factual result: deployed version/URL, migration status, secret NAMES/configuration flags, and any remaining missing provider setup. Windows device tests, purchase verification, and two-person microphone/audio tests cannot be completed by running a Cloudflare readiness request.

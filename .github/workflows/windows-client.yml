@@ -1,0 +1,44 @@
+name: Windows client checks
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ancient-nest-accounts/**'
+      - '.github/workflows/windows-client.yml'
+  pull_request:
+    paths:
+      - 'ancient-nest-accounts/**'
+      - '.github/workflows/windows-client.yml'
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: ancient-nest-accounts
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ancient-nest-accounts/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: python scripts/install-discord-sdk.py
+      - run: python scripts/install-godot-windows.py
+      - run: npm run test:godot
+      - name: Native Windows credential-store round trip
+        run: |
+          $result = & $env:GODOT_BIN --headless --path godot-client --script res://tests/keyring_smoke.gd 2>&1 | Out-String
+          Write-Output $result
+          if ($LASTEXITCODE -ne 0 -or $result -notmatch 'GODOT_KEYRING_SMOKE_PASSED') { throw 'Windows credential-store test failed' }
+      - name: Export Windows executable and verify packaged runtime files
+        run: python scripts/build-windows.py
+      - name: Start the exported executable
+        run: |
+          $client = Start-Process -FilePath '.\dist\windows\Ancient Nest.exe' -ArgumentList '--headless','--quit-after','120' -Wait -PassThru
+          if ($client.ExitCode -ne 0) { throw 'Windows exported executable failed to start' }

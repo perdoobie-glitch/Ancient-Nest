@@ -14,7 +14,8 @@
     "db:list": "wrangler d1 migrations list DB --remote",
     "deploy": "wrangler deploy",
     "build:windows": "python3 scripts/build-windows.py",
-    "setup:windows": "node scripts/setup-windows.mjs"
+    "setup:windows": "node scripts/setup-windows.mjs",
+    "build:dashboard": "node scripts/dashboard-build.mjs"
   },
   "dependencies": {
     "jose": "^6.1.0"

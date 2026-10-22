@@ -9,3 +9,5 @@ godot-client/addons/keyring/
 
 dist/
 __pycache__/
+
+.account-integration-backup/

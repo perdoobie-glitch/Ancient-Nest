@@ -8,7 +8,7 @@ Ancient Nest's cinematic main-menu preview, based on the reference artwork suppl
 
 The repository includes a working browser menu with Play, Custom Match, Settings, and Quit controls. It uses a generated adaptation of the supplied reference, with live title text and interactive menu controls over the artwork.
 
-A Godot account starter and Cloudflare accounts service are included below. Gameplay and integration of the browser menu into Godot have not been added. Play and Custom Match open clearly labeled preview screens. Settings control menu sound and volume and save locally when browser storage is available. Quit shows an exit screen with a return action; it does not attempt to close the browser tab.
+A Godot account integration package and Cloudflare accounts service are included below. The existing 10.2 game was found in connected Drive; it is not replaced by the browser preview. Current-game integration is being validated separately. Play and Custom Match open clearly labeled preview screens. Settings control menu sound and volume and save locally when browser storage is available. Quit shows an exit screen with a return action; it does not attempt to close the browser tab.
 
 ## Open the menu
 
@@ -29,6 +29,20 @@ Use a mouse, touch, or keyboard. Tab moves between controls; arrow keys change t
 - `src/menu.js`: navigation, preview screens, and saved settings.
 - `assets/main-menu.webp`: generated adaptation of the reference artwork.
 - `docs/main-menu.md`: design notes and implementation status.
+
+## Copy and paste into Cloudflare
+
+Open [the Cloudflare setup prompt](ancient-nest-accounts/cloudflare-paste/PASTE-INTO-CLOUDFLARE-ASSISTANT.txt)
+and paste its complete contents into your authenticated Cloudflare assistant.
+For dashboard-only deployment, [START-HERE.txt](ancient-nest-accounts/cloudflare-paste/START-HERE.txt)
+explains where to paste the prebuilt Worker and SQL. Existing data and secrets are
+preserved; the database is not recreated. Provider secret values still come from
+your own accounts and go into Cloudflare's secure secret fields.
+
+After deployment, `/setup-test` on the accounts Worker tests real email/SMS codes,
+session refresh and Discord identity linking. The [Windows checks workflow](.github/workflows/windows-client.yml)
+exercises native SDK loading, credential storage, Windows export and executable startup.
+Microphone and personal friends-call behavior require a two-person device test.
 
 ## Windows one-click setup and launch
 
@@ -61,9 +75,10 @@ npm run discord:install
 ```
 
 Open `ancient-nest-accounts/godot-client/project.godot` in Godot 4.4 or newer
-(validated with 4.6.3). The startup scene is the account screen. Until a gameplay
-scene is assigned, successful login shows a signed-in status. The existing browser
-menu remains a visual reference; no gameplay scene has been invented.
+(validated with 4.6.3). The startup scene is the account screen. The standalone client shows signed-in status. [Connect Existing Game.cmd](<Connect Existing Game.cmd>)
+installs the adapter into an extracted existing game while preserving its original
+intro, maps and gameplay. See [current-source status](ancient-nest-accounts/docs/EXISTING_GAME_INTEGRATION.md)
+before applying it to 10.2. No substitute gameplay has been added.
 
 The Worker configuration already identifies the existing `ancientnestaccounts`
 D1 database and Discord application. Follow the [deployment instructions](ancient-nest-accounts/README.md#install-and-deploy)
@@ -75,11 +90,14 @@ Native binaries are installed by the checksum-verified installer and are ignored
 by Git. No production credentials are included. Persistent sign-in needs a working
 OS credential store; Discord voice and microphone behavior require live desktop testing.
 
-## Next step
+## Current integration status
 
-Deploy the accounts Worker and assign the actual Godot main-menu/gameplay scene to
-the login gate. Connect the supplied matchmaking helpers to the authoritative
-coordinator when its source is available.
+The 10.2 source archive was found in Drive, but its download host is blocked in this
+workspace. The adapter was inspected against the available 8.0 game and 9.0
+coordinator reference. Do not downgrade the current game or overwrite the current
+coordinator with those older versions. Latest-game compatibility, live deployment,
+real delivery and two-player voice remain pending until the required access and
+devices are available.
 
 ## Get the repository
 

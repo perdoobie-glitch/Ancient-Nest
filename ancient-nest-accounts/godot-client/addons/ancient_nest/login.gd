@@ -187,6 +187,10 @@ func _enter_game(result: Dictionary) -> void:
 		_status.text = "You're signed in for this session, but we couldn't save sign-in on this device."
 	if game_scene != null:
 		get_tree().change_scene_to_packed(game_scene)
+	else:
+		var original: String = str(ProjectSettings.get_setting("ancient_nest/original_main_scene", ""))
+		if not original.is_empty():
+			get_tree().change_scene_to_file(original)
 
 
 func _sign_out() -> void:

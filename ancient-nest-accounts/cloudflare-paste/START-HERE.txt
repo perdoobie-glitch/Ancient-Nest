@@ -1,0 +1,22 @@
+ANCIENT NEST: COPY / PASTE CLOUDFLARE SETUP
+
+Option A - Cloudflare assistant
+Open PASTE-INTO-CLOUDFLARE-ASSISTANT.txt, copy all its text into your Cloudflare assistant, and follow its secure credential prompts. The instructions point to the tested, prebuilt Worker in your GitHub repository. If the connection has read-only permissions, use the dashboard option below.
+
+Option B - Dashboard, no terminal needed
+1. Cloudflare > Workers & Pages > ancient-nest-accounts (create only this Worker if absent).
+2. Open Edit code. Replace the example Worker with the COMPLETE contents of worker.js and deploy. Do not paste package.json, providers.js, or Godot code into the editor: worker.js already contains the imports bundled together.
+3. Under this Worker's Bindings, add D1 binding named DB using the existing ancientnestaccounts database, ID a045391c-1896-4169-bd17-04140d1cbb27.
+4. Go to D1 > ancientnestaccounts > Console. Paste check-existing-database.sql. If the database has no account tables, paste database-empty-only.sql. If users already exists, STOP: use pending versioned migrations instead, preserving existing data. The fresh SQL must not be run over the old schema.
+5. Worker Settings > Variables and Secrets: add the public variables listed in PASTE-INTO-CLOUDFLARE-ASSISTANT.txt. Enter the seven secret VALUES through secret fields. The coordinator key must match the matchmaking Worker. You need your own Resend, Twilio and Discord provider credentials; code cannot generate those account credentials.
+6. Add a scheduled cron trigger: * * * * *. Set compatibility date 2026-08-01 and enable workers.dev. Redeploy after bindings/variables are configured.
+7. Discord Developer Portal > application 1562796619722793010 > OAuth2: retain http://127.0.0.1/callback and add https://ancient-nest-accounts.ancientnest-llc.workers.dev/auth/discord/callback. Keep a confidential client and request/enable required Social SDK communication access. This Discord step is outside Cloudflare.
+8. Open https://ancient-nest-accounts.ancientnest-llc.workers.dev/setup-test. Check configuration, then create a real test account or sign into an existing one. Verify codes that actually arrive at your email and phone. Link Discord and test refresh. Sign out when finished.
+
+Windows and voice
+The repository's Windows client checks workflow runs on an actual Windows runner. It tests native SDK loading, a real Windows credential-store write/read/delete round trip, export, and starting the exported executable. It does not have two people's microphones or a personal Discord friends call.
+For the human audio check, both Windows PCs open the client and link separate Discord accounts. The owner opens Test Discord Voice.cmd, enters the coordinator key privately and the two account IDs from /setup-test. The script assigns a temporary team room and removes it when Enter is pressed. Speak in both directions with V; verify team mute/deafen and your separate personal friends call. The script cannot mark those audio checks passed for you.
+
+Existing game integration
+Your current complete source was found in Drive: Ancient Nest 10.2 - Complete Source.zip.
+This workspace could inspect the smaller 8.0 source and 9.0 coordinator reference, but download of the 10.2 archive is blocked by its network policy. The prepared adapter preserves the original scene/maps/gameplay and backs up edited files. Do not downgrade your finished 10.2 game to the older reference. Current 10.2 integration and coordinator team-room hooks still require that source to be downloaded and inspected.

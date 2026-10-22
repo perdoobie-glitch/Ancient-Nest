@@ -10,8 +10,29 @@ then attempts saved sign-in automatically on later launches. Successful restorat
 opens the game; any failed startup restoration clears the local saved sign-in and
 shows **Sign in**. Players must authenticate successfully to continue. Passwords
 are never saved. The ZIP includes the Windows/Linux x86_64 native dependencies.
-The actual game and matchmaking repositories were not supplied: copy the starter
-and connect the supplied coordinator helpers to those projects.
+The existing 10.2 source was located in connected Drive. Its download host is
+currently blocked in this workspace. The smaller 8.0 game and 9.0 coordinator are
+local references for the prepared adapter; they are not replacement releases. See
+[existing-game integration status](docs/EXISTING_GAME_INTEGRATION.md).
+
+## Cloudflare dashboard copy/paste
+
+[Paste this prompt](cloudflare-paste/PASTE-INTO-CLOUDFLARE-ASSISTANT.txt) into your
+Cloudflare assistant, or follow [the dashboard steps](cloudflare-paste/START-HERE.txt).
+`cloudflare-paste/worker.js` is a self-contained ES-module Worker bundle. Fresh-database
+SQL includes the current schema and migration history; it deliberately stops if
+account tables already exist. Existing databases must use their pending migrations.
+Rebuild these generated files after backend changes with `npm run build:dashboard`.
+
+After deployment, open `/setup-test` to check readiness, receive and verify real
+email/SMS codes, test session refresh, and link Discord. The page stores tokens only
+in memory and does not contain provider credentials. It requires your real contact
+information and working provider setup; mocked delivery tests are not live proof.
+
+The Windows CI workflow tests the native SDK and a real OS credential-store round
+trip, builds the Windows executable and starts it on a Windows runner. CI does not
+prove microphone audio or a friends call: use `Test Discord Voice.cmd` with two
+linked Windows clients for an owner-managed, 15-minute temporary team room.
 
 ## Existing Cloudflare configuration
 
@@ -178,6 +199,16 @@ a shared 10-deliveries-per-IP limit. Authentication uses 30 requests/IP and
 atomic and HMAC-keyed. Login audit IPs are HMAC protected and deleted after seven
 days. All responses disable caching; CORS accepts configured exact browser origins.
 Errors use `{ error: "code" }` and never return raw upstream messages or SQL details.
+
+## Game identity bridge
+
+The existing game expects a key-bound account assertion. `POST /api/game/assertion`
+accepts a game bearer token and RSA public key and issues a ten-minute assertion.
+`POST /api/game/verify` verifies that assertion against the exact game-key hash,
+D1 session and ban state. Assertions have a separate audience and cannot access
+account endpoints. The integration installer backs up and edits only startup/account
+plumbing; it does not rewrite gameplay. See the linked integration notes before
+changing the current coordinator. Existing ranking/results routing must be preserved.
 
 ## Matchmaking and voice
 

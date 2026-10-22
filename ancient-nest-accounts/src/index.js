@@ -1,3 +1,5 @@
+import { gameIdentity } from './game-identity.js';
+import { liveTestRoute } from './live-test-page.js';
 import { SignJWT, jwtVerify } from 'jose';
 import { DUMMY_HASH, passwordRecord, verifyPassword } from './passwords.js';
 import { discordRoutes } from './discord.js';
@@ -211,7 +213,7 @@ function bearer(request) {
   return match[1];
 }
 
-async function authenticate(token, db, key) {
+async function authenticate(token, db, key, expectedAudience = AUDIENCE) {
   let payload;
   try {
     if (typeof token !== 'string' || token.length > 2048) throw new Error();
@@ -222,9 +224,10 @@ async function authenticate(token, db, key) {
     if (typeof payload.sub !== 'string' || typeof payload.jti !== 'string' ||
         !Number.isSafeInteger(payload.iat) || !Number.isSafeInteger(payload.exp) ||
         payload.exp <= payload.iat || payload.exp - payload.iat > 86400) throw new Error();
+    if (expectedAudience !== AUDIENCE && (payload.iss !== ISSUER || payload.aud !== expectedAudience)) throw new Error();
     // Exported 10.2 JWTs lacked issuer/audience; accept those only with a matching live session.
     if ((payload.iss !== undefined || payload.aud !== undefined) &&
-        (payload.iss !== ISSUER || payload.aud !== AUDIENCE)) throw new Error();
+        (payload.iss !== ISSUER || payload.aud !== expectedAudience)) throw new Error();
   } catch {
     throw new HttpError(401, 'invalid_token');
   }
@@ -234,13 +237,22 @@ async function authenticate(token, db, key) {
     AND s.revoked = 0 AND u.banned = 0 AND s.auth_version = u.auth_version`)
     .bind(payload.jti, payload.sub, Math.floor(Date.now() / 1000), payload.exp).first();
   if (!user) throw new HttpError(401, 'invalid_token');
-  return { user: publicUser(user), record: user, sessionId: payload.jti, expires: payload.exp };
+  return { claims: payload, user: publicUser(user), record: user, sessionId: payload.jti, expires: payload.exp };
 }
 
 async function route(request, env) {
   const path = new URL(request.url).pathname;
   const method = request.method;
+  const liveTest = liveTestRoute(path);
+  if (liveTest) {
+    if (method !== 'GET') throw new HttpError(405, 'method_not_allowed', { Allow: 'GET' });
+    return liveTest;
+  }
   if (path === '/signup/config' && method === 'GET') return json({ email_required: true, phone_required: true });
+  if (path === '/api/game/assertion' || path === '/api/game/verify') {
+    const { key } = settings(env);
+    return identity(request, env, env.DB.withSession('first-primary'), key);
+  }
   if (path.startsWith('/discord/') || path === '/voice/session' || path.startsWith('/internal/voice/')) {
     const { key } = settings(env);
     return discord.handle(request, env, env.DB.withSession('first-primary'), key);
@@ -354,19 +366,21 @@ async function route(request, env) {
 }
 
 const discord = discordRoutes({ HttpError, json, body, authenticate, bearer, rateLimit, coordinator });
+const identity = gameIdentity({ HttpError, json, body, bearer, authenticate, rateLimit });
 const extras = accountExtras({ HttpError, json, body, authenticate, bearer, rateLimit, passwordRecord, verifyPassword, tokenHash, discord });
 
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin');
+    const sameOrigin = origin === new URL(request.url).origin;
     const allowed = (env.CORS_ORIGIN ?? env.ALLOWED_ORIGINS ?? '').split(',').map(value => value.trim()).filter(Boolean);
     const headers = {
       'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', Vary: 'Origin',
-      ...(origin && allowed.includes(origin) ? { 'Access-Control-Allow-Origin': origin } : {}),
+      ...(origin && (sameOrigin || allowed.includes(origin)) ? { 'Access-Control-Allow-Origin': origin } : {}),
     };
     let response;
     try {
-      if (origin && !allowed.includes(origin)) throw new HttpError(403, 'origin_not_allowed');
+      if (origin && !sameOrigin && !allowed.includes(origin)) throw new HttpError(403, 'origin_not_allowed');
       if (request.method === 'OPTIONS') {
         const methods = ['GET', 'POST'];
         const requestedHeaders = (request.headers.get('Access-Control-Request-Headers') ?? '')
