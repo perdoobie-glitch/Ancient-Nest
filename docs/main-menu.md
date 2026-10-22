@@ -1,6 +1,18 @@
 # Main menu reference
 
-The requested main menu should match the Ancient Nest reference image supplied in the conversation.
+The main menu follows the Ancient Nest reference image supplied in the conversation. A browser implementation is available in `index.html`; it does not require a game engine or a build step.
+
+## Implemented
+
+- A generated adaptation of the supplied scene and emblem is included as `assets/main-menu.webp`.
+- The title and all four menu controls are rendered separately from the background.
+- A horizontal menu follows the reference at landscape sizes; portrait screens use two rows with touch-sized controls.
+- Mouse, touch, Tab, arrow keys, Enter, and Escape work for navigation and dialogs.
+- Settings change synthesized menu sound volume and enable or disable sound, persisting on this device when browser storage is available.
+- Play and Custom Match show honest preview messages until gameplay is implemented.
+- Quit opens an exit screen, and Return to menu restores focus.
+
+The generated artwork is an adaptation, rather than the original attached image file. The emblem is part of that artwork. The supplied source image itself has not been added as a repository asset.
 
 ## Visual direction
 
@@ -34,5 +46,4 @@ Play is highlighted in the supplied reference. Selection should have a warm gold
 ## Pending project inputs
 
 - Game engine and source files.
-- Reference image as a project asset.
 - Menu action handlers and navigation destinations.

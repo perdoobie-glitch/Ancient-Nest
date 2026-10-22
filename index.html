@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111916">
+  <meta name="description" content="Ancient Nest — a cinematic main-menu preview.">
+  <title>Ancient Nest</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23d9bc76' d='M32 4 3 60h12l6-13h22l6 13h12L32 4Zm0 20 8 16H24Z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="src/menu.css">
+  <script src="src/menu.js" defer></script>
+</head>
+<body>
+  <main class="stage" aria-label="Ancient Nest main menu">
+    <img class="artwork" src="assets/main-menu.webp" alt="Ancient towers and waterfalls beneath a giant moon, flanked by two armored warriors around a golden nest emblem." fetchpriority="high">
+    <div class="shade" aria-hidden="true"></div>
+    <h1 class="game-title">Ancient Nest</h1>
+    <nav class="main-menu" aria-label="Main menu">
+      <button class="menu-item is-selected" type="button" data-action="play"><span>Play</span></button>
+      <button class="menu-item" type="button" data-action="custom"><span>Custom Match</span></button>
+      <button class="menu-item" type="button" data-action="settings"><span>Settings</span></button>
+      <button class="menu-item" type="button" data-action="quit"><span>Quit</span></button>
+    </nav>
+    <p class="preview-label">Menu preview</p>
+    <dialog id="menu-dialog" aria-labelledby="dialog-title">
+      <form method="dialog" class="panel">
+        <span class="panel-ornament" aria-hidden="true">◇</span>
+        <h2 id="dialog-title"></h2>
+        <div id="dialog-content"></div>
+        <button class="panel-button" value="close" type="submit">Return to menu</button>
+      </form>
+    </dialog>
+    <section id="farewell" class="farewell" aria-labelledby="farewell-title" hidden>
+      <p class="panel-ornament" aria-hidden="true">◇</p>
+      <h2 id="farewell-title">Until we meet again</h2>
+      <button class="panel-button" id="return-button" type="button">Return to menu</button>
+    </section>
+  </main>
+</body>
+</html>
