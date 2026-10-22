@@ -69,10 +69,9 @@ saved in local `wrangler.toml`; remote provider secrets stay in Cloudflare.
 
 For players: extract **Ancient-Nest-Windows.zip** and open **Ancient Nest.exe**.
 Keep the extracted DLLs beside it. Godot, Node.js, and terminal commands are not
-needed on a player's PC. This is the account/voice client starter; gameplay has not
-been supplied. The service must be deployed before online accounts can work.
-The Windows export is unsigned and needs testing on an actual Windows computer;
-the Windows CI run now also validates native loading, secure storage and exported executable startup.
+needed on a player's PC. This is the account/voice client starter; it does not embed the existing full game. The service must be deployed before online accounts can work.
+The Windows export is unsigned. Windows CI passed native loading, secure storage
+and exported executable startup checks.
 Interactive GPU/audio and the current full-game integration still need testing.
 
 To reproduce the player build, install Godot 4.6.3 with its matching standard export

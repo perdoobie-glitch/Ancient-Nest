@@ -14,8 +14,8 @@ Launch:
 Current status:
   This is the account and Discord voice starter, not the complete gameplay project.
   Cloudflare deployment and live email/SMS/Discord verification are still required.
-  The Windows build was exported and its runtime dependencies inspected on Linux.
-  It still needs runtime testing on a real Windows computer. It is unsigned.
+  The Windows account client passed native SDK, credential-store and exported-startup
+  checks on a hosted Windows runner. Live GPU/microphone testing remains. It is unsigned.
 
 Source and deployment details are in README.md and ancient-nest-accounts\README.md.
 Never distribute your provider secrets or Cloudflare credentials with the player folder.
