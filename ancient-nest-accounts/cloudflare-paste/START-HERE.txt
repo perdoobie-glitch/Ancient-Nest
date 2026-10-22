@@ -14,7 +14,7 @@ Option B - Dashboard, no terminal needed
 8. Open https://ancient-nest-accounts.ancientnest-llc.workers.dev/setup-test. Check configuration, then create a real test account or sign into an existing one. Verify codes that actually arrive at your email and phone. Link Discord and test refresh. Sign out when finished.
 
 Windows and voice
-The repository's Windows client checks workflow runs on an actual Windows runner. It tests native SDK loading, a real Windows credential-store write/read/delete round trip, export, and starting the exported executable. It does not have two people's microphones or a personal Discord friends call.
+The repository's Windows client checks workflow passed on an actual Windows runner (run 39840478975). It tests native SDK loading, a real Windows credential-store write/read/delete round trip, export, and starting the exported executable. It does not have two people's microphones or a personal Discord friends call.
 For the human audio check, both Windows PCs open the client and link separate Discord accounts. The owner opens Test Discord Voice.cmd, enters the coordinator key privately and the two account IDs from /setup-test. The script assigns a temporary team room and removes it when Enter is pressed. Speak in both directions with V; verify team mute/deafen and your separate personal friends call. The script cannot mark those audio checks passed for you.
 
 Existing game integration

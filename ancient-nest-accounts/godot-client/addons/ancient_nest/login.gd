@@ -20,6 +20,9 @@ var _register := true
 
 func _ready() -> void:
 	_build_ui()
+	if bool(ProjectSettings.get_setting("ancient_nest/require_login", false)):
+		_register = false
+		_apply_mode()
 	AncientNestAuth.session_lost.connect(_on_session_lost)
 	await _restore()
 
@@ -178,6 +181,7 @@ func _submit_account() -> void:
 
 
 func _enter_game(result: Dictionary) -> void:
+	ProjectSettings.set_setting("ancient_nest/require_login", false)
 	_form.hide()
 	_signed_in.show()
 	_title.text = "Ancient Nest"

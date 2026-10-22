@@ -42,3 +42,12 @@ jobs:
         run: |
           $client = Start-Process -FilePath '.\dist\windows\Ancient Nest.exe' -ArgumentList '--headless','--quit-after','120' -Wait -PassThru
           if ($client.ExitCode -ne 0) { throw 'Windows exported executable failed to start' }
+      - name: Publish the tested Windows download
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: Ancient-Nest-Windows
+          path: |
+            ancient-nest-accounts/dist/Ancient-Nest-Windows.zip
+            ancient-nest-accounts/dist/Ancient-Nest-Windows.zip.sha256
+          if-no-files-found: error
+          retention-days: 7

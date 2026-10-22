@@ -57,7 +57,7 @@ def build():
         'This is the account and voice starter. Gameplay is not included.\n'
         'The accounts Worker must be deployed and configured before online sign-in works.\n'
         'Discord voice requires approved app access and live audio testing.\n'
-        'This build is unsigned and has not been runtime-tested on Windows in the build workspace.\n', encoding='utf8')
+        'This build is unsigned. Windows startup/keyring checks run in GitHub Actions; live gameplay and audio still need testing.\n', encoding='utf8')
     archive = ROOT / 'dist' / 'Ancient-Nest-Windows.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as out:
         for source in sorted(OUTPUT.rglob('*')):

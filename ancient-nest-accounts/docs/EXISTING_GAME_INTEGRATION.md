@@ -53,8 +53,8 @@ installer and the game's existing tests. Wire server-authoritative match start/e
 to the supplied team-voice helper, using account IDs and actual team rosters. Do not
 let clients declare their own teammate list. Test login → original intro → existing
 menu → existing gameplay, restored login after restart, logout/revocation during
-play, and two clients in a real match. Test live Windows credential storage and
-microphone/friends-call behavior on the machines being shipped.
+play, and two clients in a real match. Native Windows credential storage and exported-client startup passed on the hosted Windows runner.
+Microphone/friends-call behavior still requires the machines being shipped.
 
 An older source can validate the adapter's parser and scene preservation; it cannot
 establish compatibility with the uninspected current release.
@@ -64,3 +64,10 @@ the login scene on revocation. That older release also emitted weapon-audio
 `profile.sounds` errors while initializing its own menu; the unmodified-account
 baseline exhibits the same errors. No audio/gameplay code was rewritten to hide
 them. This is a limited adapter check, not a clean end-to-end game certification.
+
+Windows validation succeeded on GitHub run 39840478975 at commit
+`a5c1633eef13aa38a96d8324624965fdeaf1ce4f`: all 44 backend tests, Godot sign-in and
+voice smoke checks, native Windows credential-store write/read/delete, Windows
+export, and starting the exported executable. The first run timed out during the
+intentional offline checks; extending that test process deadline let the unchanged
+failure scenarios finish. Hosted Windows startup is not a microphone/audio test.

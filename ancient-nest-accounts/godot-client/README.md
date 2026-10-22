@@ -13,7 +13,8 @@ The default HTTPS account origin is already configured. Owner setup and deployme
 are required before live sign-in can succeed. This export is the account/voice
 starter and does not contain gameplay. Build it with `npm run build:windows` from
 the accounts directory after installing Godot 4.6.3 export templates and native addons.
-The Windows binary is built and inspected on Linux; live Windows testing remains.
+Windows startup and native credential-store checks passed on the hosted Windows runner.
+Live GPU performance, microphone audio and personal friends-call behavior still need testing.
 
 ## Add to the game
 

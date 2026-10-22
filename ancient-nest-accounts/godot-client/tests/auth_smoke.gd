@@ -38,6 +38,8 @@ func _run() -> void:
 	assert(store.token.length() == 64)
 	var first_token := store.token
 	var user_id: String = auth.current_user.id
+	# Stop the old process timer before simulating its replacement.
+	auth.get("_timer").stop()
 	# Simulate a new game process: no access token or user state survives in memory.
 	var reopened: Node = load("res://addons/ancient_nest/auth.gd").new()
 	root.add_child(reopened)

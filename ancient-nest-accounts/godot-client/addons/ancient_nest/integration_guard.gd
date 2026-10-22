@@ -9,6 +9,10 @@ func _ready() -> void:
 func _return_to_login() -> void:
 	if str(ProjectSettings.get_setting("ancient_nest/original_main_scene", "")).is_empty():
 		return
+	ProjectSettings.set_setting("ancient_nest/require_login", true)
+	var scene := get_tree().current_scene
+	if scene != null and scene.get_script() != null and scene.get_script().resource_path == "res://addons/ancient_nest/login.gd":
+		return
 	get_tree().paused = true
 	_change_scene.call_deferred()
 
