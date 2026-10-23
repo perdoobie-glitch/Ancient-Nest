@@ -43,17 +43,6 @@ async function main() {
   console.log('3/6 Applying pending migrations after the schema compatibility check...');
   await command(process.execPath, ['scripts/migrate.mjs', '--remote']);
   let toml = await readFile(config, 'utf8');
-  if (!/^TWILIO_FROM\s*=/m.test(toml)) {
-    const phone = await prompt('SMS-capable Twilio FROM number (including +country code)', value => /^\+[1-9]\d{6,14}$/.test(value));
-    toml = toml.replace(/^(EMAIL_FROM\s*=.*)$/m, `$1\nTWILIO_FROM = ${JSON.stringify(phone)}`);
-  }
-  const sender = /^EMAIL_FROM\s*=\s*"([^"]+)"/m.exec(toml)?.[1];
-  console.log(`Email sender: ${sender}. This domain must already be verified with Resend.`);
-  if (!/^# Setup sender confirmed$/m.test(toml)) {
-    const confirmed = await prompt(`Resend sender address (Enter ${sender} to keep it)`, value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
-    toml = toml.replace(/^EMAIL_FROM\s*=.*$/m, `EMAIL_FROM = ${JSON.stringify(confirmed)}\n# Setup sender confirmed`);
-  }
-  await writeFile(config, toml);
   console.log('4/6 Deploying the Worker bundle...');
   await wrangler(['deploy']);
   console.log('5/6 Configuring missing service secrets...');
@@ -66,7 +55,7 @@ async function main() {
   const origin = /^PUBLIC_URL\s*=\s*"([^"]+)"/m.exec(toml)?.[1];
   await checkReadiness(origin);
   console.log(`\nService is configured at ${origin}. Open Ancient Nest.exe from the Windows player download.`);
-  console.log('Email/SMS delivery and two-player Discord audio still need live testing before release.');
+  console.log('Discord desktop authorization and two-player audio still need live testing before release.');
 }
 
 main().catch(error => { console.error(`\nSetup stopped: ${error.message}`); process.exitCode = 1; });

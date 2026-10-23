@@ -1,3 +1,88 @@
+// src/discord-sign-in.js
+function discordSignIn({
+  HttpError: HttpError2,
+  json: json2,
+  body: body2,
+  authenticate: authenticate2,
+  bearer: bearer2,
+  rateLimit: rateLimit2,
+  discord: discord2,
+  newSession: newSession2,
+  sessionInsert: sessionInsert2,
+  sessionResponse: sessionResponse2
+}) {
+  return async (request2, env, db, key, ttl) => {
+    const path = new URL(request2.url).pathname;
+    if (path === "/auth/discord/config") {
+      if (request2.method !== "GET") throw new HttpError2(405, "method_not_allowed");
+      discord2.configured(env);
+      return json2({ auth_provider: "discord", application_id: env.DISCORD_CLIENT_ID });
+    }
+    if (request2.method !== "POST") throw new HttpError2(405, "method_not_allowed");
+    if (path === "/profile/username") {
+      const auth = await authenticate2(bearer2(request2), db, key);
+      await rateLimit2(db, key, "profile-name", auth.user.id, 5);
+      const { username } = await body2(request2);
+      if (typeof username !== "string" || !/^[a-zA-Z0-9_-]{3,24}$/.test(username)) {
+        throw new HttpError2(400, "invalid_game_username");
+      }
+      try {
+        const saved2 = await db.prepare("UPDATE users SET username = ? WHERE id = ? AND banned = 0 RETURNING id, username, created_at").bind(username, auth.user.id).first();
+        if (!saved2) throw new HttpError2(401, "invalid_token");
+        return json2({ user: saved2 });
+      } catch (error) {
+        if (/UNIQUE constraint failed/.test(String(error))) throw new HttpError2(409, "username_taken");
+        throw error;
+      }
+    }
+    discord2.configured(env);
+    await rateLimit2(db, key, "discord-sign-in-ip", request2.headers.get("CF-Connecting-IP") ?? "local", 30);
+    const value = await body2(request2);
+    if (typeof value.code !== "string" || !value.code.length || value.code.length > 2048 || typeof value.code_verifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(value.code_verifier) || !discord2.desktopRedirect(value.redirect_uri)) throw new HttpError2(400, "invalid_discord_authorization");
+    const { tokens, discordId, discordUser } = await discord2.oauth(env, {
+      grant_type: "authorization_code",
+      code: value.code,
+      code_verifier: value.code_verifier,
+      redirect_uri: value.redirect_uri
+    });
+    let user = await db.prepare("SELECT * FROM users WHERE discord_id = ?").bind(discordId).first();
+    if (!user) {
+      const id = crypto.randomUUID();
+      const stem = String(discordUser.username ?? "Player").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 3) || "P";
+      const username = stem + "_" + discordId;
+      try {
+        await db.prepare(`INSERT INTO users (id, username, password_hash, password_salt, email, discord_id,
+          discord_username, auth_provider, created_at) VALUES (?, ?, 'DISCORD_ONLY', '', ?, ?, ?, 'discord', ?)`).bind(
+          id,
+          username,
+          discordId + "@discord.identity.invalid",
+          discordId,
+          String(discordUser.username ?? discordId).slice(0, 80),
+          Math.floor(Date.now() / 1e3)
+        ).run();
+      } catch (error) {
+        if (!/UNIQUE constraint failed/.test(String(error))) throw error;
+      }
+      user = await db.prepare("SELECT * FROM users WHERE discord_id = ?").bind(discordId).first();
+      if (!user) throw new HttpError2(409, "username_conflict");
+    }
+    if (user.banned) throw new HttpError2(403, "account_banned");
+    const saved = await db.prepare(`UPDATE users SET auth_provider = 'discord', discord_username = ?, last_login = ?
+      WHERE id = ? AND banned = 0 AND auth_version = ? RETURNING *`).bind(String(discordUser.username ?? discordId).slice(0, 80), Math.floor(Date.now() / 1e3), user.id, user.auth_version).first();
+    if (!saved) throw new HttpError2(401, "invalid_token");
+    const session = await newSession2(saved, key, ttl);
+    const issued = await sessionInsert2(db, saved, session).run();
+    if (issued.meta.changes !== 1) throw new HttpError2(401, "invalid_token");
+    return json2({ ...sessionResponse2(saved, session), auth_provider: "discord", discord: {
+      discord_id: discordId,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_in: tokens.expires_in,
+      token_type: "Bearer"
+    } });
+  };
+}
+
 // node_modules/jose/dist/webapi/lib/buffer_utils.js
 var encoder = new TextEncoder();
 var decoder = new TextDecoder();
@@ -1062,6 +1147,9 @@ function discordRoutes({ HttpError: HttpError2, json: json2, body: body2, authen
   }
   return {
     link: linkUser,
+    oauth,
+    desktopRedirect,
+    configured: configured2,
     async handle(request2, env, db, key) {
       const path = new URL(request2.url).pathname;
       const method = request2.method;
@@ -1121,6 +1209,7 @@ function discordRoutes({ HttpError: HttpError2, json: json2, body: body2, authen
       if (path === "/discord/status") return json2({ linked: Boolean(link), discord_id: link?.discord_id ?? null });
       await rateLimit2(db, key, "discord-account", auth.user.id, 20);
       if (path === "/discord/unlink") {
+        if (env.AUTH_MODE !== "legacy") throw new HttpError2(409, "discord_is_sign_in_identity");
         const removed = await db.prepare(`UPDATE users SET discord_id = NULL, discord_username = NULL WHERE id = ?
           AND NOT EXISTS (SELECT 1 FROM voice_members WHERE user_id = ?) RETURNING id`).bind(auth.user.id, auth.user.id).first();
         if (link && !removed) throw new HttpError2(409, "leave_match_before_unlinking");
@@ -1248,7 +1337,7 @@ function verificationStatus(user) {
   const email = Boolean(user.email_verified);
   const phone = Boolean(user.phone_verified);
   const discord2 = Boolean(user.discord_id);
-  return { email, phone, discord: discord2, fully_verified: email && phone && discord2 };
+  return { email, phone, discord: discord2, fully_verified: user.auth_provider === "discord" ? discord2 : email && phone && discord2 };
 }
 function accountExtras({
   HttpError: HttpError2,
@@ -1304,7 +1393,8 @@ function accountExtras({
     return {
       id: user.id,
       username: user.username,
-      email: user.email,
+      email: user.auth_provider === "discord" ? null : user.email,
+      auth_provider: user.auth_provider,
       email_verified: Boolean(user.email_verified),
       phone: user.phone ? user.phone.slice(0, -4) + "****" : null,
       phone_verified: Boolean(user.phone_verified),
@@ -1441,7 +1531,7 @@ function accountExtras({
 }
 
 // src/index.js
-var VERSION = "10.3-accounts";
+var VERSION = "10.4-discord";
 var ISSUER = "ancient-nest-accounts";
 var AUDIENCE = "ancient-nest";
 var WINDOW = 900;
@@ -1676,12 +1766,20 @@ async function authenticate(token, db, key, expectedAudience = AUDIENCE) {
 async function route(request2, env) {
   const path = new URL(request2.url).pathname;
   const method = request2.method;
+  const discordOnly = env.AUTH_MODE !== "legacy";
+  if (discordOnly && (["/register", "/login", "/account/password", "/setup-test", "/setup-test.js", "/setup-test.css"].includes(path) || path.startsWith("/verify/") || path.startsWith("/auth/discord") && !["/auth/discord/config", "/auth/discord/exchange"].includes(path))) {
+    throw new HttpError(410, "use_discord_sign_in");
+  }
+  if (path === "/auth/discord/config" || path === "/auth/discord/exchange" || path === "/profile/username") {
+    const { key: key2, ttl: ttl2 } = settings(env);
+    return discordLogin(request2, env, env.DB.withSession("first-primary"), key2, ttl2);
+  }
   const liveTest = liveTestRoute(path);
   if (liveTest) {
     if (method !== "GET") throw new HttpError(405, "method_not_allowed", { Allow: "GET" });
     return liveTest;
   }
-  if (path === "/signup/config" && method === "GET") return json({ email_required: true, phone_required: true });
+  if (path === "/signup/config" && method === "GET") return json({ auth_provider: discordOnly ? "discord" : "legacy", email_required: !discordOnly, phone_required: !discordOnly });
   if (path === "/api/game/assertion" || path === "/api/game/verify") {
     const { key: key2 } = settings(env);
     return identity(request2, env, env.DB.withSession("first-primary"), key2);
@@ -1705,7 +1803,7 @@ async function route(request2, env) {
     try {
       const db2 = env.DB.withSession("first-primary");
       await db2.batch([
-        db2.prepare("SELECT id, username, password_hash, password_salt, email, phone, auth_version FROM users LIMIT 0"),
+        db2.prepare("SELECT id, username, password_hash, password_salt, email, phone, auth_version, auth_provider FROM users LIMIT 0"),
         db2.prepare(`SELECT token_id, user_id, expires_at, issued_at, refresh_hash, revoked, auth_version,
           previous_refresh_hash, previous_refresh_until FROM sessions LIMIT 0`),
         db2.prepare("SELECT id, attempts, code FROM verification_codes LIMIT 0"),
@@ -1824,6 +1922,7 @@ async function route(request2, env) {
   }, expires_at: auth.expires });
 }
 var discord = discordRoutes({ HttpError, json, body, authenticate, bearer, rateLimit, coordinator });
+var discordLogin = discordSignIn({ HttpError, json, body, authenticate, bearer, rateLimit, discord, newSession, sessionInsert, sessionResponse });
 var identity = gameIdentity({ HttpError, json, body, bearer, authenticate, rateLimit });
 var extras = accountExtras({ HttpError, json, body, authenticate, bearer, rateLimit, passwordRecord, verifyPassword, tokenHash, discord });
 var index_default = {

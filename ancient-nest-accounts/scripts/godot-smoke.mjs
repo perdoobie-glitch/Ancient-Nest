@@ -9,6 +9,7 @@ const bundled = await build({ entryPoints: ['src/index.js'], bundle: true, write
 const mf = new Miniflare({
   modules: true, script: bundled.outputFiles[0].text, host: '127.0.0.1', port: 0,
   compatibilityDate: '2026-08-01', d1Databases: ['DB'], bindings: {
+    AUTH_MODE: 'legacy',
     JWT_SECRET: 'a-local-godot-test-secret-with-at-least-32-bytes',
     COORDINATOR_API_KEY: 'a-local-godot-coordinator-key-with-at-least-32-bytes',
   },

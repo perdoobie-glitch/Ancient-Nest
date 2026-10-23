@@ -9,7 +9,7 @@ var account_assertion := ""
 var assertion_until := 0.0
 var state: Dictionary = {}
 var refresh_in_progress := false
-var status := "Signed in through Ancient Nest accounts."
+var status := "Signed in with Discord."
 
 
 func _ready() -> void:
@@ -83,11 +83,28 @@ func show_panel() -> void:
 	game.hud.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var panel = game.center_panel(820, 690)
-	game.header(panel, "ANCIENT NEST ACCOUNT", "Account")
+	game.header(panel, "ANCIENT NEST DISCORD PROFILE", "Account")
 	panel.add_child(game.label("Signed in as " + str(AncientNestAuth.current_user.get("username", "Player")), 26, game.GOLD))
 	panel.add_child(game.label("Account ID: " + str(AncientNestAuth.current_user.get("id", "")), 13))
 	panel.add_child(game.label(status, 15))
-	panel.add_child(game.button("Verify email and phone", func() -> void: await AncientNestVerification.refresh_status()))
+	var username := LineEdit.new()
+	username.text = str(AncientNestAuth.current_user.get("username", ""))
+	username.max_length = 24
+	panel.add_child(username)
+	panel.add_child(game.button("Save game username", func() -> void:
+		var response: Dictionary = await AncientNestAuth.authenticated_request("/profile/username", HTTPClient.METHOD_POST,
+			{"username": username.text.strip_edges()})
+		if response.ok:
+			AncientNestAuth.current_user = response.data.user
+			state["username"] = response.data.user.username
+			account_assertion = ""
+			assertion_until = 0
+			game.prefs.values.username = response.data.user.username
+			game.prefs.save()
+			status = "Game username saved."
+		else:
+			status = "Choose an available username with 3–24 letters, numbers, _ or -."
+		show_panel()))
 	panel.add_child(game.label("Use Connect Discord in the voice panel to authorize your own Discord account.\nTeam voice uses your server-assigned team room.", 15))
 	panel.add_child(game.button("Sign out", func() -> void: await AncientNestAuth.sign_out()))
 	panel.add_child(game.button("Back to main menu", game.show_main))

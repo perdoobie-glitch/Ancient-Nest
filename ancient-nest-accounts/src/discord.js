@@ -161,6 +161,9 @@ export function discordRoutes({ HttpError, json, body, authenticate, bearer, rat
 
   return {
     link: linkUser,
+    oauth,
+    desktopRedirect,
+    configured,
     async handle(request, env, db, key) {
       const path = new URL(request.url).pathname;
       const method = request.method;
@@ -203,6 +206,7 @@ export function discordRoutes({ HttpError, json, body, authenticate, bearer, rat
       if (path === '/discord/status') return json({ linked: Boolean(link), discord_id: link?.discord_id ?? null });
       await rateLimit(db, key, 'discord-account', auth.user.id, 20);
       if (path === '/discord/unlink') {
+        if (env.AUTH_MODE !== 'legacy') throw new HttpError(409, 'discord_is_sign_in_identity');
         const removed = await db.prepare(`UPDATE users SET discord_id = NULL, discord_username = NULL WHERE id = ?
           AND NOT EXISTS (SELECT 1 FROM voice_members WHERE user_id = ?) RETURNING id`)
           .bind(auth.user.id, auth.user.id).first();

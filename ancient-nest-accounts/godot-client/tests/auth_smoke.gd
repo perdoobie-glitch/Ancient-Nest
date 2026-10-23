@@ -93,7 +93,7 @@ func _run() -> void:
 	var gate: Node = load("res://addons/ancient_nest/login.tscn").instantiate()
 	root.add_child(gate)
 	await process_frame
-	assert(gate.get("_register") and gate.get("_form").visible)
+	assert(not gate.get("_register") and gate.get("_form").visible)
 	result = await auth.sign_in("GodotPlayer", "test password for godot only", true)
 	assert(result.ok and not ui_store.token.is_empty())
 	await gate._restore()
@@ -101,7 +101,7 @@ func _run() -> void:
 	auth.api_url = "http://127.0.0.1:1"
 	await gate._restore()
 	assert(not gate.get("_register") and gate.get("_form").visible)
-	assert(gate.get("_submit").text == "Sign in" and not gate.get("_signed_in").visible)
+	assert(gate.get("_submit").text == "Continue with Discord" and not gate.get("_signed_in").visible)
 	assert(ui_store.token.is_empty())
 	gate.queue_free()
 	print("GODOT_AUTH_SMOKE_PASSED: first launch, automatic reopen, failed startup requires login, background offline retention, logout, revoked login, storage failure")

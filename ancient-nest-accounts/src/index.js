@@ -1,3 +1,4 @@
+import { discordSignIn } from './discord-sign-in.js';
 import { gameIdentity } from './game-identity.js';
 import { liveTestRoute } from './live-test-page.js';
 import { SignJWT, jwtVerify } from 'jose';
@@ -5,7 +6,7 @@ import { DUMMY_HASH, passwordRecord, verifyPassword } from './passwords.js';
 import { discordRoutes } from './discord.js';
 import { accountExtras, verificationStatus } from './account-extras.js';
 
-const VERSION = '10.3-accounts';
+const VERSION = '10.4-discord';
 const ISSUER = 'ancient-nest-accounts';
 const AUDIENCE = 'ancient-nest';
 const WINDOW = 900;
@@ -243,12 +244,21 @@ async function authenticate(token, db, key, expectedAudience = AUDIENCE) {
 async function route(request, env) {
   const path = new URL(request.url).pathname;
   const method = request.method;
+  const discordOnly = env.AUTH_MODE !== 'legacy';
+  if (discordOnly && (['/register', '/login', '/account/password', '/setup-test', '/setup-test.js', '/setup-test.css'].includes(path) ||
+      path.startsWith('/verify/') || path.startsWith('/auth/discord') && !['/auth/discord/config', '/auth/discord/exchange'].includes(path))) {
+    throw new HttpError(410, 'use_discord_sign_in');
+  }
+  if (path === '/auth/discord/config' || path === '/auth/discord/exchange' || path === '/profile/username') {
+    const { key, ttl } = settings(env);
+    return discordLogin(request, env, env.DB.withSession('first-primary'), key, ttl);
+  }
   const liveTest = liveTestRoute(path);
   if (liveTest) {
     if (method !== 'GET') throw new HttpError(405, 'method_not_allowed', { Allow: 'GET' });
     return liveTest;
   }
-  if (path === '/signup/config' && method === 'GET') return json({ email_required: true, phone_required: true });
+  if (path === '/signup/config' && method === 'GET') return json({ auth_provider: discordOnly ? 'discord' : 'legacy', email_required: !discordOnly, phone_required: !discordOnly });
   if (path === '/api/game/assertion' || path === '/api/game/verify') {
     const { key } = settings(env);
     return identity(request, env, env.DB.withSession('first-primary'), key);
@@ -268,7 +278,7 @@ async function route(request, env) {
     try {
       const db = env.DB.withSession('first-primary');
       await db.batch([
-        db.prepare('SELECT id, username, password_hash, password_salt, email, phone, auth_version FROM users LIMIT 0'),
+        db.prepare('SELECT id, username, password_hash, password_salt, email, phone, auth_version, auth_provider FROM users LIMIT 0'),
         db.prepare(`SELECT token_id, user_id, expires_at, issued_at, refresh_hash, revoked, auth_version,
           previous_refresh_hash, previous_refresh_until FROM sessions LIMIT 0`),
         db.prepare('SELECT id, attempts, code FROM verification_codes LIMIT 0'),
@@ -366,6 +376,7 @@ async function route(request, env) {
 }
 
 const discord = discordRoutes({ HttpError, json, body, authenticate, bearer, rateLimit, coordinator });
+const discordLogin = discordSignIn({ HttpError, json, body, authenticate, bearer, rateLimit, discord, newSession, sessionInsert, sessionResponse });
 const identity = gameIdentity({ HttpError, json, body, bearer, authenticate, rateLimit });
 const extras = accountExtras({ HttpError, json, body, authenticate, bearer, rateLimit, passwordRecord, verifyPassword, tokenHash, discord });
 

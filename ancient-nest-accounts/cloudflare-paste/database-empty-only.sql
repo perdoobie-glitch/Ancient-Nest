@@ -16,7 +16,7 @@ CREATE TABLE users (
   last_login      INTEGER,
   banned          INTEGER NOT NULL DEFAULT 0,
   metadata        TEXT NOT NULL DEFAULT '{}'
-, auth_version INTEGER NOT NULL DEFAULT 0);
+, auth_version INTEGER NOT NULL DEFAULT 0, auth_provider TEXT NOT NULL DEFAULT 'legacy');
 
 CREATE TABLE login_attempts (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,3 +117,4 @@ INSERT INTO d1_migrations (name) VALUES ('0001_create_users.sql');
 INSERT INTO d1_migrations (name) VALUES ('0002_create_verification_codes.sql');
 INSERT INTO d1_migrations (name) VALUES ('0003_create_sessions_login_attempts.sql');
 INSERT INTO d1_migrations (name) VALUES ('0004_persistent_sessions_and_voice.sql');
+INSERT INTO d1_migrations (name) VALUES ('0005_discord_sign_in.sql');

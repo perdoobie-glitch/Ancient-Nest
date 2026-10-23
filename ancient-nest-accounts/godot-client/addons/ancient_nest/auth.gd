@@ -4,6 +4,9 @@ extends Node
 signal session_changed(user: Dictionary)
 signal session_lost
 signal refresh_completed(result: Dictionary)
+signal discord_sign_in_completed(result: Dictionary)
+var _discord_client: Object
+var _discord_verifier: Object
 
 var api_url: String = str(ProjectSettings.get_setting("ancient_nest/account_api", "")).trim_suffix("/")
 var credential_store: RefCounted = preload("credential_store.gd").new()
@@ -114,6 +117,10 @@ func sign_out() -> Dictionary:
 	# Do not claim successful server revocation when the network is unavailable.
 	if result.ok or result.get("status", 0) == 401:
 		credential_store.clear_token()
+		var voice_store: RefCounted = preload("credential_store.gd").new()
+		voice_store.service = "discord-oauth-refresh"
+		voice_store.device = str(current_user.get("id", ""))
+		voice_store.clear_token()
 		_clear_session()
 		result = {"ok": true}
 	_auth_busy = false
@@ -198,3 +205,54 @@ func _request(path: String, method: int, data: Variant = null, extra_headers: Pa
 	if status < 200 or status >= 300:
 		return {"ok": false, "error": str(parsed.get("error", "service_unavailable")), "status": status}
 	return {"ok": true, "data": parsed, "status": status}
+
+
+func _process(_delta: float) -> void:
+	if _discord_client != null:
+		ClassDB.class_call_static(&"Discord", &"run_callbacks")
+
+
+func sign_in_discord(remember: bool = true) -> Dictionary:
+	if _auth_busy or _refreshing:
+		return {"ok": false, "error": "busy"}
+	if not ClassDB.class_exists(&"DiscordClient"):
+		return {"ok": false, "error": "discord_sdk_unavailable"}
+	_auth_busy = true
+	_remember_device = remember
+	var config := await _request("/auth/discord/config", HTTPClient.METHOD_GET)
+	if not config.ok:
+		_auth_busy = false
+		return config
+	_discord_client = ClassDB.instantiate(&"DiscordClient")
+	_discord_client.set_application_id(int(config.data.application_id))
+	_discord_verifier = _discord_client.create_authorization_code_verifier()
+	var args: Object = ClassDB.instantiate(&"DiscordAuthorizationArgs")
+	args.set_client_id(int(config.data.application_id))
+	args.set_scopes(ClassDB.class_call_static(&"DiscordClient", &"get_default_communication_scopes"))
+	args.set_code_challenge(_discord_verifier.challenge())
+	# SDK chooses the running desktop client, with its supported browser fallback.
+	_discord_client.authorize(args, _on_discord_authorized)
+	return await discord_sign_in_completed
+
+
+func _on_discord_authorized(result: Variant, code: String, redirect_uri: String) -> void:
+	var response: Dictionary = {"ok": false, "error": "discord_not_approved"}
+	if result.successful():
+		response = await _post("/auth/discord/exchange", {"code": code,
+			"code_verifier": _discord_verifier.verifier(), "redirect_uri": redirect_uri})
+		if response.ok:
+			# Seed the voice connection before session_changed starts it. No second consent screen.
+			var store: RefCounted = preload("credential_store.gd").new()
+			store.service = "discord-oauth-refresh"
+			store.device = str(response.data.user.id)
+			if _remember_device:
+				store.write_token(str(response.data.discord.refresh_token))
+			else:
+				store.clear_token()
+			var voice_tokens: Dictionary = response.data.discord
+			response = _accept_session(response.data)
+			get_node("/root/AncientNestDiscordVoice").set_pending_tokens(voice_tokens)
+	_discord_verifier = null
+	_discord_client = null
+	_auth_busy = false
+	discord_sign_in_completed.emit(response)

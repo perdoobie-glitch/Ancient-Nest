@@ -29,7 +29,7 @@ test('setup generates only a missing JWT key and requires the real shared coordi
 });
 
 test('setup rejects invalid secret values without returning a partial upload', async () => {
-  await assert.rejects(collectMissingSecrets(names.filter(name => name !== 'TWILIO_ACCOUNT_SID'), async () => 'invalid'), /Invalid value/);
+  await assert.rejects(collectMissingSecrets(names.filter(name => name !== 'DISCORD_CLIENT_SECRET'), async () => 'invalid'), /Invalid value/);
 });
 
 const accountChecks = { secrets: true, database: true, jwt_secret: true, resend: true, twilio: true, discord: true };
@@ -45,8 +45,8 @@ test('setup probes both live readiness routes without following redirects', asyn
   assert.deepEqual(paths, ['https://accounts.example/ready', 'https://accounts.example/discord/ready']);
 });
 
-test('base readiness alone cannot report setup success with missing SMS, schemas, or Discord', async () => {
-  for (const checks of [{}, { ...accountChecks, twilio: false }, { ...accountChecks, database: false }]) {
+test('base readiness alone cannot report setup success with missing schemas or Discord', async () => {
+  for (const checks of [{}, { ...accountChecks, discord: false }, { ...accountChecks, database: false }]) {
     await assert.rejects(checkReadiness('https://accounts.example', async () => Response.json({ ready: true, checks })), /Readiness failed/);
   }
   await assert.rejects(checkReadiness('https://accounts.example', async url => Response.json({ ready: true,

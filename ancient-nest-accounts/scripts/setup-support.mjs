@@ -2,9 +2,6 @@ import { randomBytes } from 'node:crypto';
 
 const requiredSecrets = [
   ['COORDINATOR_API_KEY', 'Existing matchmaking COORDINATOR_API_KEY (32+ bytes)', value => Buffer.byteLength(value) >= 32],
-  ['RESEND_API_KEY', 'Resend API key', value => value.length > 0],
-  ['TWILIO_ACCOUNT_SID', 'Twilio account SID', value => /^AC[0-9a-f]{32}$/i.test(value)],
-  ['TWILIO_AUTH_TOKEN', 'Twilio auth token', value => value.length > 0],
   ['DISCORD_CLIENT_SECRET', 'Discord application client secret', value => value.length >= 16],
   ['DISCORD_BOT_TOKEN', 'Discord application bot token', value => value.length >= 16],
 ];
@@ -29,7 +26,7 @@ export async function checkReadiness(origin, fetcher = fetch) {
     throw new Error('PUBLIC_URL must be the deployed HTTPS Worker origin.');
   }
   const endpoints = [
-    ['/ready', ['secrets', 'database', 'jwt_secret', 'resend', 'twilio', 'discord']],
+    ['/ready', ['secrets', 'database', 'jwt_secret', 'discord']],
     ['/discord/ready', ['application', 'client_secret', 'bot_token', 'database']],
   ];
   for (const [route, required] of endpoints) {

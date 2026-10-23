@@ -11,7 +11,7 @@ export function verificationStatus(user) {
   const email = Boolean(user.email_verified);
   const phone = Boolean(user.phone_verified);
   const discord = Boolean(user.discord_id);
-  return { email, phone, discord, fully_verified: email && phone && discord };
+  return { email, phone, discord, fully_verified: user.auth_provider === 'discord' ? discord : email && phone && discord };
 }
 
 export function accountExtras({ HttpError, json, body, authenticate, bearer, rateLimit,
@@ -57,7 +57,7 @@ export function accountExtras({ HttpError, json, body, authenticate, bearer, rat
   async function account(db, id) {
     const user = await db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
     if (!user) throw new HttpError(404, 'account_not_found');
-    return { id: user.id, username: user.username, email: user.email, email_verified: Boolean(user.email_verified),
+    return { id: user.id, username: user.username, email: user.auth_provider === 'discord' ? null : user.email, auth_provider: user.auth_provider, email_verified: Boolean(user.email_verified),
       phone: user.phone ? user.phone.slice(0, -4) + '****' : null, phone_verified: Boolean(user.phone_verified),
       discord_id: user.discord_id, discord_username: user.discord_username, discord_linked: Boolean(user.discord_id),
       created_at: user.created_at, last_login: user.last_login, verification: verificationStatus(user) };

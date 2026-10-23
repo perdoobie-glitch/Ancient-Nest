@@ -70,7 +70,7 @@ before(async () => {
   mf = new Miniflare({
     modules: true, script: bundled.outputFiles[0].text, compatibilityDate: '2026-08-01',
     d1Databases: ['DB'], bindings: {
-      JWT_SECRET: secret, COORDINATOR_API_KEY: coordinator, TOKEN_TTL_SECONDS: '3600',
+      AUTH_MODE: 'legacy', JWT_SECRET: secret, COORDINATOR_API_KEY: coordinator, TOKEN_TTL_SECONDS: '3600',
       ALLOWED_ORIGINS: 'https://ancientnest.net,http://localhost:3000',
       DISCORD_CLIENT_ID: discordAppId, DISCORD_CLIENT_SECRET: 'test-discord-client-secret',
       DISCORD_BOT_TOKEN: 'test-discord-bot-token',
@@ -254,7 +254,7 @@ test('missing configuration and an unmigrated database report not ready', async 
     assert.equal(ready.checks.secrets, false);
     assert.equal(ready.checks.database, false);
     assert.equal((await broken.dispatchFetch('https://accounts.test/health')).status, 200);
-    assert.equal((await broken.dispatchFetch('https://accounts.test/login', { method: 'POST' })).status, 503);
+    assert.equal((await broken.dispatchFetch('https://accounts.test/login', { method: 'POST' })).status, 410);
   } finally { await broken.dispose(); }
 });
 

@@ -14,6 +14,8 @@ var _busy := false
 
 
 func _ready() -> void:
+	if not bool(ProjectSettings.get_setting("ancient_nest/legacy_accounts", false)):
+		return
 	layer = 49
 	_panel = PanelContainer.new()
 	_panel.custom_minimum_size = Vector2(400, 0)

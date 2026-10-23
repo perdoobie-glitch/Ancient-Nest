@@ -1,73 +1,9 @@
-# Existing Ancient Nest game integration
+# Current identity update: 10.4 Discord
 
-The user's existing game was located in connected Drive. The current archive is
-**Ancient Nest 10.2 – Complete Source.zip**, file ID
-`1AqvpA4VTPnkLuEn7LxnHpt7zmh9DEDJJ` (61,177,174 bytes). The runtime's network policy
-currently blocks its authenticated download host. Do not substitute a fabricated
-arena or ship an older version as the current game.
+Discord is now the sign-in provider. Password/email/phone signup is disabled in the shipped configuration; see [current setup](../README.md). The existing Worker/D1 are retained as a game-profile/session/voice bridge. The adapter account panel supports changing the game username linked to the verified Discord identity. Initial consent can require approval.
 
-The smaller 8.0 clean source and 9.0 coordinator ZIP were available for interface
-inspection. They are local references, not replacement releases and are not added
-to this public repository. Their account protocol uses RSA installation identity
-plus an account assertion; a plain login JWT is insufficient for the handshake.
+The connected GitHub main branch contains the starter and adapter, not the finished 10.2 game. The complete source archive was located in Drive in earlier work, but its download host is blocked here. Only the 8.0 game and 9.0 coordinator references were downloaded. Nothing from another chat or a PC-local folder is automatically present here.
 
-## Adapter and installer
+Do not mark the finished game integrated or deploy the old coordinator over 10.2. Inspect the actual game before connecting the adapter and team voice lifecycle hooks. Existing 8.0 reference audio errors are not proof of a defect in 10.2. The original startup and gameplay/assets must be preserved.
 
-`Connect Existing Game.cmd` runs the Node installer against the owner's extracted
-Godot game. It verifies the known `NestAccountLink` and `account_assertion` interfaces
-before editing; an unrecognized layout stops with no changes. The full source
-package must include the native addons (or install them before integration).
-
-It backs up the original project settings, account bridge and any addon folders
-under `.account-integration-backup/`, installs the secure-storage/voice autoloads,
-and records the original intro scene in `ancient_nest/original_main_scene`. Successful
-sign-in enters that original scene. Revocation returns to the login gate. Maps,
-physics, weapons, rank files and gameplay scripts are not rewritten.
-
-The account adapter requests a ten-minute RSA-key-bound assertion with a game bearer
-token. The account refresh secret remains in the OS credential store, and access
-and assertion tokens remain in memory. It does not reuse the old plaintext
-`user://account_link.json` refresh token; an existing player must sign in to the new
-service to obtain its device session. This is not migration of old website accounts,
-Steam purchases, ownership or rankings.
-
-## Identity API
-
-- `POST /api/game/assertion`: authenticated JSON `{ public_key }`, valid RSA SPKI PEM
-  of at least 2048 bits; returns `{ assertion, account_id, username, key_hash, expires_in }`.
-- `POST /api/game/verify`: JSON `{ assertion, key_hash }`; returns the account identity
-  only for the exact game key, a live session and an unbanned account. Game assertions
-  have a separate audience and cannot authenticate account routes. Logging out or
-  changing the password revokes these assertions too.
-
-The 9.0 coordinator proof contract matches these response fields. Its `ACCOUNT_API`
-origin also receives profile/results requests, which this service does not implement.
-Do not repoint that whole bridge blindly or lose the existing authoritative stats
-backend. Inspect the actual current coordinator and keep identity and stats routing
-explicit when integrating. Do not deploy the old 9.0 coordinator over 10.2.
-
-## Remaining current-game checks
-
-Download and inspect the latest source, verify the account interface, then run the
-installer and the game's existing tests. Wire server-authoritative match start/end
-to the supplied team-voice helper, using account IDs and actual team rosters. Do not
-let clients declare their own teammate list. Test login → original intro → existing
-menu → existing gameplay, restored login after restart, logout/revocation during
-play, and two clients in a real match. Native Windows credential storage and exported-client startup passed on the hosted Windows runner.
-Microphone/friends-call behavior still requires the machines being shipped.
-
-An older source can validate the adapter's parser and scene preservation; it cannot
-establish compatibility with the uninspected current release.
-
-The local 8.0 smoke check reached its existing menu/account panel and returned to
-the login scene on revocation. That older release also emitted weapon-audio
-`profile.sounds` errors while initializing its own menu; the unmodified-account
-baseline exhibits the same errors. No audio/gameplay code was rewritten to hide
-them. This is a limited adapter check, not a clean end-to-end game certification.
-
-Windows validation succeeded on GitHub run 39840478975 at commit
-`a5c1633eef13aa38a96d8324624965fdeaf1ce4f`: all 44 backend tests, Godot sign-in and
-voice smoke checks, native Windows credential-store write/read/delete, Windows
-export, and starting the exported executable. The first run timed out during the
-intentional offline checks; extending that test process deadline let the unchanged
-failure scenarios finish. Hosted Windows startup is not a microphone/audio test.
+The Windows release is a clearly labeled login/voice starter. Automated tests do not prove real Discord consent or two-person microphone/friends-call behavior. Cloudflare live deployment has not been performed from this workspace because write credentials/network access are not configured.

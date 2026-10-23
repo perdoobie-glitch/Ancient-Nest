@@ -13,6 +13,8 @@ permissions:
   contents: read
 jobs:
   windows:
+    permissions:
+      contents: write
     runs-on: windows-2025
     timeout-minutes: 25
     defaults:
@@ -51,3 +53,18 @@ jobs:
             ancient-nest-accounts/dist/Ancient-Nest-Windows.zip.sha256
           if-no-files-found: error
           retention-days: 7
+
+      - name: Publish a durable Discord client prerelease download
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $short = $env:GITHUB_SHA.Substring(0, 7)
+          $tag = "v10.4-discord-client-$short"
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag dist/Ancient-Nest-Windows.zip dist/Ancient-Nest-Windows.zip.sha256 --clobber --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create $tag dist/Ancient-Nest-Windows.zip dist/Ancient-Nest-Windows.zip.sha256 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --prerelease --title "Ancient Nest 10.4 Discord login and voice starter ($short)" --notes-file docs/DISCORD_AUTH_RELEASE.md
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub release publishing failed; tested artifact remains available in Actions' }

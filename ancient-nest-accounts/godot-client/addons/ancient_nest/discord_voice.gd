@@ -4,6 +4,7 @@ extends Node
 
 signal state_changed(message: String)
 
+var _pending_tokens: Dictionary = {}
 var _client: Object
 var _call: Object
 var _verifier: Object
@@ -93,6 +94,11 @@ func _on_game_session(user: Dictionary) -> void:
 	_client.set_application_id(_application_id)
 	_client.set_status_changed_callback(_on_sdk_status.bind(generation))
 	_connect_button.disabled = false
+	if not _pending_tokens.is_empty():
+		var pending := _pending_tokens
+		_pending_tokens = {}
+		_accept_discord_tokens({"ok": true, "data": pending})
+		return
 	_discord_refresh = _store.read_token()
 	if _discord_refresh.is_empty():
 		_state("Connect Discord to enable team voice")
@@ -152,7 +158,7 @@ func _accept_discord_tokens(response: Dictionary) -> void:
 		return
 	_discord_refresh = str(response.data.refresh_token)
 	_discord_expiry = int(Time.get_unix_time_from_system()) + int(response.data.expires_in)
-	if _store.write_token(_discord_refresh) != OK:
+	if AncientNestAuth.get("_remember_device") and _store.write_token(_discord_refresh) != OK:
 		_state("Discord connected for this session; the connection couldn't be saved on this device")
 	_client.update_token(_constant("DiscordAuthorizationTokenType", "BEARER"), str(response.data.access_token),
 		_on_sdk_token_updated.bind(_generation))
@@ -268,6 +274,7 @@ func _on_game_logout() -> void:
 		_client.disconnect_discord()
 	_client = null
 	_game_user = ""
+	_pending_tokens = {}
 	_discord_refresh = ""
 	_discord_expiry = 0
 	_ready_for_calls = false
@@ -346,3 +353,10 @@ func _save_preferences() -> void:
 	config.set_value("voice", "auto_join", _auto_join)
 	config.set_value("voice", "push_to_talk", _push_to_talk)
 	config.save("user://voice-preferences.cfg")
+
+
+func set_pending_tokens(tokens: Dictionary) -> void:
+	if _client != null:
+		_accept_discord_tokens({"ok": true, "data": tokens})
+	else:
+		_pending_tokens = tokens
