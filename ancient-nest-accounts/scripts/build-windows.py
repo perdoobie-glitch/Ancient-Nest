@@ -1,4 +1,4 @@
-"""Export the Windows account client and package its runtime libraries and licenses.
+"""Export the integrated Windows game and package its runtime libraries and licenses.
 
 Requires Godot 4.6.3, its matching export templates, and installed native addons.
 The generated archive contains no server configuration or production credentials.
@@ -11,7 +11,7 @@ import subprocess
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PROJECT = ROOT / 'godot-client'
+PROJECT = ROOT.parent / 'game'
 OUTPUT = ROOT / 'dist' / 'windows'
 GODOT = os.environ.get('GODOT_BIN', 'godot')
 
@@ -39,7 +39,7 @@ def build():
         shutil.copy2(extension / name, OUTPUT / name)
     licenses = OUTPUT / 'licenses'
     licenses.mkdir()
-    for addon in ['discord_social_sdk', 'keyring']:
+    for addon in ['discord_social_sdk', 'keyring', 'webrtc_native']:
         files = [p for p in (PROJECT / 'addons' / addon).rglob('*')
                  if p.is_file() and ('license' in p.name.lower() or 'notice' in p.name.lower())]
         if not files:
@@ -49,12 +49,12 @@ def build():
     for source in (ROOT / 'licenses').glob('Godot-*'):
         shutil.copy2(source, licenses / source.name)
     (OUTPUT / 'Read me.txt').write_text(
-        'ANCIENT NEST - WINDOWS ACCOUNT CLIENT\n\n'
+        'ANCIENT NEST - DEVELOPMENT GAME\n\n'
         'Extract this entire folder, then open Ancient Nest.exe.\n'
         'Keep the DLLs and licenses beside the executable. No Godot installation is required.\n'
-        'Create an account with email and phone on first launch. Saved sign-in is tried\n'
+        'Continue with Discord on first launch. Saved sign-in is tried\n'
         'automatically on later launches; a failed restore requires manual login.\n\n'
-        'This is the account and voice starter. Gameplay is not included.\n'
+        'Development build. Live Discord and internet gameplay must be verified before release.\n'
         'The accounts Worker must be deployed and configured before online sign-in works.\n'
         'Discord voice requires approved app access and live audio testing.\n'
         'This build is unsigned. Windows startup/keyring checks run in GitHub Actions; live gameplay and audio still need testing.\n', encoding='utf8')
@@ -70,7 +70,7 @@ def build():
         names = out.namelist()
         required = ['Ancient Nest.exe', 'discord_partner_sdk.dll', 'discord_krisp.dll',
                     'discord_social_sdk.windows.template_release.x86_64.dll',
-                    'libkeyring.windows.template_release.x86_64.dll']
+                    'libkeyring.windows.template_release.x86_64.dll', 'libwebrtc_native.windows.template_release.x86_64.dll']
         for name in required:
             if not any(Path(entry).name == name for entry in names):
                 raise RuntimeError(f'Windows archive is missing {name}.')

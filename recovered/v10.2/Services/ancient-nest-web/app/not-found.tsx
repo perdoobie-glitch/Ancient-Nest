@@ -1,2 +1,0 @@
-import { Button } from "@/components/Button";
-export default function NotFound() { return <section className="container error-page"><span className="eyebrow">404 / Outside the perimeter</span><h1>Uncharted ground.</h1><p>This page isn’t part of the map. Return to the Nest or explore the game.</p><div className="button-group"><Button href="/">Back to home</Button><Button href="/game" variant="outline">Explore the game</Button></div></section>; }

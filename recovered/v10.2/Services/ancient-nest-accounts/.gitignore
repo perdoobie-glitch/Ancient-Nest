@@ -1,8 +1,0 @@
-node_modules/
-.wrangler/
-.secrets/
-.dev.vars
-verification/
-
-.secrets/
-.local-test-state/

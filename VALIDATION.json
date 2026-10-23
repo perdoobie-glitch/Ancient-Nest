@@ -1,0 +1,19 @@
+{
+  "release": "10.5-dev",
+  "protocol": "10.5-discord1",
+  "local_checks": {
+    "account_tests": 51,
+    "matchmaking_tests": 37,
+    "full_game_objective_checks": 198,
+    "monitor_checks": 12,
+    "native_game_clients": 2,
+    "godot_import": "passed",
+    "account_ui": "passed",
+    "native_sdk_auth_fixture": "passed"
+  },
+  "live_deployment": false,
+  "real_discord_audio": false,
+  "windows_physical_pc": false,
+  "internet_p2p": false,
+  "original_reforged_commit_recovered": false
+}

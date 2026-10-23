@@ -1,2 +1,0 @@
-export type ServiceState = "Operational" | "Coming Soon" | "External" | "Planned";
-export function StatusCard({ name, status, description }: { name: string; status: ServiceState; description: string }) { return <article className="status-card"><div><h2>{name}</h2><p>{description}</p></div><span className={`status-pill status-${status.toLowerCase().replace(" ","-")}`}><span aria-hidden="true"/>{status}</span></article>; }

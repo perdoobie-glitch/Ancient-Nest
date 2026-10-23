@@ -1,6 +1,6 @@
 {
   "name": "ancient-nest-accounts",
-  "version": "10.4.0",
+  "version": "10.5.0-dev",
   "private": true,
   "type": "module",
   "scripts": {

@@ -1,5 +1,6 @@
 // Read-only compatibility check before Wrangler applies versioned migrations.
 export const baseColumns = {
+  rate_limits: ['key', 'attempts', 'expires_at'],
   users: ['id', 'username', 'password_hash', 'password_salt', 'email', 'email_verified', 'phone', 'phone_verified', 'discord_id', 'discord_username', 'created_at', 'last_login', 'banned', 'metadata'],
   sessions: ['token_id', 'user_id', 'issued_at', 'expires_at', 'revoked'],
   verification_codes: ['id', 'user_id', 'type', 'code', 'destination', 'expires_at', 'used', 'created_at'],

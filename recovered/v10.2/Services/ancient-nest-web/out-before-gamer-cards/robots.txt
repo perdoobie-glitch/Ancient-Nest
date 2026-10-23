@@ -1,6 +1,0 @@
-User-Agent: *
-Allow: /
-Disallow: /account
-Disallow: /profile
-
-Sitemap: https://ancientnest.net/sitemap.xml

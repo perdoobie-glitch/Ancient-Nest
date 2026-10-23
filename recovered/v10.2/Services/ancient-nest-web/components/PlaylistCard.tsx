@@ -1,4 +1,0 @@
-import type { Playlist } from "@/types/playlist";
-import { gameTypeLabels } from "@/types/playlist";
-import { Icon } from "@/components/Icon";
-export function PlaylistCard({ playlist, index, detailed = false }: { playlist: Playlist; index: number; detailed?: boolean }) { return <article className={`playlist-card ${playlist.id === "tactical_3v3" ? "playlist-featured" : ""}`}><div className="card-top"><span className="card-index">0{index+1}</span><Icon name={playlist.gameType === "bomb_defuse" ? "spark" : "cross"}/></div><span className="eyebrow">{playlist.maxPlayers} players</span><h3>{playlist.name}</h3><p className="game-type">{gameTypeLabels[playlist.gameType]}</p><p>{playlist.description}</p><div className="playlist-meta"><span>Player hosted</span>{detailed && <span className="muted-status">In development</span>}</div></article>; }

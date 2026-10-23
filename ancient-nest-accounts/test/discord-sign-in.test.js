@@ -31,7 +31,7 @@ before(async () => {
   });
   db = await mf.getD1Database('DB');
   for (const file of (await readdir('migrations')).filter(f => f.endsWith('.sql')).sort()) {
-    for (const sql of (await readFile('migrations/' + file, 'utf8')).replace(/--[^\n]*/g, '').split(';').filter(s => s.trim())) {
+    for (const sql of (await readFile('migrations/' + file, 'utf8')).replace(/--[^\n]*/g, '').split(/;(?=\s*(?:CREATE|ALTER|INSERT|UPDATE|DELETE|DROP|PRAGMA|$))/i).filter(s => s.trim())) {
       await db.prepare(sql).run();
     }
   }
@@ -112,4 +112,48 @@ test('an existing game username or synthetic contact cannot preclaim a Discord i
   assert.notEqual(signed.user.id, 'different-owner');
   assert.match(signed.user.username, /^Player_[a-f0-9]{16}$/);
   assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM users').first()).n, 2);
+});
+
+test('Discord profiles retain isolated playlist ranks, reject custom results and commit each match once', async () => {
+  const { generateKeyPairSync, createHash, randomUUID } = await import('node:crypto');
+  const first = await login();
+  discordId = '223456789012345678';
+  const second = await login();
+  const { publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const pem = publicKey.export({ type: 'spki', format: 'pem' });
+  const key_hash = createHash('sha256').update(pem).digest('hex');
+  const issuance = await request('/api/game/assertion', { public_key: pem }, first.token);
+  assert.equal(issuance.status, 200);
+  const { assertion } = await issuance.json();
+  const card = async () => {
+    const response = await request('/api/game/profile', { assertion, key_hash, playlist: 'duel_1v1' });
+    assert.equal(response.status, 200, JSON.stringify(await response.clone().json()));
+    return response.json();
+  };
+  assert.equal((await card()).elo, 1);
+  assert.equal((await card()).player_rating, null);
+  const key = 'test-coordinator-secret-at-least-32-bytes';
+  for (let i = 0; i < 3; i++) {
+    const match_id = randomUUID();
+    const registration = { match_id, scope: 'matchmaking', playlist_id: 'duel_1v1', game_type: 'team_deathmatch', hosting: 'player_hosted', map_id: 'temple', authority_id: 'host', roster: [{ account_id: first.user.id, team: 0 }, { account_id: second.user.id, team: 1 }] };
+    assert.equal((await request('/api/internal/matches/register', { ...registration, scope: 'custom' }, key)).status, 400);
+    assert.equal((await request('/api/internal/matches/register', registration)).status, 401);
+    const registered = await request('/api/internal/matches/register', registration, key);
+    assert.equal(registered.status, 200, JSON.stringify(await registered.clone().json()));
+    const players = registration.roster.map((p, n) => ({ account_id: p.account_id, kills: n ? 3 : 10, deaths: n ? 10 : 3, assists: 0, flags_captured: 0, flags_stopped: 0 }));
+    const result = { match_id, epoch: 1, authority_id: 'host', winner_team: 0, players };
+    const finished = await request('/api/internal/matches/result', result, key);
+    assert.equal(finished.status, 200, JSON.stringify(await finished.clone().json()));
+    assert.equal((await (await request('/api/internal/matches/result', result, key)).json()).duplicate, true);
+    assert.equal((await request('/api/internal/matches/result', { ...result, winner_team: 1 }, key)).status, 409);
+    const profile = await card();
+    assert.equal(profile.matches, i + 1);
+    assert.equal(profile.playlists.doubles_2v2.matches, 0);
+    assert.equal(profile.playlists.doubles_2v2.elo, 1);
+    assert.equal(profile.player_rating === null, i < 2);
+  }
+  const summary = await request('/api/game/service-card', { assertion, key_hash, account_id: first.user.id });
+  assert.equal(summary.status, 200);
+  assert.equal((await summary.json()).username, first.user.username);
+  assert.equal((await request('/api/game/profile', { assertion, key_hash: '0'.repeat(64) })).status, 401);
 });

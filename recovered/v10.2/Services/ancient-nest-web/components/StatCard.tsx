@@ -1,1 +1,0 @@
-export function StatCard({ label, value }: { label: string; value: string | number }) { return <div className="stat-card"><dt>{label}</dt><dd>{typeof value === "number" ? value.toLocaleString("en-US") : value}</dd></div>; }

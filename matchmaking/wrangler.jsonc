@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ancient-nest-matchmaking",
+  "main": "dist/worker.js",
+  "compatibility_date": "2026-08-06",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "MATCHMAKER", "class_name": "Matchmaker" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Matchmaker"] }],
+  "vars": {
+    "ACCOUNT_API": "https://ancient-nest-accounts.ancientnest-llc.workers.dev",
+    "ALLOW_GUESTS": "false",
+    "TEAM_VOICE": "true",
+    "VOTE_SECONDS": "25",
+  },
+  "observability": { "enabled": true },
+}

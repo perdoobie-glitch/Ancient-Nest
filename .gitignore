@@ -15,3 +15,16 @@ Desktop.ini
 *.tmp
 *.swp
 *~
+
+**/node_modules/
+**/.godot/
+**/.wrangler/
+**/.dev.vars
+**/.dev.vars.*
+!**/.dev.vars.example
+**/.account-integration-backup/
+**/addons/discord_social_sdk/
+**/addons/keyring/
+**/dist/windows/
+**/dist/*.zip
+**/dist/*.sha256

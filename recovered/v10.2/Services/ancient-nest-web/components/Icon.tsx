@@ -1,4 +1,0 @@
-export function Icon({ name = "arrow", className = "", ...props }: { name?: "arrow" | "shield" | "cross" | "network" | "layers" | "spark" | "menu" | "close" | "external"; className?: string }) {
- const paths = { arrow: "M5 12h14m-6-6 6 6-6 6", shield: "M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z", cross: "M12 2v5m0 10v5M2 12h5m10 0h5M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8", network: "M8 5h8M5 8v8m3 3h8m3-11v8M3 3h4v4H3Zm14 0h4v4h-4ZM3 17h4v4H3Zm14 0h4v4h-4ZM7 7l10 10M17 7 7 17", layers: "m12 3 9 5-9 5-9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5", spark: "m12 2 2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z", menu: "M4 6h16M4 12h16M4 18h16", close: "m6 6 12 12M18 6 6 18", external: "M14 3h7v7m0-7L10 14M10 3H3v18h18v-7" };
- return <svg {...props} className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
-}

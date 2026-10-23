@@ -1,3 +1,7 @@
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { assertCompatible, inspectionSql } from './database-shape.mjs';
@@ -23,6 +27,19 @@ try {
 } catch (error) {
   console.error(error.message);
   process.exit(1);
+}
+if (target === '--remote') {
+  const directory = join(process.env.LOCALAPPDATA || homedir(), 'AncientNest-Recovery', 'database-backups');
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
+  const output = join(directory, 'accounts-' + new Date().toISOString().replace(/[:.]/g, '-') + '.sql');
+  const exported = spawnSync(process.execPath, [cli, 'd1', 'export', 'DB', '--remote', '--output', output], { cwd, stdio: 'inherit' });
+  if (exported.status !== 0) { console.error('Database export failed. No migrations applied.'); process.exit(1); }
+  const bytes = readFileSync(output);
+  if (bytes.length < 20 || !/CREATE TABLE|INSERT INTO|PRAGMA/i.test(bytes.toString('utf8'))) {
+    console.error('Database export could not be verified. No migrations applied.'); process.exit(1);
+  }
+  writeFileSync(output + '.sha256', createHash('sha256').update(bytes).digest('hex') + '\n', { mode: 0o600 });
+  console.log('Private database export and SHA-256 saved: ' + output);
 }
 console.log('Database matches the exported schema (or is empty). Applying pending migrations.');
 const applied = spawnSync(process.execPath, [cli, 'd1', 'migrations', 'apply', 'DB', target], { cwd, stdio: 'inherit' });

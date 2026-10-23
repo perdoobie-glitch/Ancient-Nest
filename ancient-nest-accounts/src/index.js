@@ -1,3 +1,4 @@
+import { profile, publicServiceCard, internalRatings, coordinator as rankedCoordinator, reviewSummary, ServiceError } from './stats.js';
 import { discordSignIn } from './discord-sign-in.js';
 import { gameIdentity } from './game-identity.js';
 import { liveTestRoute } from './live-test-page.js';
@@ -6,7 +7,7 @@ import { DUMMY_HASH, passwordRecord, verifyPassword } from './passwords.js';
 import { discordRoutes } from './discord.js';
 import { accountExtras, verificationStatus } from './account-extras.js';
 
-const VERSION = '10.4-discord';
+const VERSION = '10.5-discord';
 const ISSUER = 'ancient-nest-accounts';
 const AUDIENCE = 'ancient-nest';
 const WINDOW = 900;
@@ -259,6 +260,28 @@ async function route(request, env) {
     return liveTest;
   }
   if (path === '/signup/config' && method === 'GET') return json({ auth_provider: discordOnly ? 'discord' : 'legacy', email_required: !discordOnly, phone_required: !discordOnly });
+  if (['/api/game/profile', '/api/game/service-card'].includes(path) || path.startsWith('/api/internal/')) {
+    if (method !== 'POST') throw new HttpError(405, 'method_not_allowed');
+    const { key } = settings(env);
+    const db = env.DB.withSession('first-primary');
+    const data = await body(request);
+    const statsEnv = { ACCOUNTS_DB: db, COORDINATOR_API_KEY: env.COORDINATOR_API_KEY };
+    try {
+      if (path === '/api/game/profile' || path === '/api/game/service-card') {
+        const auth = await authenticate(data.assertion, db, key, 'ancient-nest-matchmaking');
+        if (auth.claims.kind !== 'game-assertion' || auth.claims.key_hash !== data.key_hash) throw new HttpError(401, 'invalid_game_assertion');
+        await rateLimit(db, key, 'rank-profile', auth.user.id, 120);
+        return json(path === '/api/game/profile' ? await profile(statsEnv, auth.user.id, data.playlist) : await publicServiceCard(statsEnv, data.account_id ?? auth.user.id));
+      }
+      if (path === '/api/internal/players/ratings') return json(await internalRatings(request, statsEnv, data));
+      if (path === '/api/internal/reviews') return json(await reviewSummary(request, statsEnv));
+      if (path.startsWith('/api/internal/matches/')) return json(await rankedCoordinator(request, statsEnv, data));
+      throw new HttpError(404, 'not_found');
+    } catch (error) {
+      if (error instanceof ServiceError) throw new HttpError(error.status, error.code);
+      throw error;
+    }
+  }
   if (path === '/api/game/assertion' || path === '/api/game/verify') {
     const { key } = settings(env);
     return identity(request, env, env.DB.withSession('first-primary'), key);
@@ -284,6 +307,7 @@ async function route(request, env) {
         db.prepare('SELECT id, attempts, code FROM verification_codes LIMIT 0'),
         db.prepare('SELECT state_hash, user_id, token_id, code_verifier, expires_at FROM oauth_states LIMIT 0'),
         db.prepare('SELECT key, attempts, expires_at FROM rate_limits LIMIT 0'),
+        db.prepare('SELECT account_id, playlist_id, rp FROM player_playlist_stats LIMIT 0'),
       ]);
       checks.database = true;
     } catch { /* schema may not be migrated yet */ }

@@ -1,8 +1,0 @@
-# Development only; use Wrangler secrets in production. Never put these in NEXT_PUBLIC_*.
-# Paste a locally generated PKCS8 private key as a quoted multiline/escaped value.
-ACCOUNT_SIGNING_KEY="SET_LOCAL_PRIVATE_KEY"
-CODE_PEPPER="SET_RANDOM_VALUE_AT_LEAST_32_CHARACTERS"
-
-COORDINATOR_API_KEY="SET_RANDOM_64_HEX_CHARACTERS_SHARED_WITH_YOUR_PRIVATE_HUB_ONLY"
-# Leave Steam credentials unset until you own a real App ID. Never use Spacewar 480.
-# STEAM_PUBLISHER_KEY="SERVER_ONLY_PUBLISHER_KEY"

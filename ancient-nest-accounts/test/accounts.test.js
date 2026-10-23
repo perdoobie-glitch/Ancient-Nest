@@ -83,7 +83,7 @@ before(async () => {
   const migrations = new URL('../migrations/', import.meta.url);
   for (const name of (await readdir(migrations)).filter(name => name.endsWith('.sql')).sort()) {
     const schema = await readFile(new URL(name, migrations), 'utf8');
-    for (const statement of schema.replace(/--[^\n]*/g, '').split(';').map(s => s.trim()).filter(Boolean)) {
+    for (const statement of schema.replace(/--[^\n]*/g, '').split(/;(?=\s*(?:CREATE|ALTER|INSERT|UPDATE|DELETE|DROP|PRAGMA|$))/i).map(s => s.trim()).filter(Boolean)) {
       await db.prepare(statement).run();
     }
   }
