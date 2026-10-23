@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Miniflare } from "miniflare";
@@ -14,7 +15,7 @@ const pem = (bytes) =>
 async function setup(options = {}) {
   const mf = new Miniflare({
     modules: true,
-    scriptPath: new URL("../dist/worker.js", import.meta.url).pathname,
+    scriptPath: fileURLToPath(new URL("../dist/worker.js", import.meta.url)),
     compatibilityDate: "2026-08-06",
     durableObjects: {
       MATCHMAKER: { className: "Matchmaker", useSQLite: true },

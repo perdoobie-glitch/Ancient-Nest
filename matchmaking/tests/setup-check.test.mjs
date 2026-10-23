@@ -1,8 +1,9 @@
+import { fileURLToPath } from "node:url";
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Miniflare} from 'miniflare';
 import {checkServer,masterOrigin} from '../scripts/check-server.mjs';
-const make=(bindings={})=>new Miniflare({modules:true,scriptPath:new URL('../dist/worker.js',import.meta.url).pathname,compatibilityDate:'2026-08-06',host:'127.0.0.1',port:0,durableObjects:{MATCHMAKER:{className:'Matchmaker',useSQLite:true}},bindings:{ALLOW_GUESTS:'true',LOCAL_TEST:'true',...bindings}});
+const make=(bindings={})=>new Miniflare({modules:true,scriptPath:fileURLToPath(new URL('../dist/worker.js',import.meta.url)),compatibilityDate:'2026-08-06',host:'127.0.0.1',port:0,durableObjects:{MATCHMAKER:{className:'Matchmaker',useSQLite:true}},bindings:{ALLOW_GUESTS:'true',LOCAL_TEST:'true',...bindings}});
 test('setup URL parser accepts master URLs and rejects credentials and remote HTTP',()=>{
  assert.equal(masterOrigin('wss://master.example.com/v1/matchmaking'),'https://master.example.com');
  assert.equal(masterOrigin('https://master.example.com/health'),'https://master.example.com');
