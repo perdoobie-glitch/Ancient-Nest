@@ -1,0 +1,73 @@
+Ancient Nest v0.6 audio credits
+
+The original v0.5 oscillator/noise effects and Flite narration have been replaced.
+No Halo game recordings or announcer impersonation are included.
+
+Gun reports: The Free Firearm Sound Library by Ben Jaszczak, Brian Nelson,
+Kevin Heras and Matthew Nanney / Still North Media. CC0 1.0.
+https://opengameart.org/content/the-free-firearm-sound-library
+Retrieved via https://github.com/petroulacl/fps-asset-kit .
+Individual close reports were isolated from the original multiple-shot recordings,
+trimmed into crack/tail layers, equalized and compressed.
+
+Foley, footsteps, metal, shield/energy, explosions and UI sources:
+Kenney / www.kenney.nl. Impact Sounds, RPG Audio, Sci-fi Sounds, Digital Audio
+and Interface Sounds. CC0 1.0. Copied original license notices in audio/licenses.
+https://kenney.nl/assets/impact-sounds
+https://kenney.nl/assets/sci-fi-sounds
+Retrieved via https://github.com/GeorgeQLe/assets-sfx-combat
+and https://github.com/Mcamento8/open-game-sfx-index .
+
+Short breath/pain/death texture: Zombies Sound Pack by artisticdude, CC0 1.0.
+https://opengameart.org/content/zombies-sound-pack
+Melee/throw air movement: Battle Sound Effects by Ogrebane, CC0 1.0.
+https://opengameart.org/content/battle-sound-effects
+Clips shortened, pitched and mixed; these are stylized texture cues.
+
+Announcer: original Ancient Nest lines, newly synthesized offline with the generic
+Piper LibriTTS-R medium voice (speaker 3922), with light compression.
+Piper voice model / rhasspy: https://huggingface.co/rhasspy/piper-voices
+Model card: https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/libritts_r/medium/MODEL_CARD
+LibriTTS-R dataset: https://www.openslr.org/141/ ; CC BY 4.0.
+Attribution to the LibriTTS-R authors and contributors; license text is included.
+Model conversion distributed by k2-fsa/sherpa-onnx:
+https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models
+The model and synthesis engines are authoring tools and are not shipped.
+Original line text and generated game cues are included as editable audio assets.
+
+Exact curated source paths, source identities, licenses and SHA-256 checksums are
+recorded in audio/source/PROVENANCE.json. Source WAV clips and all mix recipes are
+included, so Ogg files can be rebuilt with authoring/create_soundscape.py.
+
+Menu music: Sanctuary at Dawn, original Ancient Nest composition.
+Synthesized original instruments and melody, no borrowed recordings or game music.
+Score: data/menu_music_score.json. Rebuild: authoring/create_menu_music.py.
+
+Ancient Nest v14.4 weapon composites:
+New files in audio/sfx/weapons/<weapon>/ mix the already-licensed close crack,
+mechanical and tail variations listed above. No new external recordings or Halo
+assets were added. Distant, first reload-stage and dry-fire clips are derived
+from the corresponding existing weapon recordings. Rebuild with
+python authoring/mix_weapon_reports.py (NumPy and ffmpeg required).
+
+
+2026-10-15 user-supplied update: audio/announcer/killing_spree.ogg, killing_machine.ogg, in_the_building.ogg were provided in AncientNest_Codex_Update.zip. The package does not specify their producer or license. They are integrated as supplied, not attributed to the original generated audio recipes.
+
+V15 menu track: Siege of the Nest, original synthesized composition at 128 BPM in D minor. No borrowed recordings or melodies. Rebuild with authoring/create_intense_menu.py. Old menu_music.ogg retained.
+
+V16 active menu theme: The Siege Awakens, original 87.27-second composition at 132 BPM.
+Sampled orchestral instruments rendered with FluidSynth and TimGM6mb by Tim Brechbill
+and David Bolton. Synthetic battle cries and war drums were authored for this track.
+This track and its score/source are GPL-2.0-only; license and SoundFont notices are
+in audio/licenses/MenuTheme-GPL-2.txt and TimGM6mb-copyright.txt. Complete score/render
+source and SoundFont are included in authoring/create_war_menu.py and authoring/soundfonts/.
+No existing song or commercial game music was sampled. The v15 score is historical;
+audio/music/menu_theme.ogg now contains the v16 composition.
+
+V19 plasma firing/reload/dry-fire effects: original procedural audio generated for Ancient Nest. Source recipe: authoring/make_v19_plasma_audio.py. No external recordings used for these new effects.
+
+V19.1 waterfall ambience: original procedurally synthesized periodic water-rush noise by OpenAI for Ancient Nest; no sampled third-party recordings.
+
+V20 update objective arming/defuse/tick tones: original procedural synthesis for Ancient Nest, no third-party samples.
+
+Naki shields-off beep: original procedural sine/harmonic pulse generated for Ancient Nest, 2026-10-17. No external samples.

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NestWeapon" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/weapon_profile.gd" id="1"]
+[resource]
+script = ExtResource("1")
+title = "Sidearm"
+kind = "sidearm"
+automatic = false
+damage = 25.0
+speed = 0.0
+interval = 0.2
+spread_degrees = 0.12
+magazine = 6
+reserve = 60

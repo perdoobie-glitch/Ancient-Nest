@@ -1,0 +1,13 @@
+{
+  "title": "The Siege Awakens",
+  "version": 16,
+  "bpm": 132,
+  "seconds": 87.27272727272727,
+  "key": "D minor",
+  "arrangement": "War drums, timpani, celli ostinato, strings, horns, trombones, choir and synthetic battle cries",
+  "soundfont": "TimGM6mb by Tim Brechbill and David Bolton",
+  "license": "GPL-2.0-only; see audio/licenses/MenuTheme-GPL-2.txt",
+  "source": "authoring/create_war_menu.py; authoring/soundfonts/TimGM6mb.sf2",
+  "borrowed_songs": false,
+  "synthetic_battle_cries": true
+}

@@ -1,0 +1,1 @@
+canyon_rock.png: original deterministic procedural erosion/grain texture made for Ancient Nest, 512x512 RGB. No external texture pack or third-party artwork used.

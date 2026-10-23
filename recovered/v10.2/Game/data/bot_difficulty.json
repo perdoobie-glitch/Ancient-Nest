@@ -1,0 +1,34 @@
+{
+  "easy": {
+    "think_seconds": 0.35,
+    "reaction_seconds": 0.6,
+    "aim_error_m": 0.48,
+    "tracking_rate": 3.5,
+    "fire_chance": 0.65,
+    "headshot_chance": 0.04
+  },
+  "normal": {
+    "think_seconds": 0.18,
+    "reaction_seconds": 0.24,
+    "aim_error_m": 0.14,
+    "tracking_rate": 8.0,
+    "fire_chance": 0.85,
+    "headshot_chance": 0.12
+  },
+  "hard": {
+    "think_seconds": 0.12,
+    "reaction_seconds": 0.13,
+    "aim_error_m": 0.055,
+    "tracking_rate": 12.0,
+    "fire_chance": 0.97,
+    "headshot_chance": 0.3
+  },
+  "insane": {
+    "think_seconds": 0.09,
+    "reaction_seconds": 0.1,
+    "aim_error_m": 0.04,
+    "tracking_rate": 14.0,
+    "fire_chance": 0.97,
+    "headshot_chance": 0.4
+  }
+}

@@ -1,0 +1,15 @@
+config_version=5
+[application]
+config/name="Ancient Nest Master Monitor 10.2"
+config/version="10.2"
+config/icon="res://icon.png"
+run/main_scene="res://main.tscn"
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=800
+window/size/window_width_override=1280
+window/size/window_height_override=800
+window/stretch/mode="canvas_items"
+[rendering]
+renderer/rendering_method="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false

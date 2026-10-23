@@ -1,0 +1,20 @@
+{
+  "name": "ancient-nest-accounts",
+  "version": "10.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/worker.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=dist/worker.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "generate:keys": "node scripts/generate-keys.mjs",
+    "test:browser": "node tests/browser.integration.mjs",
+    "test:native": "node tests/native.integration.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "miniflare": "4.20260730.0",
+    "@cloudflare/workers-types": "5.20261019.1",
+    "typescript": "5.9.3"
+  }
+}

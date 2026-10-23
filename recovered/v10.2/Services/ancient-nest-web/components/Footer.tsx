@@ -1,0 +1,4 @@
+import Link from "next/link";
+import Image from "next/image";
+import { site } from "@/data/site";
+export function Footer() { return <footer className="site-footer"><div className="container"><div className="footer-top"><div><Link href="/" className="brand"><Image src="/icons/nest.svg" alt="" width={35} height={35}/><span>Ancient Nest</span></Link><p>A world left behind.<br/>A new fight ahead.</p></div><nav aria-label="Footer navigation">{[["Game","/game"],["Play","/play"],["Community","/community"],["News","/news"],["Status","/status"],["Privacy","/privacy"],["Terms","/terms"]].map(([label,href]) => <Link key={href} href={href}>{label}</Link>)}</nav></div><div className="footer-bottom"><span>Created by {site.studio}</span><span>Ancient Nest is currently in development.</span><span>PC · Release TBD</span></div></div></footer>; }

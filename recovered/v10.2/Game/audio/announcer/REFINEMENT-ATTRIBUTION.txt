@@ -1,0 +1,1 @@
+Additional original announcer text synthesized offline with Piper en_US-libritts_r-medium speaker 0 (LibriTTS-R speaker 3922). Model/dataset: CC BY 4.0. https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts_r/medium . No voice model or synthesis runtime is shipped. No commercial character voice cloning.

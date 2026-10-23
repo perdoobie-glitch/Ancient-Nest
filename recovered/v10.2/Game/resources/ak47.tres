@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NestWeapon" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/weapon_profile.gd" id="1"]
+[resource]
+script = ExtResource("1")
+title = "AK-47"
+kind = "ak47"
+automatic = true
+damage = 60.0
+precision = false
+speed = 0.0
+interval = 0.10
+spread_degrees = 0.0
+magazine = 30
+reserve = 150
+reload_seconds = 2.3

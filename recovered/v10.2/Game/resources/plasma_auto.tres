@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="NestWeapon" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/weapon_profile.gd" id="1"]
+[resource]
+script = ExtResource("1")
+kind = "plasma_auto"
+title = "Automatic Plasma"
+damage = 5.1
+magazine = 48
+reserve = 192
+interval = 0.06666666666666667
+reload_seconds = 2.3
+automatic = true
+speed = 22.5
+pellets = 1
+max_range = 90
+precision = false
+explosive = false
+plasma = true
+spread_half_angle_deg = 1.265
+plasma_color = Color(1, 0.811765, 0.258824, 1)

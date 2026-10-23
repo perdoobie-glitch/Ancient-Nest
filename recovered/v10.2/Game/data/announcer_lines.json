@@ -1,0 +1,501 @@
+{
+  "schema_version": 1,
+  "voice": "Original generic Flite RMS synthesis; no commercial-character voice cloning.",
+  "lines": [
+    {
+      "id": "match_start",
+      "text": "Match begins.",
+      "files": [
+        "res://audio/announcer/announcer_match_start_01.ogg",
+        "res://audio/announcer/announcer_match_start_02.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_match_start"
+    },
+    {
+      "id": "countdown_10",
+      "text": "Ten.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_10_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_10"
+    },
+    {
+      "id": "countdown_9",
+      "text": "Nine.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_9_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_9"
+    },
+    {
+      "id": "countdown_8",
+      "text": "Eight.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_8_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_8"
+    },
+    {
+      "id": "countdown_7",
+      "text": "Seven.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_7_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_7"
+    },
+    {
+      "id": "countdown_6",
+      "text": "Six.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_6_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_6"
+    },
+    {
+      "id": "countdown_5",
+      "text": "Five.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_5_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_5"
+    },
+    {
+      "id": "countdown_4",
+      "text": "Four.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_4_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_4"
+    },
+    {
+      "id": "countdown_3",
+      "text": "Three.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_3_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_3"
+    },
+    {
+      "id": "countdown_2",
+      "text": "Two.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_2_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_2"
+    },
+    {
+      "id": "countdown_1",
+      "text": "One.",
+      "files": [
+        "res://audio/announcer/announcer_countdown_1_01.ogg"
+      ],
+      "priority": 40,
+      "cooldown": 3,
+      "sound_id": "announcer_countdown_1"
+    },
+    {
+      "id": "match_one_minute",
+      "text": "One minute remaining.",
+      "files": [
+        "res://audio/announcer/announcer_match_one_minute_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_match_one_minute"
+    },
+    {
+      "id": "match_30_seconds",
+      "text": "Thirty seconds.",
+      "files": [
+        "res://audio/announcer/announcer_match_30_seconds_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_match_30_seconds"
+    },
+    {
+      "id": "match_end",
+      "text": "Match complete.",
+      "files": [
+        "res://audio/announcer/announcer_match_end_01.ogg"
+      ],
+      "priority": 100,
+      "cooldown": 3,
+      "sound_id": "announcer_match_end"
+    },
+    {
+      "id": "you_win",
+      "text": "Victory.",
+      "files": [
+        "res://audio/announcer/announcer_you_win_01.ogg"
+      ],
+      "priority": 100,
+      "cooldown": 3,
+      "sound_id": "announcer_you_win"
+    },
+    {
+      "id": "you_lose",
+      "text": "Defeat.",
+      "files": [
+        "res://audio/announcer/announcer_you_lose_01.ogg"
+      ],
+      "priority": 100,
+      "cooldown": 3,
+      "sound_id": "announcer_you_lose"
+    },
+    {
+      "id": "draw",
+      "text": "Draw.",
+      "files": [
+        "res://audio/announcer/announcer_draw_01.ogg"
+      ],
+      "priority": 100,
+      "cooldown": 3,
+      "sound_id": "announcer_draw"
+    },
+    {
+      "id": "round_start",
+      "text": "Fight.",
+      "files": [
+        "res://audio/announcer/announcer_round_start_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_round_start"
+    },
+    {
+      "id": "round_end",
+      "text": "Match complete.",
+      "files": [
+        "res://audio/announcer/announcer_round_end_01.ogg"
+      ],
+      "priority": 80,
+      "cooldown": 3,
+      "sound_id": "announcer_round_end"
+    },
+    {
+      "id": "halftime",
+      "text": "Fight.",
+      "files": [
+        "res://audio/announcer/announcer_halftime_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_halftime"
+    },
+    {
+      "id": "lead_taken",
+      "text": "You have the lead.",
+      "files": [
+        "res://audio/announcer/announcer_lead_taken_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_lead_taken"
+    },
+    {
+      "id": "lead_lost",
+      "text": "You have lost the lead.",
+      "files": [
+        "res://audio/announcer/announcer_lead_lost_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_lead_lost"
+    },
+    {
+      "id": "lead_tied",
+      "text": "Scores are tied.",
+      "files": [
+        "res://audio/announcer/announcer_lead_tied_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_lead_tied"
+    },
+    {
+      "id": "team_lead_taken",
+      "text": "Your team takes the lead.",
+      "files": [
+        "res://audio/announcer/announcer_team_lead_taken_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_team_lead_taken"
+    },
+    {
+      "id": "team_lead_lost",
+      "text": "Your team has lost the lead.",
+      "files": [
+        "res://audio/announcer/announcer_team_lead_lost_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_team_lead_lost"
+    },
+    {
+      "id": "kill_double",
+      "text": "Double kill.",
+      "files": [
+        "res://audio/announcer/announcer_kill_double_01.ogg",
+        "res://audio/announcer/announcer_kill_double_02.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_kill_double"
+    },
+    {
+      "id": "kill_triple",
+      "text": "Triple kill.",
+      "files": [
+        "res://audio/announcer/announcer_kill_triple_01.ogg",
+        "res://audio/announcer/announcer_kill_triple_02.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_kill_triple"
+    },
+    {
+      "id": "kill_overkill",
+      "text": "Overkill.",
+      "files": [
+        "res://audio/announcer/announcer_kill_overkill_01.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_kill_overkill"
+    },
+    {
+      "id": "killing_spree",
+      "text": "Killing spree.",
+      "files": [
+        "res://audio/announcer/killing_spree.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_killing_spree"
+    },
+    {
+      "id": "running_riot",
+      "text": "Running riot.",
+      "files": [
+        "res://audio/announcer/announcer_running_riot_01.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_running_riot"
+    },
+    {
+      "id": "rampage",
+      "text": "Rampage.",
+      "files": [
+        "res://audio/announcer/announcer_rampage_01.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_rampage"
+    },
+    {
+      "id": "untouchable",
+      "text": "Untouchable.",
+      "files": [
+        "res://audio/announcer/announcer_untouchable_01.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_untouchable"
+    },
+    {
+      "id": "invincible",
+      "text": "Invincible.",
+      "files": [
+        "res://audio/announcer/announcer_invincible_01.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_invincible"
+    },
+    {
+      "id": "headshot",
+      "text": "Headshot.",
+      "files": [
+        "res://audio/announcer/announcer_headshot_01.ogg",
+        "res://audio/announcer/announcer_headshot_02.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_headshot"
+    },
+    {
+      "id": "melee_kill",
+      "text": "Beatdown.",
+      "files": [
+        "res://audio/announcer/announcer_melee_kill_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_melee_kill"
+    },
+    {
+      "id": "grenade_kill",
+      "text": "Grenade kill.",
+      "files": [
+        "res://audio/announcer/announcer_grenade_kill_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_grenade_kill"
+    },
+    {
+      "id": "sniper_kill",
+      "text": "Sniper kill.",
+      "files": [
+        "res://audio/announcer/announcer_sniper_kill_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_sniper_kill"
+    },
+    {
+      "id": "revenge",
+      "text": "Payback.",
+      "files": [
+        "res://audio/announcer/announcer_revenge_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_revenge"
+    },
+    {
+      "id": "first_blood",
+      "text": "First blood.",
+      "files": [
+        "res://audio/announcer/announcer_first_blood_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_first_blood"
+    },
+    {
+      "id": "betrayal",
+      "text": "Betrayal.",
+      "files": [
+        "res://audio/announcer/announcer_betrayal_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_betrayal"
+    },
+    {
+      "id": "suicide",
+      "text": "Self-destruct.",
+      "files": [
+        "res://audio/announcer/announcer_suicide_01.ogg"
+      ],
+      "priority": 30,
+      "cooldown": 3,
+      "sound_id": "announcer_suicide"
+    },
+    {
+      "id": "bomb_planted",
+      "text": "Bomb planted.",
+      "files": [
+        "res://audio/announcer/announcer_bomb_planted_01.ogg",
+        "res://audio/announcer/announcer_bomb_planted_refined.ogg"
+      ],
+      "priority": 80,
+      "cooldown": 3,
+      "sound_id": "announcer_bomb_planted"
+    },
+    {
+      "id": "bomb_defused",
+      "text": "Bomb defused.",
+      "files": [
+        "res://audio/announcer/announcer_bomb_defused_01.ogg"
+      ],
+      "priority": 80,
+      "cooldown": 3,
+      "sound_id": "announcer_bomb_defused"
+    },
+    {
+      "id": "killing_machine",
+      "text": "Killing machine.",
+      "files": [
+        "res://audio/announcer/killing_machine.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_killing_machine"
+    },
+    {
+      "id": "in_the_building",
+      "text": "Master Chief is in the building.",
+      "files": [
+        "res://audio/announcer/in_the_building.ogg"
+      ],
+      "priority": 60,
+      "cooldown": 3,
+      "sound_id": "announcer_in_the_building"
+    },
+    {
+      "id": "drill_commencing",
+      "text": "Drilling commencing. Secure the site.",
+      "files": [
+        "res://audio/announcer/announcer_drill_commencing_refined.ogg"
+      ],
+      "priority": 65,
+      "cooldown": 3,
+      "sound_id": "announcer_drill_commencing"
+    },
+    {
+      "id": "drill_complete",
+      "text": "Drilling complete. Recover the gold.",
+      "files": [
+        "res://audio/announcer/announcer_drill_complete_refined.ogg"
+      ],
+      "priority": 65,
+      "cooldown": 3,
+      "sound_id": "announcer_drill_complete"
+    },
+    {
+      "id": "bomb_ten_seconds",
+      "text": "Ten seconds to detonation.",
+      "files": [
+        "res://audio/announcer/announcer_bomb_ten_seconds_refined.ogg"
+      ],
+      "priority": 65,
+      "cooldown": 3,
+      "sound_id": "announcer_bomb_ten_seconds"
+    },
+    {
+      "id": "bomb_five_seconds",
+      "text": "Five seconds. Clear the blast zone.",
+      "files": [
+        "res://audio/announcer/announcer_bomb_five_seconds_refined.ogg"
+      ],
+      "priority": 65,
+      "cooldown": 3,
+      "sound_id": "announcer_bomb_five_seconds"
+    }
+  ]
+}

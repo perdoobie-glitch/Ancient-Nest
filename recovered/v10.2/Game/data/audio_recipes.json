@@ -1,0 +1,2415 @@
+{
+  "sample_rate": 44100,
+  "sounds": {
+    "assault_rifle_fire_crack": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.16,
+      "rate": 1,
+      "lowpass": 6500,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/assault_rifle_take_0.wav",
+        "res://audio/source/assault_rifle_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "assault_rifle_fire_mechanical": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "assault_rifle_fire_tail_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/assault_rifle_take_0.wav",
+        "res://audio/source/assault_rifle_take_1.wav"
+      ],
+      "offset": 0.11
+    },
+    "assault_rifle_fire_distant": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 1800,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/assault_rifle_take_0.wav",
+        "res://audio/source/assault_rifle_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "assault_rifle_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "assault_rifle_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "assault_rifle_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "assault_rifle_reload_magout": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "assault_rifle_reload_magin": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.28,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/cloth.wav"
+    },
+    "assault_rifle_reload_chamber": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "assault_rifle_shell_eject": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "assault_rifle_shell_bounce": {
+      "source": "res://audio/source/shell.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_fire_crack": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.16,
+      "rate": 0.9,
+      "lowpass": 6500,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/battle_rifle_take_0.wav",
+        "res://audio/source/battle_rifle_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "battle_rifle_fire_mechanical": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_fire_tail_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/battle_rifle_take_0.wav",
+        "res://audio/source/battle_rifle_take_1.wav"
+      ],
+      "offset": 0.11
+    },
+    "battle_rifle_fire_distant": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 0.9,
+      "lowpass": 1800,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/battle_rifle_take_0.wav",
+        "res://audio/source/battle_rifle_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "battle_rifle_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_reload_mag_release": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_reload_magout": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_reload_magin": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.28,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/cloth.wav"
+    },
+    "battle_rifle_reload_chamber": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_shell_eject": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_shell_bounce": {
+      "source": "res://audio/source/shell.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "magnum_fire_crack": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.16,
+      "rate": 1,
+      "lowpass": 6500,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/magnum_take_0.wav",
+        "res://audio/source/magnum_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "magnum_fire_mechanical": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "magnum_fire_tail_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/magnum_take_0.wav",
+        "res://audio/source/magnum_take_1.wav"
+      ],
+      "offset": 0.11
+    },
+    "magnum_fire_distant": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 1800,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/magnum_take_0.wav",
+        "res://audio/source/magnum_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "magnum_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "magnum_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "magnum_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "magnum_reload_magout": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "magnum_reload_magin": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.28,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/cloth.wav"
+    },
+    "magnum_reload_slide_release": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "magnum_shell_eject": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "magnum_shell_bounce": {
+      "source": "res://audio/source/shell.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "shotgun_fire_crack": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.16,
+      "rate": 1,
+      "lowpass": 6500,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/shotgun_take_0.wav",
+        "res://audio/source/shotgun_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "shotgun_fire_mechanical": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "shotgun_fire_tail_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/shotgun_take_0.wav",
+        "res://audio/source/shotgun_take_1.wav"
+      ],
+      "offset": 0.11
+    },
+    "shotgun_fire_distant": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 1800,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/shotgun_take_0.wav",
+        "res://audio/source/shotgun_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "shotgun_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "shotgun_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "shotgun_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "shotgun_reload_shell_insert": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.28,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/cloth.wav"
+    },
+    "shotgun_reload_chamber": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "shotgun_pump": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "shotgun_shell_eject": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "shotgun_shell_bounce": {
+      "source": "res://audio/source/shell.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "sniper_rifle_fire_crack": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.16,
+      "rate": 1,
+      "lowpass": 6500,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/sniper_rifle_take_0.wav",
+        "res://audio/source/sniper_rifle_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "sniper_rifle_fire_mechanical": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "sniper_rifle_fire_tail_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/sniper_rifle_take_0.wav",
+        "res://audio/source/sniper_rifle_take_1.wav"
+      ],
+      "offset": 0.11
+    },
+    "sniper_rifle_fire_distant": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 1800,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/sniper_rifle_take_0.wav",
+        "res://audio/source/sniper_rifle_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "sniper_rifle_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "sniper_rifle_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "sniper_rifle_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "sniper_rifle_reload_magout": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "sniper_rifle_reload_magin": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.28,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/cloth.wav"
+    },
+    "sniper_rifle_reload_bolt": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "sniper_rifle_zoom_in": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "sniper_rifle_zoom_out": {
+      "source": "res://audio/source/down.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "sniper_rifle_zoom_step": {
+      "source": "res://audio/source/down.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "sniper_rifle_bolt_cycle": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "sniper_rifle_shell_eject": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "sniper_rifle_shell_bounce": {
+      "source": "res://audio/source/shell.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_fire_crack": {
+      "source": "res://audio/source/thruster.wav",
+      "duration": 0.4,
+      "rate": 0.8,
+      "lowpass": 6500,
+      "gain": 0.85
+    },
+    "rocket_launcher_fire_mechanical": {
+      "source": "res://audio/source/thruster.wav",
+      "duration": 0.4,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_fire_tail_open": {
+      "source": "res://audio/source/thruster.wav",
+      "duration": 0.4,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_fire_distant": {
+      "source": "res://audio/source/thruster.wav",
+      "duration": 0.4,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "rocket_launcher_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "rocket_launcher_reload_latch_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_reload_rocket_insert": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_reload_latch_close": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_launcher_flight": {
+      "source": "res://audio/source/wind.wav",
+      "duration": 1.3,
+      "rate": 0.9,
+      "lowpass": 1600,
+      "gain": 0.85
+    },
+    "ak47_fire_crack": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.16,
+      "rate": 1,
+      "lowpass": 6500,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/ak47_take_0.wav",
+        "res://audio/source/ak47_take_1.wav",
+        "res://audio/source/ak47_take_2.wav",
+        "res://audio/source/ak47_take_3.wav"
+      ],
+      "offset": 0
+    },
+    "ak47_fire_mechanical": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "ak47_fire_tail_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/ak47_take_0.wav",
+        "res://audio/source/ak47_take_1.wav",
+        "res://audio/source/ak47_take_2.wav",
+        "res://audio/source/ak47_take_3.wav"
+      ],
+      "offset": 0.11
+    },
+    "ak47_fire_distant": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 1,
+      "lowpass": 1800,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/ak47_take_0.wav",
+        "res://audio/source/ak47_take_1.wav",
+        "res://audio/source/ak47_take_2.wav",
+        "res://audio/source/ak47_take_3.wav"
+      ],
+      "offset": 0
+    },
+    "ak47_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "ak47_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "ak47_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "ak47_reload_magout": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "ak47_reload_magin": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.28,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/cloth.wav"
+    },
+    "ak47_reload_chamber": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "ak47_shell_eject": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "ak47_shell_bounce": {
+      "source": "res://audio/source/shell.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "grenade_bounce_metal": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_metal_0.wav",
+        "res://audio/source/impact_metal_1.wav",
+        "res://audio/source/impact_metal_2.wav"
+      ]
+    },
+    "bullet_impact_metal": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_metal_0.wav",
+        "res://audio/source/impact_metal_1.wav",
+        "res://audio/source/impact_metal_2.wav"
+      ]
+    },
+    "footstep_metal_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_metal_0.wav",
+        "res://audio/source/step_metal_1.wav",
+        "res://audio/source/step_metal_2.wav"
+      ]
+    },
+    "footstep_metal_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_metal_0.wav",
+        "res://audio/source/step_metal_1.wav",
+        "res://audio/source/step_metal_2.wav"
+      ]
+    },
+    "footstep_metal_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_metal_0.wav",
+        "res://audio/source/step_metal_1.wav",
+        "res://audio/source/step_metal_2.wav"
+      ]
+    },
+    "footstep_metal_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_metal_0.wav",
+        "res://audio/source/step_metal_1.wav",
+        "res://audio/source/step_metal_2.wav"
+      ]
+    },
+    "grenade_bounce_concrete": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "bullet_impact_concrete": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "footstep_concrete_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_concrete_0.wav",
+        "res://audio/source/step_concrete_1.wav",
+        "res://audio/source/step_concrete_2.wav"
+      ]
+    },
+    "footstep_concrete_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_concrete_0.wav",
+        "res://audio/source/step_concrete_1.wav",
+        "res://audio/source/step_concrete_2.wav"
+      ]
+    },
+    "footstep_concrete_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_concrete_0.wav",
+        "res://audio/source/step_concrete_1.wav",
+        "res://audio/source/step_concrete_2.wav"
+      ]
+    },
+    "footstep_concrete_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_concrete_0.wav",
+        "res://audio/source/step_concrete_1.wav",
+        "res://audio/source/step_concrete_2.wav"
+      ]
+    },
+    "grenade_bounce_dirt": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_dirt_0.wav",
+        "res://audio/source/impact_dirt_1.wav",
+        "res://audio/source/impact_dirt_2.wav"
+      ]
+    },
+    "bullet_impact_dirt": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_dirt_0.wav",
+        "res://audio/source/impact_dirt_1.wav",
+        "res://audio/source/impact_dirt_2.wav"
+      ]
+    },
+    "footstep_dirt_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_dirt_0.wav",
+        "res://audio/source/step_dirt_1.wav",
+        "res://audio/source/step_dirt_2.wav"
+      ]
+    },
+    "footstep_dirt_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_dirt_0.wav",
+        "res://audio/source/step_dirt_1.wav",
+        "res://audio/source/step_dirt_2.wav"
+      ]
+    },
+    "footstep_dirt_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_dirt_0.wav",
+        "res://audio/source/step_dirt_1.wav",
+        "res://audio/source/step_dirt_2.wav"
+      ]
+    },
+    "footstep_dirt_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_dirt_0.wav",
+        "res://audio/source/step_dirt_1.wav",
+        "res://audio/source/step_dirt_2.wav"
+      ]
+    },
+    "grenade_bounce_grass": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_grass_0.wav",
+        "res://audio/source/impact_grass_1.wav",
+        "res://audio/source/impact_grass_2.wav"
+      ]
+    },
+    "bullet_impact_grass": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_grass_0.wav",
+        "res://audio/source/impact_grass_1.wav",
+        "res://audio/source/impact_grass_2.wav"
+      ]
+    },
+    "footstep_grass_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_grass_0.wav",
+        "res://audio/source/step_grass_1.wav",
+        "res://audio/source/step_grass_2.wav"
+      ]
+    },
+    "footstep_grass_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_grass_0.wav",
+        "res://audio/source/step_grass_1.wav",
+        "res://audio/source/step_grass_2.wav"
+      ]
+    },
+    "footstep_grass_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_grass_0.wav",
+        "res://audio/source/step_grass_1.wav",
+        "res://audio/source/step_grass_2.wav"
+      ]
+    },
+    "footstep_grass_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_grass_0.wav",
+        "res://audio/source/step_grass_1.wav",
+        "res://audio/source/step_grass_2.wav"
+      ]
+    },
+    "grenade_bounce_wood": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_wood_0.wav",
+        "res://audio/source/impact_wood_1.wav",
+        "res://audio/source/impact_wood_2.wav"
+      ]
+    },
+    "bullet_impact_wood": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_wood_0.wav",
+        "res://audio/source/impact_wood_1.wav",
+        "res://audio/source/impact_wood_2.wav"
+      ]
+    },
+    "footstep_wood_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_wood_0.wav",
+        "res://audio/source/step_wood_1.wav",
+        "res://audio/source/step_wood_2.wav"
+      ]
+    },
+    "footstep_wood_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_wood_0.wav",
+        "res://audio/source/step_wood_1.wav",
+        "res://audio/source/step_wood_2.wav"
+      ]
+    },
+    "footstep_wood_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_wood_0.wav",
+        "res://audio/source/step_wood_1.wav",
+        "res://audio/source/step_wood_2.wav"
+      ]
+    },
+    "footstep_wood_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_wood_0.wav",
+        "res://audio/source/step_wood_1.wav",
+        "res://audio/source/step_wood_2.wav"
+      ]
+    },
+    "grenade_bounce_sand": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_sand_0.wav",
+        "res://audio/source/impact_sand_1.wav",
+        "res://audio/source/impact_sand_2.wav"
+      ]
+    },
+    "bullet_impact_sand": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_sand_0.wav",
+        "res://audio/source/impact_sand_1.wav",
+        "res://audio/source/impact_sand_2.wav"
+      ]
+    },
+    "footstep_sand_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_sand_0.wav",
+        "res://audio/source/step_sand_1.wav",
+        "res://audio/source/step_sand_2.wav"
+      ]
+    },
+    "footstep_sand_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_sand_0.wav",
+        "res://audio/source/step_sand_1.wav",
+        "res://audio/source/step_sand_2.wav"
+      ]
+    },
+    "footstep_sand_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_sand_0.wav",
+        "res://audio/source/step_sand_1.wav",
+        "res://audio/source/step_sand_2.wav"
+      ]
+    },
+    "footstep_sand_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_sand_0.wav",
+        "res://audio/source/step_sand_1.wav",
+        "res://audio/source/step_sand_2.wav"
+      ]
+    },
+    "grenade_bounce_glass": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_glass_0.wav",
+        "res://audio/source/impact_glass_1.wav",
+        "res://audio/source/impact_glass_2.wav"
+      ]
+    },
+    "bullet_impact_glass": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_glass_0.wav",
+        "res://audio/source/impact_glass_1.wav",
+        "res://audio/source/impact_glass_2.wav"
+      ]
+    },
+    "footstep_glass_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_glass_0.wav",
+        "res://audio/source/step_glass_1.wav",
+        "res://audio/source/step_glass_2.wav"
+      ]
+    },
+    "footstep_glass_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_glass_0.wav",
+        "res://audio/source/step_glass_1.wav",
+        "res://audio/source/step_glass_2.wav"
+      ]
+    },
+    "footstep_glass_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_glass_0.wav",
+        "res://audio/source/step_glass_1.wav",
+        "res://audio/source/step_glass_2.wav"
+      ]
+    },
+    "footstep_glass_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_glass_0.wav",
+        "res://audio/source/step_glass_1.wav",
+        "res://audio/source/step_glass_2.wav"
+      ]
+    },
+    "grenade_bounce_water": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_water_0.wav",
+        "res://audio/source/impact_water_1.wav",
+        "res://audio/source/impact_water_2.wav"
+      ]
+    },
+    "bullet_impact_water": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_water_0.wav",
+        "res://audio/source/impact_water_1.wav",
+        "res://audio/source/impact_water_2.wav"
+      ]
+    },
+    "footstep_water_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_water_0.wav",
+        "res://audio/source/step_water_1.wav",
+        "res://audio/source/step_water_2.wav"
+      ]
+    },
+    "footstep_water_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_water_0.wav",
+        "res://audio/source/step_water_1.wav",
+        "res://audio/source/step_water_2.wav"
+      ]
+    },
+    "footstep_water_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_water_0.wav",
+        "res://audio/source/step_water_1.wav",
+        "res://audio/source/step_water_2.wav"
+      ]
+    },
+    "footstep_water_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_water_0.wav",
+        "res://audio/source/step_water_1.wav",
+        "res://audio/source/step_water_2.wav"
+      ]
+    },
+    "grenade_bounce_flesh": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_flesh_0.wav",
+        "res://audio/source/impact_flesh_1.wav",
+        "res://audio/source/impact_flesh_2.wav"
+      ]
+    },
+    "bullet_impact_flesh": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_flesh_0.wav",
+        "res://audio/source/impact_flesh_1.wav",
+        "res://audio/source/impact_flesh_2.wav"
+      ]
+    },
+    "footstep_flesh_walk": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_flesh_0.wav",
+        "res://audio/source/step_flesh_1.wav",
+        "res://audio/source/step_flesh_2.wav"
+      ]
+    },
+    "footstep_flesh_crouch": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.5,
+      "sources": [
+        "res://audio/source/step_flesh_0.wav",
+        "res://audio/source/step_flesh_1.wav",
+        "res://audio/source/step_flesh_2.wav"
+      ]
+    },
+    "footstep_flesh_land_soft": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_flesh_0.wav",
+        "res://audio/source/step_flesh_1.wav",
+        "res://audio/source/step_flesh_2.wav"
+      ]
+    },
+    "footstep_flesh_land_hard": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.4,
+      "rate": 0.94,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/step_flesh_0.wav",
+        "res://audio/source/step_flesh_1.wav",
+        "res://audio/source/step_flesh_2.wav"
+      ]
+    },
+    "frag_grenade_throw": {
+      "source": "res://audio/source/whoosh.wav",
+      "duration": 0.3,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "frag_grenade_arm": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "frag_grenade_settle": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "frag_grenade_explosion_close": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "frag_grenade_explosion_far": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 1,
+      "lowpass": 1500,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "plasma_grenade_throw": {
+      "source": "res://audio/source/whoosh.wav",
+      "duration": 0.3,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "plasma_grenade_arm": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "plasma_grenade_settle": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "plasma_grenade_fuse": {
+      "source": "res://audio/source/beep.wav",
+      "duration": 0.75,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "plasma_grenade_stick": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "plasma_grenade_stuck_warning": {
+      "source": "res://audio/source/beep.wav",
+      "duration": 0.75,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "plasma_grenade_explosion_close": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "plasma_grenade_explosion_far": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 1,
+      "lowpass": 1500,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "naki_shield_hit_light": {
+      "source": "res://audio/source/field.wav",
+      "duration": 0.24,
+      "rate": 1.2,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "naki_shield_hit_heavy": {
+      "source": "res://audio/source/field.wav",
+      "duration": 0.24,
+      "rate": 1.2,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "naki_shield_low_warning": {
+      "source": "res://audio/source/beep.wav",
+      "duration": 0.75,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "naki_shield_break": {
+      "source": "res://audio/source/field_break.wav",
+      "duration": 0.8,
+      "rate": 0.7,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "naki_shield_recharge_start": {
+      "source": "res://audio/source/field.wav",
+      "duration": 1,
+      "rate": 0.65,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "naki_shield_recharge_loop": {
+      "source": "res://audio/source/field.wav",
+      "duration": 1,
+      "rate": 0.65,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "naki_shield_full": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.6,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "naki_health_hit": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "naki_health_low": {
+      "source": "res://audio/source/boom.wav",
+      "duration": 1.25,
+      "rate": 0.65,
+      "lowpass": 160,
+      "gain": 0.85
+    },
+    "naki_death": {
+      "source": "res://audio/source/death.wav",
+      "duration": 0.8,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "annu_armor_hit": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "annu_helmet_hit": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "annu_headshot_no_helmet": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "annu_body_hit_no_armor": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "annu_armor_break": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "annu_armor_pickup": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.35,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "annu_helmet_pickup": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.35,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "annu_health_pickup": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.35,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "annu_low_health": {
+      "source": "res://audio/source/boom.wav",
+      "duration": 1.25,
+      "rate": 0.65,
+      "lowpass": 160,
+      "gain": 0.85
+    },
+    "hit_body": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "hit_head": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "kill_confirm": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.35,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "ammo_low": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "melee_swing": {
+      "source": "res://audio/source/whoosh.wav",
+      "duration": 0.3,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "melee_hit_flesh": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_flesh_0.wav",
+        "res://audio/source/impact_flesh_1.wav",
+        "res://audio/source/impact_flesh_2.wav"
+      ]
+    },
+    "melee_hit_shield": {
+      "source": "res://audio/source/field.wav",
+      "duration": 0.24,
+      "rate": 1.2,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "melee_hit_armor": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "melee_kill": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "bullet_flyby": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "ricochet_metal": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "ricochet_concrete": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "jump": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "respawn": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.35,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "death_world": {
+      "source": "res://audio/source/death.wav",
+      "duration": 0.8,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "health_hit_world": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_concrete_0.wav",
+        "res://audio/source/impact_concrete_1.wav",
+        "res://audio/source/impact_concrete_2.wav"
+      ]
+    },
+    "shield_hit_world": {
+      "source": "res://audio/source/field.wav",
+      "duration": 0.24,
+      "rate": 1.2,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "weapon_pickup": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "weapon_drop": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "weapon_throw_away": {
+      "source": "res://audio/source/whoosh.wav",
+      "duration": 0.3,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "fall_damage": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "rocket_explosion_close": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 0.78,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "rocket_explosion_far": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 0.78,
+      "lowpass": 1500,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "explosion_water": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "explosion_debris": {
+      "source": "res://audio/source/crash.wav",
+      "duration": 1.4,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/boom.wav"
+    },
+    "glass_break": {
+      "source": "res://audio/source/chip.wav",
+      "duration": 0.5,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_zoom_in": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_zoom_out": {
+      "source": "res://audio/source/down.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_zoom_step": {
+      "source": "res://audio/source/down.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_scoped_fire_crack": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.16,
+      "rate": 0.9,
+      "lowpass": 6500,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/battle_rifle_scoped_take_0.wav",
+        "res://audio/source/battle_rifle_scoped_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "battle_rifle_scoped_fire_mechanical": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_scoped_fire_tail_open": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/battle_rifle_scoped_take_0.wav",
+        "res://audio/source/battle_rifle_scoped_take_1.wav"
+      ],
+      "offset": 0.11
+    },
+    "battle_rifle_scoped_fire_distant": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.6,
+      "rate": 0.9,
+      "lowpass": 1800,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/battle_rifle_scoped_take_0.wav",
+        "res://audio/source/battle_rifle_scoped_take_1.wav"
+      ],
+      "offset": 0
+    },
+    "battle_rifle_scoped_dry_fire": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_scoped_equip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_scoped_unequip": {
+      "source": "res://audio/source/cloth.wav",
+      "duration": 0.3,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_scoped_reload_mag_release": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_scoped_reload_magout": {
+      "source": "res://audio/source/belt.wav",
+      "duration": 0.3,
+      "rate": 0.95,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_scoped_reload_magin": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.28,
+      "rate": 0.85,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/cloth.wav"
+    },
+    "battle_rifle_scoped_reload_chamber": {
+      "source": "res://audio/source/slide.wav",
+      "duration": 0.35,
+      "rate": 0.8,
+      "lowpass": 0,
+      "gain": 0.85,
+      "second": "res://audio/source/latch.wav"
+    },
+    "battle_rifle_scoped_shell_eject": {
+      "source": "res://audio/source/latch.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_scoped_shell_bounce": {
+      "source": "res://audio/source/shell.wav",
+      "duration": 0.14,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_scoped_zoom_in": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_scoped_zoom_out": {
+      "source": "res://audio/source/down.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "battle_rifle_scoped_zoom_step": {
+      "source": "res://audio/source/down.wav",
+      "duration": 0.2,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "annu_death": {
+      "source": "res://audio/source/death.wav",
+      "duration": 0.8,
+      "rate": 1.3,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "drill_loop": {
+      "source": "res://audio/source/engine.wav",
+      "duration": 1,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "fall_loop": {
+      "source": "res://audio/source/wind.wav",
+      "duration": 1.3,
+      "rate": 0.9,
+      "lowpass": 1600,
+      "gain": 0.85
+    },
+    "objective_complete": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.35,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "jump_grunt": {
+      "source": "res://audio/source/grunt.wav",
+      "duration": 0.25,
+      "rate": 1.5,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "land_grunt": {
+      "source": "res://audio/source/grunt.wav",
+      "duration": 0.25,
+      "rate": 1.5,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "player_pain": {
+      "source": "res://audio/source/grunt.wav",
+      "duration": 0.25,
+      "rate": 1.5,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_match_start": {
+      "source": "res://audio/source/announcer_match_start.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_10": {
+      "source": "res://audio/source/announcer_countdown_10.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_9": {
+      "source": "res://audio/source/announcer_countdown_9.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_8": {
+      "source": "res://audio/source/announcer_countdown_8.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_7": {
+      "source": "res://audio/source/announcer_countdown_7.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_6": {
+      "source": "res://audio/source/announcer_countdown_6.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_5": {
+      "source": "res://audio/source/announcer_countdown_5.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_4": {
+      "source": "res://audio/source/announcer_countdown_4.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_3": {
+      "source": "res://audio/source/announcer_countdown_3.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_2": {
+      "source": "res://audio/source/announcer_countdown_2.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_countdown_1": {
+      "source": "res://audio/source/announcer_countdown_1.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_match_one_minute": {
+      "source": "res://audio/source/announcer_match_one_minute.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_match_30_seconds": {
+      "source": "res://audio/source/announcer_match_30_seconds.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_match_end": {
+      "source": "res://audio/source/announcer_match_end.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_you_win": {
+      "source": "res://audio/source/announcer_you_win.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_you_lose": {
+      "source": "res://audio/source/announcer_you_lose.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_draw": {
+      "source": "res://audio/source/announcer_draw.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_round_start": {
+      "source": "res://audio/source/announcer_round_start.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_round_end": {
+      "source": "res://audio/source/announcer_round_end.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_halftime": {
+      "source": "res://audio/source/announcer_halftime.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_lead_taken": {
+      "source": "res://audio/source/announcer_lead_taken.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_lead_lost": {
+      "source": "res://audio/source/announcer_lead_lost.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_lead_tied": {
+      "source": "res://audio/source/announcer_lead_tied.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_team_lead_taken": {
+      "source": "res://audio/source/announcer_team_lead_taken.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_team_lead_lost": {
+      "source": "res://audio/source/announcer_team_lead_lost.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_kill_double": {
+      "source": "res://audio/source/announcer_kill_double.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_kill_triple": {
+      "source": "res://audio/source/announcer_kill_triple.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_kill_overkill": {
+      "source": "res://audio/source/announcer_kill_overkill.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_killing_spree": {
+      "source": "res://audio/source/announcer_killing_spree.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_running_riot": {
+      "source": "res://audio/source/announcer_running_riot.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_rampage": {
+      "source": "res://audio/source/announcer_rampage.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_untouchable": {
+      "source": "res://audio/source/announcer_untouchable.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_invincible": {
+      "source": "res://audio/source/announcer_invincible.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_headshot": {
+      "source": "res://audio/source/announcer_headshot.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_melee_kill": {
+      "source": "res://audio/source/announcer_melee_kill.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_grenade_kill": {
+      "source": "res://audio/source/announcer_grenade_kill.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_sniper_kill": {
+      "source": "res://audio/source/announcer_sniper_kill.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_revenge": {
+      "source": "res://audio/source/announcer_revenge.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_first_blood": {
+      "source": "res://audio/source/announcer_first_blood.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_betrayal": {
+      "source": "res://audio/source/announcer_betrayal.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_suicide": {
+      "source": "res://audio/source/announcer_suicide.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_bomb_planted": {
+      "source": "res://audio/source/announcer_bomb_planted.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "announcer_bomb_defused": {
+      "source": "res://audio/source/announcer_bomb_defused.wav",
+      "duration": 8,
+      "rate": 1.015,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "shield_glow_on_hit": {
+      "source": "res://audio/source/field.wav",
+      "duration": 0.24,
+      "rate": 1.2,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "body_phase_start": {
+      "source": "res://audio/source/field_break.wav",
+      "duration": 0.8,
+      "rate": 0.7,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "body_hit_shield_down": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.35,
+      "rate": 0.9,
+      "lowpass": 0,
+      "gain": 0.85,
+      "sources": [
+        "res://audio/source/impact_flesh_0.wav",
+        "res://audio/source/impact_flesh_1.wav",
+        "res://audio/source/impact_flesh_2.wav"
+      ]
+    },
+    "headshot_kill": {
+      "source": "res://audio/source/up.wav",
+      "duration": 0.35,
+      "rate": 1.1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "reticle_red_on": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "reticle_red_off": {
+      "source": "res://audio/source/ui.wav",
+      "duration": 0.23,
+      "rate": 1,
+      "lowpass": 0,
+      "gain": 0.85
+    },
+    "man_cannon_launch": {
+      "source": "res://audio/source/thruster.wav",
+      "duration": 0.7,
+      "rate": 0.85,
+      "gain": 0.85
+    }
+  }
+}

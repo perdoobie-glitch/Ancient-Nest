@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "debug_audio": false,
+  "defaults": {
+    "min_impact_speed": 1.5,
+    "bounce_cooldown": 0.08,
+    "bounce_sound_cap": 8,
+    "rest_speed": 0.35,
+    "wake_speed": 1.0,
+    "rest_seconds": 0.16,
+    "speed_for_full_gain": 10,
+    "min_gain_db": -24,
+    "pitch_at_min_speed": 1.04,
+    "pitch_at_max_speed": 0.96,
+    "fuse_pitch_start": 0.8,
+    "fuse_pitch_end": 1.65,
+    "fuse_seconds": 1.5,
+    "max_flight_seconds": 5,
+    "materials": [
+      "metal",
+      "concrete",
+      "dirt",
+      "grass",
+      "wood",
+      "sand",
+      "glass",
+      "water",
+      "flesh"
+    ],
+    "default_material": "concrete"
+  },
+  "grenades": [
+    {
+      "id": "frag_grenade",
+      "sticky": false
+    },
+    {
+      "id": "plasma_grenade",
+      "sticky": true
+    }
+  ]
+}

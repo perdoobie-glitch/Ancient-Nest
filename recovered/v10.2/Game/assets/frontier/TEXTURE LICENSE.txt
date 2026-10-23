@@ -1,0 +1,1 @@
+Frontier map texture sources: ambientCG Rock064, Rock058, Plaster007, Metal063, Rock063 and Ground103. CC0 1.0 public domain. Source: https://ambientcg.com/. Downsampled from the existing FPS Asset Kit to 768px JPEG for this game. New procedural masonry, alloy, moss and rock PNG maps are original project artwork.

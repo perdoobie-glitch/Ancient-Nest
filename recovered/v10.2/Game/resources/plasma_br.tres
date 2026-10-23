@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="NestWeapon" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/weapon_profile.gd" id="1"]
+[resource]
+script = ExtResource("1")
+kind = "plasma_br"
+title = "Plasma Scoped Battle Rifle"
+damage = 19.125
+magazine = 36
+reserve = 144
+interval = 0.78
+reload_seconds = 2
+automatic = false
+speed = 30.0
+pellets = 1
+max_range = 120
+precision = true
+explosive = false
+plasma = true
+spread_half_angle_deg = 0.16171875
+plasma_color = Color(1, 0.811765, 0.258824, 1)

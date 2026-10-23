@@ -1,0 +1,4893 @@
+{
+  "schema_version": 1,
+  "status": "sampled_combat_audio_v06",
+  "notes": [
+    "Replaces all v0.5 procedural noise SFX and Flite narration.",
+    "Real CC0 firearm recordings, sampled CC0 foley and sci-fi energy effects; original generic neural announcements.",
+    "Halo 3 inspired feedback and synchronization; independent assets, no Halo recordings."
+  ],
+  "defaults": {
+    "max_voices": 96,
+    "max_pending": 64,
+    "voice_limit": 6,
+    "volume_db": -12.0,
+    "pitch_range": [
+      1.0,
+      1.0
+    ],
+    "spatial": true,
+    "max_distance": 80.0,
+    "unit_size": 5.0,
+    "attenuation_filter_cutoff_hz": 5000.0,
+    "attenuation_filter_db": -18.0,
+    "doppler_tracking": 0,
+    "far_distance": 35.0,
+    "sound_speed": 343.0,
+    "bus": "SFX_Foley",
+    "preload": true,
+    "loop": false,
+    "gain_db": 0.0
+  },
+  "buses": [
+    {
+      "name": "Master",
+      "send": "",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "Master",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "master"
+      }
+    },
+    {
+      "name": "SFX_Weapons",
+      "send": "Master",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "Weapons",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "audio_sfx_weapons"
+      }
+    },
+    {
+      "name": "SFX_Explosions",
+      "send": "Master",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "Explosions",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "audio_sfx_explosions"
+      }
+    },
+    {
+      "name": "SFX_Foley",
+      "send": "Master",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "Foley",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "audio_sfx_foley"
+      }
+    },
+    {
+      "name": "SFX_Player",
+      "send": "Master",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "Player",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "audio_sfx_player"
+      }
+    },
+    {
+      "name": "Announcer",
+      "send": "Master",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "Announcer",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "audio_announcer"
+      }
+    },
+    {
+      "name": "UI",
+      "send": "Master",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "UI",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "audio_ui"
+      }
+    },
+    {
+      "name": "Music",
+      "send": "Master",
+      "volume_db": 0.0,
+      "slider": {
+        "label": "Menu music",
+        "min": 0.0,
+        "max": 1.0,
+        "step": 0.05,
+        "key": "audio_music"
+      }
+    }
+  ],
+  "sounds": {
+    "assault_rifle_fire_crack": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_crack_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_crack_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -15,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_fire_crack"
+    },
+    "assault_rifle_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_mechanical_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_mechanical_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_fire_mechanical"
+    },
+    "assault_rifle_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_tail_open_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_tail_open_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -24,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_fire_tail_open"
+    },
+    "assault_rifle_fire": {
+      "layers": [
+        "assault_rifle_fire_crack",
+        "assault_rifle_fire_mechanical",
+        "assault_rifle_fire_tail_open"
+      ],
+      "far_sound": "assault_rifle_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "assault_rifle_fire_distant": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_distant_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_distant_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_fire_distant"
+    },
+    "assault_rifle_dry_fire": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_dry_fire_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_dry_fire_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_dry_fire"
+    },
+    "assault_rifle_equip": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_equip_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_equip_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_equip"
+    },
+    "assault_rifle_unequip": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_unequip_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_unequip_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_unequip"
+    },
+    "assault_rifle_reload_magout": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_magout_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_magout_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_magout_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_reload_magout"
+    },
+    "assault_rifle_reload_magin": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_magin_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_magin_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_magin_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_reload_magin"
+    },
+    "assault_rifle_reload_chamber": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_chamber_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_chamber_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_reload_chamber_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_reload_chamber"
+    },
+    "assault_rifle_shell_eject": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_shell_eject_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_shell_eject_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_shell_eject_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_shell_eject"
+    },
+    "assault_rifle_shell_bounce": {
+      "files": [
+        "res://audio/weapons/assault_rifle/assault_rifle_shell_bounce_01.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_shell_bounce_02.ogg",
+        "res://audio/weapons/assault_rifle/assault_rifle_shell_bounce_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#assault_rifle_shell_bounce"
+    },
+    "battle_rifle_fire_crack": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_crack_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_crack_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -15,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_fire_crack"
+    },
+    "battle_rifle_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_mechanical_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_mechanical_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_fire_mechanical"
+    },
+    "battle_rifle_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_tail_open_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_tail_open_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -24,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_fire_tail_open"
+    },
+    "battle_rifle_fire": {
+      "layers": [
+        "battle_rifle_fire_crack",
+        "battle_rifle_fire_mechanical",
+        "battle_rifle_fire_tail_open"
+      ],
+      "far_sound": "battle_rifle_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "battle_rifle_fire_distant": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_distant_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_distant_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_fire_distant"
+    },
+    "battle_rifle_dry_fire": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_dry_fire_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_dry_fire_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_dry_fire"
+    },
+    "battle_rifle_equip": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_equip_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_equip_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_equip"
+    },
+    "battle_rifle_unequip": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_unequip_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_unequip_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_unequip"
+    },
+    "battle_rifle_reload_mag_release": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_mag_release_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_mag_release_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_mag_release_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_reload_mag_release"
+    },
+    "battle_rifle_reload_magout": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_magout_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_magout_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_magout_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_reload_magout"
+    },
+    "battle_rifle_reload_magin": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_magin_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_magin_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_magin_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_reload_magin"
+    },
+    "battle_rifle_reload_chamber": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_chamber_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_chamber_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_reload_chamber_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_reload_chamber"
+    },
+    "battle_rifle_shell_eject": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_shell_eject_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_shell_eject_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_shell_eject_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_shell_eject"
+    },
+    "battle_rifle_shell_bounce": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_shell_bounce_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_shell_bounce_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_shell_bounce_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_shell_bounce"
+    },
+    "magnum_fire_crack": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_fire_crack_01.ogg",
+        "res://audio/weapons/magnum/magnum_fire_crack_02.ogg",
+        "res://audio/weapons/magnum/magnum_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -15,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_fire_crack"
+    },
+    "magnum_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_fire_mechanical_01.ogg",
+        "res://audio/weapons/magnum/magnum_fire_mechanical_02.ogg",
+        "res://audio/weapons/magnum/magnum_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_fire_mechanical"
+    },
+    "magnum_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_fire_tail_open_01.ogg",
+        "res://audio/weapons/magnum/magnum_fire_tail_open_02.ogg",
+        "res://audio/weapons/magnum/magnum_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -24,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_fire_tail_open"
+    },
+    "magnum_fire": {
+      "layers": [
+        "magnum_fire_crack",
+        "magnum_fire_mechanical",
+        "magnum_fire_tail_open"
+      ],
+      "far_sound": "magnum_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "magnum_fire_distant": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_fire_distant_01.ogg",
+        "res://audio/weapons/magnum/magnum_fire_distant_02.ogg",
+        "res://audio/weapons/magnum/magnum_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_fire_distant"
+    },
+    "magnum_dry_fire": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_dry_fire_01.ogg",
+        "res://audio/weapons/magnum/magnum_dry_fire_02.ogg",
+        "res://audio/weapons/magnum/magnum_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_dry_fire"
+    },
+    "magnum_equip": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_equip_01.ogg",
+        "res://audio/weapons/magnum/magnum_equip_02.ogg",
+        "res://audio/weapons/magnum/magnum_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_equip"
+    },
+    "magnum_unequip": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_unequip_01.ogg",
+        "res://audio/weapons/magnum/magnum_unequip_02.ogg",
+        "res://audio/weapons/magnum/magnum_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_unequip"
+    },
+    "magnum_reload_magout": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_reload_magout_01.ogg",
+        "res://audio/weapons/magnum/magnum_reload_magout_02.ogg",
+        "res://audio/weapons/magnum/magnum_reload_magout_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_reload_magout"
+    },
+    "magnum_reload_magin": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_reload_magin_01.ogg",
+        "res://audio/weapons/magnum/magnum_reload_magin_02.ogg",
+        "res://audio/weapons/magnum/magnum_reload_magin_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_reload_magin"
+    },
+    "magnum_reload_slide_release": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_reload_slide_release_01.ogg",
+        "res://audio/weapons/magnum/magnum_reload_slide_release_02.ogg",
+        "res://audio/weapons/magnum/magnum_reload_slide_release_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -28,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_reload_slide_release"
+    },
+    "magnum_shell_eject": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_shell_eject_01.ogg",
+        "res://audio/weapons/magnum/magnum_shell_eject_02.ogg",
+        "res://audio/weapons/magnum/magnum_shell_eject_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_shell_eject"
+    },
+    "magnum_shell_bounce": {
+      "files": [
+        "res://audio/weapons/magnum/magnum_shell_bounce_01.ogg",
+        "res://audio/weapons/magnum/magnum_shell_bounce_02.ogg",
+        "res://audio/weapons/magnum/magnum_shell_bounce_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#magnum_shell_bounce"
+    },
+    "shotgun_fire_crack": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_fire_crack_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_crack_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -15,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_fire_crack"
+    },
+    "shotgun_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_fire_mechanical_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_mechanical_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_fire_mechanical"
+    },
+    "shotgun_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_fire_tail_open_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_tail_open_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -24,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_fire_tail_open"
+    },
+    "shotgun_fire": {
+      "layers": [
+        "shotgun_fire_crack",
+        "shotgun_fire_mechanical",
+        "shotgun_fire_tail_open"
+      ],
+      "far_sound": "shotgun_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "shotgun_fire_distant": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_fire_distant_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_distant_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_fire_distant"
+    },
+    "shotgun_dry_fire": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_dry_fire_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_dry_fire_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_dry_fire"
+    },
+    "shotgun_equip": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_equip_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_equip_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_equip"
+    },
+    "shotgun_unequip": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_unequip_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_unequip_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_unequip"
+    },
+    "shotgun_reload_shell_insert": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_reload_shell_insert_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_reload_shell_insert_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_reload_shell_insert_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_reload_shell_insert"
+    },
+    "shotgun_reload_chamber": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_reload_chamber_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_reload_chamber_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_reload_chamber_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_reload_chamber"
+    },
+    "shotgun_pump": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_pump_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_pump_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_pump_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_pump"
+    },
+    "shotgun_shell_eject": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_shell_eject_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_shell_eject_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_shell_eject_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_shell_eject"
+    },
+    "shotgun_shell_bounce": {
+      "files": [
+        "res://audio/weapons/shotgun/shotgun_shell_bounce_01.ogg",
+        "res://audio/weapons/shotgun/shotgun_shell_bounce_02.ogg",
+        "res://audio/weapons/shotgun/shotgun_shell_bounce_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shotgun_shell_bounce"
+    },
+    "sniper_rifle_fire_crack": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_crack_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_crack_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -15,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_fire_crack"
+    },
+    "sniper_rifle_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_mechanical_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_mechanical_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_fire_mechanical"
+    },
+    "sniper_rifle_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_tail_open_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_tail_open_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -24,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_fire_tail_open"
+    },
+    "sniper_rifle_fire": {
+      "layers": [
+        "sniper_rifle_fire_crack",
+        "sniper_rifle_fire_mechanical",
+        "sniper_rifle_fire_tail_open"
+      ],
+      "far_sound": "sniper_rifle_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "sniper_rifle_fire_distant": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_distant_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_distant_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_fire_distant"
+    },
+    "sniper_rifle_dry_fire": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_dry_fire_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_dry_fire_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_dry_fire"
+    },
+    "sniper_rifle_equip": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_equip_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_equip_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_equip"
+    },
+    "sniper_rifle_unequip": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_unequip_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_unequip_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_unequip"
+    },
+    "sniper_rifle_reload_magout": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_magout_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_magout_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_magout_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_reload_magout"
+    },
+    "sniper_rifle_reload_magin": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_magin_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_magin_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_magin_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_reload_magin"
+    },
+    "sniper_rifle_reload_bolt": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_bolt_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_bolt_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_reload_bolt_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_reload_bolt"
+    },
+    "sniper_rifle_zoom_in": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_in_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_in_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_in_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_zoom_in"
+    },
+    "sniper_rifle_zoom_out": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_out_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_out_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_out_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_zoom_out"
+    },
+    "sniper_rifle_zoom_step": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_step_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_step_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_zoom_step_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_zoom_step"
+    },
+    "sniper_rifle_bolt_cycle": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_bolt_cycle_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_bolt_cycle_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_bolt_cycle_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_bolt_cycle"
+    },
+    "sniper_rifle_shell_eject": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_shell_eject_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_shell_eject_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_shell_eject_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_shell_eject"
+    },
+    "sniper_rifle_shell_bounce": {
+      "files": [
+        "res://audio/weapons/sniper_rifle/sniper_rifle_shell_bounce_01.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_shell_bounce_02.ogg",
+        "res://audio/weapons/sniper_rifle/sniper_rifle_shell_bounce_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#sniper_rifle_shell_bounce"
+    },
+    "rocket_launcher_fire_crack": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_crack_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_crack_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -16,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_fire_crack"
+    },
+    "rocket_launcher_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_mechanical_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_mechanical_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -16,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_fire_mechanical"
+    },
+    "rocket_launcher_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_tail_open_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_tail_open_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -16,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_fire_tail_open"
+    },
+    "rocket_launcher_fire": {
+      "layers": [
+        "rocket_launcher_fire_crack",
+        "rocket_launcher_fire_mechanical",
+        "rocket_launcher_fire_tail_open"
+      ],
+      "far_sound": "rocket_launcher_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "rocket_launcher_fire_distant": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_distant_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_distant_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -16,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_fire_distant"
+    },
+    "rocket_launcher_dry_fire": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_dry_fire_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_dry_fire_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_dry_fire"
+    },
+    "rocket_launcher_equip": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_equip_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_equip_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_equip"
+    },
+    "rocket_launcher_unequip": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_unequip_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_unequip_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_unequip"
+    },
+    "rocket_launcher_reload_latch_open": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_latch_open_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_latch_open_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_latch_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -28,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_reload_latch_open"
+    },
+    "rocket_launcher_reload_rocket_insert": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_rocket_insert_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_rocket_insert_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_rocket_insert_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -28,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_reload_rocket_insert"
+    },
+    "rocket_launcher_reload_latch_close": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_latch_close_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_latch_close_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_reload_latch_close_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -28,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_reload_latch_close"
+    },
+    "rocket_launcher_flight": {
+      "files": [
+        "res://audio/weapons/rocket_launcher/rocket_launcher_flight_01.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_flight_02.ogg",
+        "res://audio/weapons/rocket_launcher/rocket_launcher_flight_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": true,
+      "asset_recipe": "data/audio_recipes.json#rocket_launcher_flight"
+    },
+    "ak47_fire_crack": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_fire_crack_01.ogg",
+        "res://audio/weapons/ak47/ak47_fire_crack_02.ogg",
+        "res://audio/weapons/ak47/ak47_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -15,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_fire_crack"
+    },
+    "ak47_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_fire_mechanical_01.ogg",
+        "res://audio/weapons/ak47/ak47_fire_mechanical_02.ogg",
+        "res://audio/weapons/ak47/ak47_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_fire_mechanical"
+    },
+    "ak47_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_fire_tail_open_01.ogg",
+        "res://audio/weapons/ak47/ak47_fire_tail_open_02.ogg",
+        "res://audio/weapons/ak47/ak47_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -24,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_fire_tail_open"
+    },
+    "ak47_fire": {
+      "layers": [
+        "ak47_fire_crack",
+        "ak47_fire_mechanical",
+        "ak47_fire_tail_open"
+      ],
+      "far_sound": "ak47_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "ak47_fire_distant": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_fire_distant_01.ogg",
+        "res://audio/weapons/ak47/ak47_fire_distant_02.ogg",
+        "res://audio/weapons/ak47/ak47_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_fire_distant"
+    },
+    "ak47_dry_fire": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_dry_fire_01.ogg",
+        "res://audio/weapons/ak47/ak47_dry_fire_02.ogg",
+        "res://audio/weapons/ak47/ak47_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_dry_fire"
+    },
+    "ak47_equip": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_equip_01.ogg",
+        "res://audio/weapons/ak47/ak47_equip_02.ogg",
+        "res://audio/weapons/ak47/ak47_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_equip"
+    },
+    "ak47_unequip": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_unequip_01.ogg",
+        "res://audio/weapons/ak47/ak47_unequip_02.ogg",
+        "res://audio/weapons/ak47/ak47_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_unequip"
+    },
+    "ak47_reload_magout": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_reload_magout_01.ogg",
+        "res://audio/weapons/ak47/ak47_reload_magout_02.ogg",
+        "res://audio/weapons/ak47/ak47_reload_magout_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_reload_magout"
+    },
+    "ak47_reload_magin": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_reload_magin_01.ogg",
+        "res://audio/weapons/ak47/ak47_reload_magin_02.ogg",
+        "res://audio/weapons/ak47/ak47_reload_magin_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_reload_magin"
+    },
+    "ak47_reload_chamber": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_reload_chamber_01.ogg",
+        "res://audio/weapons/ak47/ak47_reload_chamber_02.ogg",
+        "res://audio/weapons/ak47/ak47_reload_chamber_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_reload_chamber"
+    },
+    "ak47_shell_eject": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_shell_eject_01.ogg",
+        "res://audio/weapons/ak47/ak47_shell_eject_02.ogg",
+        "res://audio/weapons/ak47/ak47_shell_eject_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_shell_eject"
+    },
+    "ak47_shell_bounce": {
+      "files": [
+        "res://audio/weapons/ak47/ak47_shell_bounce_01.ogg",
+        "res://audio/weapons/ak47/ak47_shell_bounce_02.ogg",
+        "res://audio/weapons/ak47/ak47_shell_bounce_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ak47_shell_bounce"
+    },
+    "grenade_bounce_metal": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_metal_01.ogg",
+        "res://audio/grenades/grenade_bounce_metal_02.ogg",
+        "res://audio/grenades/grenade_bounce_metal_03.ogg",
+        "res://audio/grenades/grenade_bounce_metal_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_metal"
+    },
+    "bullet_impact_metal": {
+      "files": [
+        "res://audio/impacts/bullet_impact_metal_01.ogg",
+        "res://audio/impacts/bullet_impact_metal_02.ogg",
+        "res://audio/impacts/bullet_impact_metal_03.ogg",
+        "res://audio/impacts/bullet_impact_metal_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_metal",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_metal_walk": {
+      "files": [
+        "res://audio/player/footstep_metal_walk_01.ogg",
+        "res://audio/player/footstep_metal_walk_02.ogg",
+        "res://audio/player/footstep_metal_walk_03.ogg",
+        "res://audio/player/footstep_metal_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_metal_walk"
+    },
+    "footstep_metal_crouch": {
+      "files": [
+        "res://audio/player/footstep_metal_crouch_01.ogg",
+        "res://audio/player/footstep_metal_crouch_02.ogg",
+        "res://audio/player/footstep_metal_crouch_03.ogg",
+        "res://audio/player/footstep_metal_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_metal_crouch"
+    },
+    "footstep_metal_land_soft": {
+      "files": [
+        "res://audio/player/footstep_metal_land_soft_01.ogg",
+        "res://audio/player/footstep_metal_land_soft_02.ogg",
+        "res://audio/player/footstep_metal_land_soft_03.ogg",
+        "res://audio/player/footstep_metal_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_metal_land_soft"
+    },
+    "footstep_metal_land_hard": {
+      "files": [
+        "res://audio/player/footstep_metal_land_hard_01.ogg",
+        "res://audio/player/footstep_metal_land_hard_02.ogg",
+        "res://audio/player/footstep_metal_land_hard_03.ogg",
+        "res://audio/player/footstep_metal_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_metal_land_hard"
+    },
+    "grenade_bounce_concrete": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_concrete_01.ogg",
+        "res://audio/grenades/grenade_bounce_concrete_02.ogg",
+        "res://audio/grenades/grenade_bounce_concrete_03.ogg",
+        "res://audio/grenades/grenade_bounce_concrete_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_concrete"
+    },
+    "bullet_impact_concrete": {
+      "files": [
+        "res://audio/impacts/bullet_impact_concrete_01.ogg",
+        "res://audio/impacts/bullet_impact_concrete_02.ogg",
+        "res://audio/impacts/bullet_impact_concrete_03.ogg",
+        "res://audio/impacts/bullet_impact_concrete_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_concrete",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_concrete_walk": {
+      "files": [
+        "res://audio/player/footstep_concrete_walk_01.ogg",
+        "res://audio/player/footstep_concrete_walk_02.ogg",
+        "res://audio/player/footstep_concrete_walk_03.ogg",
+        "res://audio/player/footstep_concrete_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_concrete_walk"
+    },
+    "footstep_concrete_crouch": {
+      "files": [
+        "res://audio/player/footstep_concrete_crouch_01.ogg",
+        "res://audio/player/footstep_concrete_crouch_02.ogg",
+        "res://audio/player/footstep_concrete_crouch_03.ogg",
+        "res://audio/player/footstep_concrete_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_concrete_crouch"
+    },
+    "footstep_concrete_land_soft": {
+      "files": [
+        "res://audio/player/footstep_concrete_land_soft_01.ogg",
+        "res://audio/player/footstep_concrete_land_soft_02.ogg",
+        "res://audio/player/footstep_concrete_land_soft_03.ogg",
+        "res://audio/player/footstep_concrete_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_concrete_land_soft"
+    },
+    "footstep_concrete_land_hard": {
+      "files": [
+        "res://audio/player/footstep_concrete_land_hard_01.ogg",
+        "res://audio/player/footstep_concrete_land_hard_02.ogg",
+        "res://audio/player/footstep_concrete_land_hard_03.ogg",
+        "res://audio/player/footstep_concrete_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_concrete_land_hard"
+    },
+    "grenade_bounce_dirt": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_dirt_01.ogg",
+        "res://audio/grenades/grenade_bounce_dirt_02.ogg",
+        "res://audio/grenades/grenade_bounce_dirt_03.ogg",
+        "res://audio/grenades/grenade_bounce_dirt_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_dirt"
+    },
+    "bullet_impact_dirt": {
+      "files": [
+        "res://audio/impacts/bullet_impact_dirt_01.ogg",
+        "res://audio/impacts/bullet_impact_dirt_02.ogg",
+        "res://audio/impacts/bullet_impact_dirt_03.ogg",
+        "res://audio/impacts/bullet_impact_dirt_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_dirt",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_dirt_walk": {
+      "files": [
+        "res://audio/player/footstep_dirt_walk_01.ogg",
+        "res://audio/player/footstep_dirt_walk_02.ogg",
+        "res://audio/player/footstep_dirt_walk_03.ogg",
+        "res://audio/player/footstep_dirt_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_dirt_walk"
+    },
+    "footstep_dirt_crouch": {
+      "files": [
+        "res://audio/player/footstep_dirt_crouch_01.ogg",
+        "res://audio/player/footstep_dirt_crouch_02.ogg",
+        "res://audio/player/footstep_dirt_crouch_03.ogg",
+        "res://audio/player/footstep_dirt_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_dirt_crouch"
+    },
+    "footstep_dirt_land_soft": {
+      "files": [
+        "res://audio/player/footstep_dirt_land_soft_01.ogg",
+        "res://audio/player/footstep_dirt_land_soft_02.ogg",
+        "res://audio/player/footstep_dirt_land_soft_03.ogg",
+        "res://audio/player/footstep_dirt_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_dirt_land_soft"
+    },
+    "footstep_dirt_land_hard": {
+      "files": [
+        "res://audio/player/footstep_dirt_land_hard_01.ogg",
+        "res://audio/player/footstep_dirt_land_hard_02.ogg",
+        "res://audio/player/footstep_dirt_land_hard_03.ogg",
+        "res://audio/player/footstep_dirt_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_dirt_land_hard"
+    },
+    "grenade_bounce_grass": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_grass_01.ogg",
+        "res://audio/grenades/grenade_bounce_grass_02.ogg",
+        "res://audio/grenades/grenade_bounce_grass_03.ogg",
+        "res://audio/grenades/grenade_bounce_grass_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_grass"
+    },
+    "bullet_impact_grass": {
+      "files": [
+        "res://audio/impacts/bullet_impact_grass_01.ogg",
+        "res://audio/impacts/bullet_impact_grass_02.ogg",
+        "res://audio/impacts/bullet_impact_grass_03.ogg",
+        "res://audio/impacts/bullet_impact_grass_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_grass",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_grass_walk": {
+      "files": [
+        "res://audio/player/footstep_grass_walk_01.ogg",
+        "res://audio/player/footstep_grass_walk_02.ogg",
+        "res://audio/player/footstep_grass_walk_03.ogg",
+        "res://audio/player/footstep_grass_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_grass_walk"
+    },
+    "footstep_grass_crouch": {
+      "files": [
+        "res://audio/player/footstep_grass_crouch_01.ogg",
+        "res://audio/player/footstep_grass_crouch_02.ogg",
+        "res://audio/player/footstep_grass_crouch_03.ogg",
+        "res://audio/player/footstep_grass_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_grass_crouch"
+    },
+    "footstep_grass_land_soft": {
+      "files": [
+        "res://audio/player/footstep_grass_land_soft_01.ogg",
+        "res://audio/player/footstep_grass_land_soft_02.ogg",
+        "res://audio/player/footstep_grass_land_soft_03.ogg",
+        "res://audio/player/footstep_grass_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_grass_land_soft"
+    },
+    "footstep_grass_land_hard": {
+      "files": [
+        "res://audio/player/footstep_grass_land_hard_01.ogg",
+        "res://audio/player/footstep_grass_land_hard_02.ogg",
+        "res://audio/player/footstep_grass_land_hard_03.ogg",
+        "res://audio/player/footstep_grass_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_grass_land_hard"
+    },
+    "grenade_bounce_wood": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_wood_01.ogg",
+        "res://audio/grenades/grenade_bounce_wood_02.ogg",
+        "res://audio/grenades/grenade_bounce_wood_03.ogg",
+        "res://audio/grenades/grenade_bounce_wood_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_wood"
+    },
+    "bullet_impact_wood": {
+      "files": [
+        "res://audio/impacts/bullet_impact_wood_01.ogg",
+        "res://audio/impacts/bullet_impact_wood_02.ogg",
+        "res://audio/impacts/bullet_impact_wood_03.ogg",
+        "res://audio/impacts/bullet_impact_wood_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_wood",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_wood_walk": {
+      "files": [
+        "res://audio/player/footstep_wood_walk_01.ogg",
+        "res://audio/player/footstep_wood_walk_02.ogg",
+        "res://audio/player/footstep_wood_walk_03.ogg",
+        "res://audio/player/footstep_wood_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_wood_walk"
+    },
+    "footstep_wood_crouch": {
+      "files": [
+        "res://audio/player/footstep_wood_crouch_01.ogg",
+        "res://audio/player/footstep_wood_crouch_02.ogg",
+        "res://audio/player/footstep_wood_crouch_03.ogg",
+        "res://audio/player/footstep_wood_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_wood_crouch"
+    },
+    "footstep_wood_land_soft": {
+      "files": [
+        "res://audio/player/footstep_wood_land_soft_01.ogg",
+        "res://audio/player/footstep_wood_land_soft_02.ogg",
+        "res://audio/player/footstep_wood_land_soft_03.ogg",
+        "res://audio/player/footstep_wood_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_wood_land_soft"
+    },
+    "footstep_wood_land_hard": {
+      "files": [
+        "res://audio/player/footstep_wood_land_hard_01.ogg",
+        "res://audio/player/footstep_wood_land_hard_02.ogg",
+        "res://audio/player/footstep_wood_land_hard_03.ogg",
+        "res://audio/player/footstep_wood_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_wood_land_hard"
+    },
+    "grenade_bounce_sand": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_sand_01.ogg",
+        "res://audio/grenades/grenade_bounce_sand_02.ogg",
+        "res://audio/grenades/grenade_bounce_sand_03.ogg",
+        "res://audio/grenades/grenade_bounce_sand_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_sand"
+    },
+    "bullet_impact_sand": {
+      "files": [
+        "res://audio/impacts/bullet_impact_sand_01.ogg",
+        "res://audio/impacts/bullet_impact_sand_02.ogg",
+        "res://audio/impacts/bullet_impact_sand_03.ogg",
+        "res://audio/impacts/bullet_impact_sand_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_sand",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_sand_walk": {
+      "files": [
+        "res://audio/player/footstep_sand_walk_01.ogg",
+        "res://audio/player/footstep_sand_walk_02.ogg",
+        "res://audio/player/footstep_sand_walk_03.ogg",
+        "res://audio/player/footstep_sand_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_sand_walk"
+    },
+    "footstep_sand_crouch": {
+      "files": [
+        "res://audio/player/footstep_sand_crouch_01.ogg",
+        "res://audio/player/footstep_sand_crouch_02.ogg",
+        "res://audio/player/footstep_sand_crouch_03.ogg",
+        "res://audio/player/footstep_sand_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_sand_crouch"
+    },
+    "footstep_sand_land_soft": {
+      "files": [
+        "res://audio/player/footstep_sand_land_soft_01.ogg",
+        "res://audio/player/footstep_sand_land_soft_02.ogg",
+        "res://audio/player/footstep_sand_land_soft_03.ogg",
+        "res://audio/player/footstep_sand_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_sand_land_soft"
+    },
+    "footstep_sand_land_hard": {
+      "files": [
+        "res://audio/player/footstep_sand_land_hard_01.ogg",
+        "res://audio/player/footstep_sand_land_hard_02.ogg",
+        "res://audio/player/footstep_sand_land_hard_03.ogg",
+        "res://audio/player/footstep_sand_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_sand_land_hard"
+    },
+    "grenade_bounce_glass": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_glass_01.ogg",
+        "res://audio/grenades/grenade_bounce_glass_02.ogg",
+        "res://audio/grenades/grenade_bounce_glass_03.ogg",
+        "res://audio/grenades/grenade_bounce_glass_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_glass"
+    },
+    "bullet_impact_glass": {
+      "files": [
+        "res://audio/impacts/bullet_impact_glass_01.ogg",
+        "res://audio/impacts/bullet_impact_glass_02.ogg",
+        "res://audio/impacts/bullet_impact_glass_03.ogg",
+        "res://audio/impacts/bullet_impact_glass_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_glass",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_glass_walk": {
+      "files": [
+        "res://audio/player/footstep_glass_walk_01.ogg",
+        "res://audio/player/footstep_glass_walk_02.ogg",
+        "res://audio/player/footstep_glass_walk_03.ogg",
+        "res://audio/player/footstep_glass_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_glass_walk"
+    },
+    "footstep_glass_crouch": {
+      "files": [
+        "res://audio/player/footstep_glass_crouch_01.ogg",
+        "res://audio/player/footstep_glass_crouch_02.ogg",
+        "res://audio/player/footstep_glass_crouch_03.ogg",
+        "res://audio/player/footstep_glass_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_glass_crouch"
+    },
+    "footstep_glass_land_soft": {
+      "files": [
+        "res://audio/player/footstep_glass_land_soft_01.ogg",
+        "res://audio/player/footstep_glass_land_soft_02.ogg",
+        "res://audio/player/footstep_glass_land_soft_03.ogg",
+        "res://audio/player/footstep_glass_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_glass_land_soft"
+    },
+    "footstep_glass_land_hard": {
+      "files": [
+        "res://audio/player/footstep_glass_land_hard_01.ogg",
+        "res://audio/player/footstep_glass_land_hard_02.ogg",
+        "res://audio/player/footstep_glass_land_hard_03.ogg",
+        "res://audio/player/footstep_glass_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_glass_land_hard"
+    },
+    "grenade_bounce_water": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_water_01.ogg",
+        "res://audio/grenades/grenade_bounce_water_02.ogg",
+        "res://audio/grenades/grenade_bounce_water_03.ogg",
+        "res://audio/grenades/grenade_bounce_water_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_water"
+    },
+    "bullet_impact_water": {
+      "files": [
+        "res://audio/impacts/bullet_impact_water_01.ogg",
+        "res://audio/impacts/bullet_impact_water_02.ogg",
+        "res://audio/impacts/bullet_impact_water_03.ogg",
+        "res://audio/impacts/bullet_impact_water_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_water",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_water_walk": {
+      "files": [
+        "res://audio/player/footstep_water_walk_01.ogg",
+        "res://audio/player/footstep_water_walk_02.ogg",
+        "res://audio/player/footstep_water_walk_03.ogg",
+        "res://audio/player/footstep_water_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_water_walk"
+    },
+    "footstep_water_crouch": {
+      "files": [
+        "res://audio/player/footstep_water_crouch_01.ogg",
+        "res://audio/player/footstep_water_crouch_02.ogg",
+        "res://audio/player/footstep_water_crouch_03.ogg",
+        "res://audio/player/footstep_water_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_water_crouch"
+    },
+    "footstep_water_land_soft": {
+      "files": [
+        "res://audio/player/footstep_water_land_soft_01.ogg",
+        "res://audio/player/footstep_water_land_soft_02.ogg",
+        "res://audio/player/footstep_water_land_soft_03.ogg",
+        "res://audio/player/footstep_water_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_water_land_soft"
+    },
+    "footstep_water_land_hard": {
+      "files": [
+        "res://audio/player/footstep_water_land_hard_01.ogg",
+        "res://audio/player/footstep_water_land_hard_02.ogg",
+        "res://audio/player/footstep_water_land_hard_03.ogg",
+        "res://audio/player/footstep_water_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_water_land_hard"
+    },
+    "grenade_bounce_flesh": {
+      "files": [
+        "res://audio/grenades/grenade_bounce_flesh_01.ogg",
+        "res://audio/grenades/grenade_bounce_flesh_02.ogg",
+        "res://audio/grenades/grenade_bounce_flesh_03.ogg",
+        "res://audio/grenades/grenade_bounce_flesh_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#grenade_bounce_flesh"
+    },
+    "bullet_impact_flesh": {
+      "files": [
+        "res://audio/impacts/bullet_impact_flesh_01.ogg",
+        "res://audio/impacts/bullet_impact_flesh_02.ogg",
+        "res://audio/impacts/bullet_impact_flesh_03.ogg",
+        "res://audio/impacts/bullet_impact_flesh_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_impact_flesh",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "footstep_flesh_walk": {
+      "files": [
+        "res://audio/player/footstep_flesh_walk_01.ogg",
+        "res://audio/player/footstep_flesh_walk_02.ogg",
+        "res://audio/player/footstep_flesh_walk_03.ogg",
+        "res://audio/player/footstep_flesh_walk_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -25,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_flesh_walk"
+    },
+    "footstep_flesh_crouch": {
+      "files": [
+        "res://audio/player/footstep_flesh_crouch_01.ogg",
+        "res://audio/player/footstep_flesh_crouch_02.ogg",
+        "res://audio/player/footstep_flesh_crouch_03.ogg",
+        "res://audio/player/footstep_flesh_crouch_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_flesh_crouch"
+    },
+    "footstep_flesh_land_soft": {
+      "files": [
+        "res://audio/player/footstep_flesh_land_soft_01.ogg",
+        "res://audio/player/footstep_flesh_land_soft_02.ogg",
+        "res://audio/player/footstep_flesh_land_soft_03.ogg",
+        "res://audio/player/footstep_flesh_land_soft_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -39,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_flesh_land_soft"
+    },
+    "footstep_flesh_land_hard": {
+      "files": [
+        "res://audio/player/footstep_flesh_land_hard_01.ogg",
+        "res://audio/player/footstep_flesh_land_hard_02.ogg",
+        "res://audio/player/footstep_flesh_land_hard_03.ogg",
+        "res://audio/player/footstep_flesh_land_hard_04.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -36,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#footstep_flesh_land_hard"
+    },
+    "frag_grenade_throw": {
+      "files": [
+        "res://audio/grenades/frag_grenade_throw_01.ogg",
+        "res://audio/grenades/frag_grenade_throw_02.ogg",
+        "res://audio/grenades/frag_grenade_throw_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -26,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#frag_grenade_throw"
+    },
+    "frag_grenade_arm": {
+      "files": [
+        "res://audio/grenades/frag_grenade_arm_01.ogg",
+        "res://audio/grenades/frag_grenade_arm_02.ogg",
+        "res://audio/grenades/frag_grenade_arm_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#frag_grenade_arm"
+    },
+    "frag_grenade_settle": {
+      "files": [
+        "res://audio/grenades/frag_grenade_settle_01.ogg",
+        "res://audio/grenades/frag_grenade_settle_02.ogg",
+        "res://audio/grenades/frag_grenade_settle_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#frag_grenade_settle"
+    },
+    "frag_grenade_explosion_close": {
+      "files": [
+        "res://audio/grenades/frag_grenade_explosion_close_01.ogg",
+        "res://audio/grenades/frag_grenade_explosion_close_02.ogg",
+        "res://audio/grenades/frag_grenade_explosion_close_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -15,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#frag_grenade_explosion_close"
+    },
+    "frag_grenade_explosion_far": {
+      "files": [
+        "res://audio/grenades/frag_grenade_explosion_far_01.ogg",
+        "res://audio/grenades/frag_grenade_explosion_far_02.ogg",
+        "res://audio/grenades/frag_grenade_explosion_far_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -23,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#frag_grenade_explosion_far"
+    },
+    "frag_grenade_explosion": {
+      "layers": [
+        "frag_grenade_explosion_close"
+      ],
+      "far_sound": "frag_grenade_explosion_far",
+      "delay_far": true,
+      "bus": "SFX_Explosions",
+      "spatial": true
+    },
+    "plasma_grenade_throw": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_throw_01.ogg",
+        "res://audio/grenades/plasma_grenade_throw_02.ogg",
+        "res://audio/grenades/plasma_grenade_throw_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -26,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_throw"
+    },
+    "plasma_grenade_arm": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_arm_01.ogg",
+        "res://audio/grenades/plasma_grenade_arm_02.ogg",
+        "res://audio/grenades/plasma_grenade_arm_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_arm"
+    },
+    "plasma_grenade_settle": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_settle_01.ogg",
+        "res://audio/grenades/plasma_grenade_settle_02.ogg",
+        "res://audio/grenades/plasma_grenade_settle_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_settle"
+    },
+    "plasma_grenade_fuse": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_fuse_01.ogg",
+        "res://audio/grenades/plasma_grenade_fuse_02.ogg",
+        "res://audio/grenades/plasma_grenade_fuse_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": true,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_fuse"
+    },
+    "plasma_grenade_stick": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_stick_01.ogg",
+        "res://audio/grenades/plasma_grenade_stick_02.ogg",
+        "res://audio/grenades/plasma_grenade_stick_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_stick"
+    },
+    "plasma_grenade_stuck_warning": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_stuck_warning_01.ogg",
+        "res://audio/grenades/plasma_grenade_stuck_warning_02.ogg",
+        "res://audio/grenades/plasma_grenade_stuck_warning_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_stuck_warning"
+    },
+    "plasma_grenade_explosion_close": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_explosion_close_01.ogg",
+        "res://audio/grenades/plasma_grenade_explosion_close_02.ogg",
+        "res://audio/grenades/plasma_grenade_explosion_close_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -15,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_explosion_close"
+    },
+    "plasma_grenade_explosion_far": {
+      "files": [
+        "res://audio/grenades/plasma_grenade_explosion_far_01.ogg",
+        "res://audio/grenades/plasma_grenade_explosion_far_02.ogg",
+        "res://audio/grenades/plasma_grenade_explosion_far_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -23,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#plasma_grenade_explosion_far"
+    },
+    "plasma_grenade_explosion": {
+      "layers": [
+        "plasma_grenade_explosion_close"
+      ],
+      "far_sound": "plasma_grenade_explosion_far",
+      "delay_far": true,
+      "bus": "SFX_Explosions",
+      "spatial": true
+    },
+    "naki_shield_hit_light": {
+      "files": [
+        "res://audio/shields/naki_shield_hit_light_01.ogg",
+        "res://audio/shields/naki_shield_hit_light_02.ogg",
+        "res://audio/shields/naki_shield_hit_light_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -18,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#naki_shield_hit_light",
+      "listener_max_distance": 4.572
+    },
+    "naki_shield_hit_heavy": {
+      "files": [
+        "res://audio/shields/naki_shield_hit_heavy_01.ogg",
+        "res://audio/shields/naki_shield_hit_heavy_02.ogg",
+        "res://audio/shields/naki_shield_hit_heavy_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -18,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#naki_shield_hit_heavy",
+      "listener_max_distance": 4.572
+    },
+    "naki_shield_low_warning": {
+      "files": [
+        "res://audio/shields/naki_shields_off_beep.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -19,
+      "pitch_range": [
+        1.0,
+        1.0
+      ],
+      "spatial": false,
+      "loop": true,
+      "asset_recipe": "Original synthesized 740 Hz soft pulse, 85 ms raised-cosine envelope per 1.2-second loop; no samples."
+    },
+    "naki_shield_break": {
+      "files": [
+        "res://audio/shields/naki_shield_break_01.ogg",
+        "res://audio/shields/naki_shield_break_02.ogg",
+        "res://audio/shields/naki_shield_break_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -17,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#naki_shield_break",
+      "listener_max_distance": 4.572
+    },
+    "naki_shield_recharge_start": {
+      "files": [
+        "res://audio/shields/naki_shield_recharge_start_01.ogg",
+        "res://audio/shields/naki_shield_recharge_start_02.ogg",
+        "res://audio/shields/naki_shield_recharge_start_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -28,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#naki_shield_recharge_start"
+    },
+    "naki_shield_recharge_loop": {
+      "files": [
+        "res://audio/shields/naki_shield_recharge_loop_01.ogg",
+        "res://audio/shields/naki_shield_recharge_loop_02.ogg",
+        "res://audio/shields/naki_shield_recharge_loop_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -28,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": true,
+      "asset_recipe": "data/audio_recipes.json#naki_shield_recharge_loop"
+    },
+    "naki_shield_full": {
+      "files": [
+        "res://audio/shields/naki_shield_full_01.ogg",
+        "res://audio/shields/naki_shield_full_02.ogg",
+        "res://audio/shields/naki_shield_full_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -22,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#naki_shield_full"
+    },
+    "naki_health_hit": {
+      "files": [
+        "res://audio/player/naki_health_hit_01.ogg",
+        "res://audio/player/naki_health_hit_02.ogg",
+        "res://audio/player/naki_health_hit_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -24,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#naki_health_hit",
+      "listener_max_distance": 4.572
+    },
+    "naki_health_low": {
+      "files": [
+        "res://audio/player/naki_health_low_01.ogg",
+        "res://audio/player/naki_health_low_02.ogg",
+        "res://audio/player/naki_health_low_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -32,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": true,
+      "asset_recipe": "data/audio_recipes.json#naki_health_low"
+    },
+    "naki_death": {
+      "files": [
+        "res://audio/player/naki_death_01.ogg",
+        "res://audio/player/naki_death_02.ogg",
+        "res://audio/player/naki_death_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -23,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#naki_death"
+    },
+    "annu_armor_hit": {
+      "files": [
+        "res://audio/armor_health/annu_armor_hit_01.ogg",
+        "res://audio/armor_health/annu_armor_hit_02.ogg",
+        "res://audio/armor_health/annu_armor_hit_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -24,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_armor_hit",
+      "listener_max_distance": 4.572
+    },
+    "annu_helmet_hit": {
+      "files": [
+        "res://audio/armor_health/annu_helmet_hit_01.ogg",
+        "res://audio/armor_health/annu_helmet_hit_02.ogg",
+        "res://audio/armor_health/annu_helmet_hit_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -24,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_helmet_hit",
+      "listener_max_distance": 4.572
+    },
+    "annu_headshot_no_helmet": {
+      "files": [
+        "res://audio/armor_health/annu_headshot_no_helmet_01.ogg",
+        "res://audio/armor_health/annu_headshot_no_helmet_02.ogg",
+        "res://audio/armor_health/annu_headshot_no_helmet_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -20.0,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_headshot_no_helmet",
+      "listener_max_distance": 4.572
+    },
+    "annu_body_hit_no_armor": {
+      "files": [
+        "res://audio/armor_health/annu_body_hit_no_armor_01.ogg",
+        "res://audio/armor_health/annu_body_hit_no_armor_02.ogg",
+        "res://audio/armor_health/annu_body_hit_no_armor_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -24,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_body_hit_no_armor",
+      "listener_max_distance": 4.572
+    },
+    "annu_armor_break": {
+      "files": [
+        "res://audio/armor_health/annu_armor_break_01.ogg",
+        "res://audio/armor_health/annu_armor_break_02.ogg",
+        "res://audio/armor_health/annu_armor_break_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -20.0,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_armor_break",
+      "listener_max_distance": 4.572
+    },
+    "annu_armor_pickup": {
+      "files": [
+        "res://audio/armor_health/annu_armor_pickup_01.ogg",
+        "res://audio/armor_health/annu_armor_pickup_02.ogg",
+        "res://audio/armor_health/annu_armor_pickup_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -28,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_armor_pickup"
+    },
+    "annu_helmet_pickup": {
+      "files": [
+        "res://audio/armor_health/annu_helmet_pickup_01.ogg",
+        "res://audio/armor_health/annu_helmet_pickup_02.ogg",
+        "res://audio/armor_health/annu_helmet_pickup_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -28,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_helmet_pickup"
+    },
+    "annu_health_pickup": {
+      "files": [
+        "res://audio/armor_health/annu_health_pickup_01.ogg",
+        "res://audio/armor_health/annu_health_pickup_02.ogg",
+        "res://audio/armor_health/annu_health_pickup_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -28,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_health_pickup"
+    },
+    "annu_low_health": {
+      "files": [
+        "res://audio/armor_health/annu_low_health_01.ogg",
+        "res://audio/armor_health/annu_low_health_02.ogg",
+        "res://audio/armor_health/annu_low_health_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -32,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "loop": true,
+      "asset_recipe": "data/audio_recipes.json#annu_low_health"
+    },
+    "hit_body": {
+      "files": [
+        "res://audio/ui/hit_body_01.ogg",
+        "res://audio/ui/hit_body_02.ogg",
+        "res://audio/ui/hit_body_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -24,
+      "pitch_range": [
+        1.0,
+        1.0
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#hit_body",
+      "listener_max_distance": 4.572
+    },
+    "hit_head": {
+      "files": [
+        "res://audio/ui/hit_head_01.ogg",
+        "res://audio/ui/hit_head_02.ogg",
+        "res://audio/ui/hit_head_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -24,
+      "pitch_range": [
+        1.0,
+        1.0
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#hit_head",
+      "listener_max_distance": 4.572
+    },
+    "kill_confirm": {
+      "files": [
+        "res://audio/ui/kill_confirm_01.ogg",
+        "res://audio/ui/kill_confirm_02.ogg",
+        "res://audio/ui/kill_confirm_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -28,
+      "pitch_range": [
+        1.0,
+        1.0
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#kill_confirm"
+    },
+    "ammo_low": {
+      "files": [
+        "res://audio/ui/ammo_low_01.ogg",
+        "res://audio/ui/ammo_low_02.ogg",
+        "res://audio/ui/ammo_low_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -28.0,
+      "pitch_range": [
+        1.0,
+        1.0
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ammo_low"
+    },
+    "melee_swing": {
+      "files": [
+        "res://audio/melee/melee_swing_01.ogg",
+        "res://audio/melee/melee_swing_02.ogg",
+        "res://audio/melee/melee_swing_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -26,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#melee_swing"
+    },
+    "melee_hit_flesh": {
+      "files": [
+        "res://audio/melee/melee_hit_flesh_01.ogg",
+        "res://audio/melee/melee_hit_flesh_02.ogg",
+        "res://audio/melee/melee_hit_flesh_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#melee_hit_flesh"
+    },
+    "melee_hit_shield": {
+      "files": [
+        "res://audio/melee/melee_hit_shield_01.ogg",
+        "res://audio/melee/melee_hit_shield_02.ogg",
+        "res://audio/melee/melee_hit_shield_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -18,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#melee_hit_shield"
+    },
+    "melee_hit_armor": {
+      "files": [
+        "res://audio/melee/melee_hit_armor_01.ogg",
+        "res://audio/melee/melee_hit_armor_02.ogg",
+        "res://audio/melee/melee_hit_armor_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#melee_hit_armor"
+    },
+    "melee_kill": {
+      "files": [
+        "res://audio/melee/melee_kill_01.ogg",
+        "res://audio/melee/melee_kill_02.ogg",
+        "res://audio/melee/melee_kill_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -20.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#melee_kill"
+    },
+    "bullet_flyby": {
+      "files": [
+        "res://audio/impacts/bullet_flyby_01.ogg",
+        "res://audio/impacts/bullet_flyby_02.ogg",
+        "res://audio/impacts/bullet_flyby_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -10,
+      "pitch_range": [
+        0.97,
+        1.03
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#bullet_flyby"
+    },
+    "ricochet_metal": {
+      "files": [
+        "res://audio/impacts/ricochet_metal_01.ogg",
+        "res://audio/impacts/ricochet_metal_02.ogg",
+        "res://audio/impacts/ricochet_metal_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ricochet_metal",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "ricochet_concrete": {
+      "files": [
+        "res://audio/impacts/ricochet_concrete_01.ogg",
+        "res://audio/impacts/ricochet_concrete_02.ogg",
+        "res://audio/impacts/ricochet_concrete_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#ricochet_concrete",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "jump": {
+      "files": [
+        "res://audio/player/jump_01.ogg",
+        "res://audio/player/jump_02.ogg",
+        "res://audio/player/jump_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -37,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#jump"
+    },
+    "respawn": {
+      "files": [
+        "res://audio/player/respawn_01.ogg",
+        "res://audio/player/respawn_02.ogg",
+        "res://audio/player/respawn_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -28,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#respawn"
+    },
+    "death_world": {
+      "files": [
+        "res://audio/player/death_world_01.ogg",
+        "res://audio/player/death_world_02.ogg",
+        "res://audio/player/death_world_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -23,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#death_world"
+    },
+    "health_hit_world": {
+      "files": [
+        "res://audio/player/health_hit_world_01.ogg",
+        "res://audio/player/health_hit_world_02.ogg",
+        "res://audio/player/health_hit_world_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -24,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#health_hit_world",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "shield_hit_world": {
+      "files": [
+        "res://audio/player/shield_hit_world_01.ogg",
+        "res://audio/player/shield_hit_world_02.ogg",
+        "res://audio/player/shield_hit_world_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -18,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#shield_hit_world",
+      "listener_max_distance": 4.572,
+      "max_distance": 4.572
+    },
+    "weapon_pickup": {
+      "files": [
+        "res://audio/impacts/weapon_pickup_01.ogg",
+        "res://audio/impacts/weapon_pickup_02.ogg",
+        "res://audio/impacts/weapon_pickup_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -26,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#weapon_pickup"
+    },
+    "weapon_drop": {
+      "files": [
+        "res://audio/impacts/weapon_drop_01.ogg",
+        "res://audio/impacts/weapon_drop_02.ogg",
+        "res://audio/impacts/weapon_drop_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#weapon_drop"
+    },
+    "weapon_throw_away": {
+      "files": [
+        "res://audio/impacts/weapon_throw_away_01.ogg",
+        "res://audio/impacts/weapon_throw_away_02.ogg",
+        "res://audio/impacts/weapon_throw_away_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -26,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#weapon_throw_away"
+    },
+    "fall_damage": {
+      "files": [
+        "res://audio/player/fall_damage_01.ogg",
+        "res://audio/player/fall_damage_02.ogg",
+        "res://audio/player/fall_damage_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -22.0,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#fall_damage"
+    },
+    "rocket_explosion_close": {
+      "files": [
+        "res://audio/impacts/rocket_explosion_close_01.ogg",
+        "res://audio/impacts/rocket_explosion_close_02.ogg",
+        "res://audio/impacts/rocket_explosion_close_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -15,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_explosion_close"
+    },
+    "rocket_explosion_far": {
+      "files": [
+        "res://audio/impacts/rocket_explosion_far_01.ogg",
+        "res://audio/impacts/rocket_explosion_far_02.ogg",
+        "res://audio/impacts/rocket_explosion_far_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -23,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#rocket_explosion_far"
+    },
+    "explosion_water": {
+      "files": [
+        "res://audio/impacts/explosion_water_01.ogg",
+        "res://audio/impacts/explosion_water_02.ogg",
+        "res://audio/impacts/explosion_water_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -23,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#explosion_water"
+    },
+    "explosion_debris": {
+      "files": [
+        "res://audio/impacts/explosion_debris_01.ogg",
+        "res://audio/impacts/explosion_debris_02.ogg",
+        "res://audio/impacts/explosion_debris_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -23,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#explosion_debris"
+    },
+    "glass_break": {
+      "files": [
+        "res://audio/impacts/glass_break_01.ogg",
+        "res://audio/impacts/glass_break_02.ogg",
+        "res://audio/impacts/glass_break_03.ogg"
+      ],
+      "bus": "SFX_Explosions",
+      "volume_db": -16.0,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#glass_break"
+    },
+    "assault_rifle_fire_round": {
+      "layers": [
+        "assault_rifle_fire_crack",
+        "assault_rifle_fire_mechanical"
+      ],
+      "far_sound": "assault_rifle_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "battle_rifle_fire_round": {
+      "layers": [
+        "battle_rifle_fire_crack",
+        "battle_rifle_fire_mechanical"
+      ],
+      "far_sound": "battle_rifle_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "battle_rifle_zoom_in": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_in_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_in_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_in_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_zoom_in"
+    },
+    "battle_rifle_zoom_out": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_out_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_out_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_out_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_zoom_out"
+    },
+    "battle_rifle_zoom_step": {
+      "files": [
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_step_01.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_step_02.ogg",
+        "res://audio/weapons/battle_rifle/battle_rifle_zoom_step_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_zoom_step"
+    },
+    "magnum_fire_round": {
+      "layers": [
+        "magnum_fire_crack",
+        "magnum_fire_mechanical"
+      ],
+      "far_sound": "magnum_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "shotgun_fire_round": {
+      "layers": [
+        "shotgun_fire_crack",
+        "shotgun_fire_mechanical"
+      ],
+      "far_sound": "shotgun_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "sniper_rifle_fire_round": {
+      "layers": [
+        "sniper_rifle_fire_crack",
+        "sniper_rifle_fire_mechanical"
+      ],
+      "far_sound": "sniper_rifle_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "rocket_launcher_fire_round": {
+      "layers": [
+        "rocket_launcher_fire_crack",
+        "rocket_launcher_fire_mechanical"
+      ],
+      "far_sound": "rocket_launcher_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "ak47_fire_round": {
+      "layers": [
+        "ak47_fire_crack",
+        "ak47_fire_mechanical"
+      ],
+      "far_sound": "ak47_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "battle_rifle_scoped_fire_crack": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_crack_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_crack_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_crack_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -15,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_fire_crack"
+    },
+    "battle_rifle_scoped_fire_mechanical": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_mechanical_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_mechanical_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_mechanical_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_fire_mechanical"
+    },
+    "battle_rifle_scoped_fire_tail_open": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_tail_open_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_tail_open_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_tail_open_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -24,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_fire_tail_open"
+    },
+    "battle_rifle_scoped_fire": {
+      "layers": [
+        "battle_rifle_scoped_fire_crack",
+        "battle_rifle_scoped_fire_mechanical",
+        "battle_rifle_scoped_fire_tail_open"
+      ],
+      "far_sound": "battle_rifle_scoped_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "battle_rifle_scoped_fire_distant": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_distant_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_distant_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_fire_distant_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_fire_distant"
+    },
+    "battle_rifle_scoped_dry_fire": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_dry_fire_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_dry_fire_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_dry_fire_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_dry_fire"
+    },
+    "battle_rifle_scoped_equip": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_equip_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_equip_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_equip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_equip"
+    },
+    "battle_rifle_scoped_unequip": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_unequip_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_unequip_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_unequip_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -26,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_unequip"
+    },
+    "battle_rifle_scoped_reload_mag_release": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_mag_release_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_mag_release_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_mag_release_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_reload_mag_release"
+    },
+    "battle_rifle_scoped_reload_magout": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_magout_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_magout_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_magout_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -23,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_reload_magout"
+    },
+    "battle_rifle_scoped_reload_magin": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_magin_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_magin_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_magin_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_reload_magin"
+    },
+    "battle_rifle_scoped_reload_chamber": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_chamber_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_chamber_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_reload_chamber_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -22,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_reload_chamber"
+    },
+    "battle_rifle_scoped_shell_eject": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_shell_eject_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_shell_eject_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_shell_eject_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_shell_eject"
+    },
+    "battle_rifle_scoped_shell_bounce": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_shell_bounce_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_shell_bounce_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_shell_bounce_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -31,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_shell_bounce"
+    },
+    "battle_rifle_scoped_fire_round": {
+      "layers": [
+        "battle_rifle_scoped_fire_crack",
+        "battle_rifle_scoped_fire_mechanical"
+      ],
+      "far_sound": "battle_rifle_scoped_fire_distant",
+      "delay_far": false,
+      "spatial": true,
+      "bus": "SFX_Weapons"
+    },
+    "battle_rifle_scoped_zoom_in": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_in_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_in_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_in_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_zoom_in"
+    },
+    "battle_rifle_scoped_zoom_out": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_out_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_out_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_out_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_zoom_out"
+    },
+    "battle_rifle_scoped_zoom_step": {
+      "files": [
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_step_01.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_step_02.ogg",
+        "res://audio/weapons/battle_rifle_scoped/battle_rifle_scoped_zoom_step_03.ogg"
+      ],
+      "bus": "SFX_Weapons",
+      "volume_db": -30,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#battle_rifle_scoped_zoom_step"
+    },
+    "annu_death": {
+      "files": [
+        "res://audio/player/annu_death_01.ogg",
+        "res://audio/player/annu_death_02.ogg",
+        "res://audio/player/annu_death_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -23,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#annu_death"
+    },
+    "drill_loop": {
+      "files": [
+        "res://audio/impacts/drill_loop_01.ogg",
+        "res://audio/impacts/drill_loop_02.ogg",
+        "res://audio/impacts/drill_loop_03.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -29,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": true,
+      "asset_recipe": "data/audio_recipes.json#drill_loop"
+    },
+    "fall_loop": {
+      "files": [
+        "res://audio/player/fall_loop_01.ogg",
+        "res://audio/player/fall_loop_02.ogg",
+        "res://audio/player/fall_loop_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -31,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": true,
+      "asset_recipe": "data/audio_recipes.json#fall_loop"
+    },
+    "objective_complete": {
+      "files": [
+        "res://audio/ui/objective_complete_01.ogg",
+        "res://audio/ui/objective_complete_02.ogg",
+        "res://audio/ui/objective_complete_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -28,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#objective_complete"
+    },
+    "jump_grunt": {
+      "files": [
+        "res://audio/player/jump_grunt_01.ogg",
+        "res://audio/player/jump_grunt_02.ogg",
+        "res://audio/player/jump_grunt_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -44,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#jump_grunt"
+    },
+    "land_grunt": {
+      "files": [
+        "res://audio/player/land_grunt_01.ogg",
+        "res://audio/player/land_grunt_02.ogg",
+        "res://audio/player/land_grunt_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -44,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#land_grunt"
+    },
+    "player_pain": {
+      "files": [
+        "res://audio/player/player_pain_01.ogg",
+        "res://audio/player/player_pain_02.ogg",
+        "res://audio/player/player_pain_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -33,
+      "pitch_range": [
+        0.96,
+        1.04
+      ],
+      "spatial": true,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#player_pain"
+    },
+    "announcer_match_start": {
+      "files": [
+        "res://audio/announcer/announcer_match_start_01.ogg",
+        "res://audio/announcer/announcer_match_start_02.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_match_start"
+    },
+    "announcer_countdown_10": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_10_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_10"
+    },
+    "announcer_countdown_9": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_9_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_9"
+    },
+    "announcer_countdown_8": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_8_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_8"
+    },
+    "announcer_countdown_7": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_7_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_7"
+    },
+    "announcer_countdown_6": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_6_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_6"
+    },
+    "announcer_countdown_5": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_5_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_5"
+    },
+    "announcer_countdown_4": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_4_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_4"
+    },
+    "announcer_countdown_3": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_3_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_3"
+    },
+    "announcer_countdown_2": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_2_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_2"
+    },
+    "announcer_countdown_1": {
+      "files": [
+        "res://audio/announcer/announcer_countdown_1_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_countdown_1"
+    },
+    "announcer_match_one_minute": {
+      "files": [
+        "res://audio/announcer/announcer_match_one_minute_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_match_one_minute"
+    },
+    "announcer_match_30_seconds": {
+      "files": [
+        "res://audio/announcer/announcer_match_30_seconds_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_match_30_seconds"
+    },
+    "announcer_match_end": {
+      "files": [
+        "res://audio/announcer/announcer_match_end_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_match_end"
+    },
+    "announcer_you_win": {
+      "files": [
+        "res://audio/announcer/announcer_you_win_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_you_win"
+    },
+    "announcer_you_lose": {
+      "files": [
+        "res://audio/announcer/announcer_you_lose_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_you_lose"
+    },
+    "announcer_draw": {
+      "files": [
+        "res://audio/announcer/announcer_draw_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_draw"
+    },
+    "announcer_round_start": {
+      "files": [
+        "res://audio/announcer/announcer_round_start_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_round_start"
+    },
+    "announcer_round_end": {
+      "files": [
+        "res://audio/announcer/announcer_round_end_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_round_end"
+    },
+    "announcer_halftime": {
+      "files": [
+        "res://audio/announcer/announcer_halftime_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_halftime"
+    },
+    "announcer_lead_taken": {
+      "files": [
+        "res://audio/announcer/announcer_lead_taken_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_lead_taken"
+    },
+    "announcer_lead_lost": {
+      "files": [
+        "res://audio/announcer/announcer_lead_lost_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_lead_lost"
+    },
+    "announcer_lead_tied": {
+      "files": [
+        "res://audio/announcer/announcer_lead_tied_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_lead_tied"
+    },
+    "announcer_team_lead_taken": {
+      "files": [
+        "res://audio/announcer/announcer_team_lead_taken_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_team_lead_taken"
+    },
+    "announcer_team_lead_lost": {
+      "files": [
+        "res://audio/announcer/announcer_team_lead_lost_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_team_lead_lost"
+    },
+    "announcer_kill_double": {
+      "files": [
+        "res://audio/announcer/announcer_kill_double_01.ogg",
+        "res://audio/announcer/announcer_kill_double_02.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_kill_double"
+    },
+    "announcer_kill_triple": {
+      "files": [
+        "res://audio/announcer/announcer_kill_triple_01.ogg",
+        "res://audio/announcer/announcer_kill_triple_02.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_kill_triple"
+    },
+    "announcer_kill_overkill": {
+      "files": [
+        "res://audio/announcer/announcer_kill_overkill_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_kill_overkill"
+    },
+    "announcer_killing_spree": {
+      "files": [
+        "res://audio/announcer/killing_spree.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false
+    },
+    "announcer_running_riot": {
+      "files": [
+        "res://audio/announcer/announcer_running_riot_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_running_riot"
+    },
+    "announcer_rampage": {
+      "files": [
+        "res://audio/announcer/announcer_rampage_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_rampage"
+    },
+    "announcer_untouchable": {
+      "files": [
+        "res://audio/announcer/announcer_untouchable_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_untouchable"
+    },
+    "announcer_invincible": {
+      "files": [
+        "res://audio/announcer/announcer_invincible_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_invincible"
+    },
+    "announcer_headshot": {
+      "files": [
+        "res://audio/announcer/announcer_headshot_01.ogg",
+        "res://audio/announcer/announcer_headshot_02.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_headshot"
+    },
+    "announcer_melee_kill": {
+      "files": [
+        "res://audio/announcer/announcer_melee_kill_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_melee_kill"
+    },
+    "announcer_grenade_kill": {
+      "files": [
+        "res://audio/announcer/announcer_grenade_kill_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_grenade_kill"
+    },
+    "announcer_sniper_kill": {
+      "files": [
+        "res://audio/announcer/announcer_sniper_kill_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_sniper_kill"
+    },
+    "announcer_revenge": {
+      "files": [
+        "res://audio/announcer/announcer_revenge_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_revenge"
+    },
+    "announcer_first_blood": {
+      "files": [
+        "res://audio/announcer/announcer_first_blood_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_first_blood"
+    },
+    "announcer_betrayal": {
+      "files": [
+        "res://audio/announcer/announcer_betrayal_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_betrayal"
+    },
+    "announcer_suicide": {
+      "files": [
+        "res://audio/announcer/announcer_suicide_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_suicide"
+    },
+    "announcer_bomb_planted": {
+      "files": [
+        "res://audio/announcer/announcer_bomb_planted_01.ogg",
+        "res://audio/announcer/announcer_bomb_planted_refined.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_bomb_planted"
+    },
+    "announcer_bomb_defused": {
+      "files": [
+        "res://audio/announcer/announcer_bomb_defused_01.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false,
+      "asset_recipe": "data/audio_recipes.json#announcer_bomb_defused"
+    },
+    "shield_glow_on_hit": {
+      "files": [
+        "res://audio/player/shield_glow_on_hit_01.ogg",
+        "res://audio/player/shield_glow_on_hit_02.ogg",
+        "res://audio/player/shield_glow_on_hit_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -25,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "asset_recipe": "data/audio_recipes.json#shield_glow_on_hit",
+      "listener_max_distance": 4.572
+    },
+    "body_phase_start": {
+      "files": [
+        "res://audio/player/body_phase_start_01.ogg",
+        "res://audio/player/body_phase_start_02.ogg",
+        "res://audio/player/body_phase_start_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -30,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "asset_recipe": "data/audio_recipes.json#body_phase_start",
+      "listener_max_distance": 4.572
+    },
+    "body_hit_shield_down": {
+      "files": [
+        "res://audio/player/body_hit_shield_down_01.ogg",
+        "res://audio/player/body_hit_shield_down_02.ogg",
+        "res://audio/player/body_hit_shield_down_03.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -24,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "asset_recipe": "data/audio_recipes.json#body_hit_shield_down",
+      "listener_max_distance": 4.572
+    },
+    "headshot_kill": {
+      "files": [
+        "res://audio/player/headshot_kill_01.ogg",
+        "res://audio/player/headshot_kill_02.ogg",
+        "res://audio/player/headshot_kill_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -28,
+      "pitch_range": [
+        0.98,
+        1.02
+      ],
+      "spatial": false,
+      "asset_recipe": "data/audio_recipes.json#headshot_kill"
+    },
+    "reticle_red_on": {
+      "files": [
+        "res://audio/player/reticle_red_on_01.ogg",
+        "res://audio/player/reticle_red_on_02.ogg",
+        "res://audio/player/reticle_red_on_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -30,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "asset_recipe": "data/audio_recipes.json#reticle_red_on"
+    },
+    "reticle_red_off": {
+      "files": [
+        "res://audio/player/reticle_red_off_01.ogg",
+        "res://audio/player/reticle_red_off_02.ogg",
+        "res://audio/player/reticle_red_off_03.ogg"
+      ],
+      "bus": "UI",
+      "volume_db": -30,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "asset_recipe": "data/audio_recipes.json#reticle_red_off"
+    },
+    "rocket_launcher_explosion": {
+      "layers": [
+        "rocket_explosion_close"
+      ],
+      "far_sound": "rocket_explosion_far",
+      "delay_far": true,
+      "spatial": true,
+      "bus": "SFX_Explosions"
+    },
+    "man_cannon_launch": {
+      "files": [
+        "res://audio/impacts/man_cannon_launch_01.ogg"
+      ],
+      "bus": "SFX_Foley",
+      "volume_db": -21,
+      "pitch_range": [
+        0.99,
+        1.01
+      ],
+      "spatial": true
+    },
+    "menu_music": {
+      "files": [
+        "res://audio/music/menu_music.ogg"
+      ],
+      "bus": "Music",
+      "volume_db": -23,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": true,
+      "composition": "data/menu_music_score.json"
+    },
+    "announcer_killing_machine": {
+      "files": [
+        "res://audio/announcer/killing_machine.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false
+    },
+    "announcer_in_the_building": {
+      "files": [
+        "res://audio/announcer/in_the_building.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -16,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false
+    },
+    "bomb_planted_alert": {
+      "files": [
+        "res://audio/sfx/objectives/bomb_planted_alert.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -8,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "voice_limit": 2,
+      "priority": 85
+    },
+    "bomb_defuse_start": {
+      "files": [
+        "res://audio/sfx/objectives/bomb_defuse_start.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -8,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "voice_limit": 2,
+      "priority": 85
+    },
+    "bomb_armed_tick": {
+      "files": [
+        "res://audio/sfx/objectives/bomb_armed_tick.ogg"
+      ],
+      "bus": "SFX_Player",
+      "volume_db": -7,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": true,
+      "voice_limit": 2,
+      "priority": 85,
+      "max_distance": 48,
+      "unit_size": 4
+    },
+    "announcer_drill_commencing": {
+      "files": [
+        "res://audio/announcer/announcer_drill_commencing_refined.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -10,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false
+    },
+    "announcer_drill_complete": {
+      "files": [
+        "res://audio/announcer/announcer_drill_complete_refined.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -10,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false
+    },
+    "announcer_bomb_ten_seconds": {
+      "files": [
+        "res://audio/announcer/announcer_bomb_ten_seconds_refined.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -10,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false
+    },
+    "announcer_bomb_five_seconds": {
+      "files": [
+        "res://audio/announcer/announcer_bomb_five_seconds_refined.ogg"
+      ],
+      "bus": "Announcer",
+      "volume_db": -10,
+      "pitch_range": [
+        1,
+        1
+      ],
+      "spatial": false,
+      "loop": false
+    }
+  },
+  "aliases": {
+    "shot": "assault_rifle_fire",
+    "hurt": "player_pain",
+    "melee": "melee_swing",
+    "blast": "frag_grenade_explosion",
+    "objective": "objective_complete",
+    "death": "death_world",
+    "fall": "fall_loop"
+  },
+  "master_limiter": {
+    "ceiling_db": -0.5,
+    "threshold_db": -3.0,
+    "soft_clip_db": 2.0,
+    "soft_clip_ratio": 4.0
+  }
+}

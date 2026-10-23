@@ -1,0 +1,8 @@
+# Local development only. Never upload an actual .dev.vars file.
+ALLOW_GUESTS=true
+# TURN_KEY_ID=
+# TURN_KEY_API_TOKEN=
+# COORDINATOR_API_KEY=
+
+# Read-only owner monitor; use a fresh private value >=32 characters.
+MONITOR_TOKEN=replace-with-a-private-owner-monitor-key

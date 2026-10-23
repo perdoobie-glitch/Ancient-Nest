@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "damage_model": "faction",
+  "shield_low_fraction": 0.25,
+  "health_low_fraction": 0.25,
+  "heavy_hit_damage": 25,
+  "shield_duck_db": -12,
+  "health_duck_db": -6,
+  "recharge_epsilon": 0.01,
+  "walk_step_distance": 1.6,
+  "crouch_step_distance": 1.1,
+  "min_step_speed": 0.6,
+  "hard_land_speed": 7,
+  "jump_min_velocity": 2,
+  "flyby_distance": 2.0,
+  "flyby_min_distance": 0.15,
+  "ricochet_probability": 0.1,
+  "ricochet_materials": [
+    "metal",
+    "concrete"
+  ],
+  "default_material": "concrete",
+  "surface_materials": {
+    "stone": "concrete",
+    "dark": "metal",
+    "gold": "metal",
+    "bark": "wood",
+    "foliage": "grass",
+    "green": "grass",
+    "red": "grass"
+  },
+  "medal_window_seconds": 4,
+  "kill_medals": {
+    "2": "kill_double",
+    "3": "kill_triple",
+    "4": "kill_overkill"
+  },
+  "streak_medals": {
+    "5": "killing_spree",
+    "10": "killing_machine",
+    "15": "in_the_building"
+  },
+  "revenge_enabled": true,
+  "announcer_duplicate_seconds": 3,
+  "announcer_max_queue": 3,
+  "announcer_stinger": false,
+  "helmet_pickup_enabled": false,
+  "armor_break_enabled": true,
+  "ear_ring_enabled": false,
+  "incoming_grenade_warning_enabled": false
+}

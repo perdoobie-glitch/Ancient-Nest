@@ -1,0 +1,26 @@
+{
+  "Naki": {
+    "vertices": 17397,
+    "polygons": 17856,
+    "bones": 40,
+    "clips": 21,
+    "animation_signature": "07a796cc46a50fea993f6ad19c5ce17c7276f331e4100d3443831db2a52fcdfa",
+    "weight_data_unchanged": true,
+    "bone_data_unchanged": true,
+    "protected_hand_head_foot_max_shift": 0.0,
+    "damage_source_match_max_distance": 1.1944189282075968e-07,
+    "damage_fallback_count": 0
+  },
+  "Annu": {
+    "vertices": 18934,
+    "polygons": 19423,
+    "bones": 40,
+    "clips": 21,
+    "animation_signature": "07a796cc46a50fea993f6ad19c5ce17c7276f331e4100d3443831db2a52fcdfa",
+    "weight_data_unchanged": true,
+    "bone_data_unchanged": true,
+    "protected_hand_head_foot_max_shift": 0.0,
+    "damage_source_match_max_distance": 1.1944189282075968e-07,
+    "damage_fallback_count": 0
+  }
+}

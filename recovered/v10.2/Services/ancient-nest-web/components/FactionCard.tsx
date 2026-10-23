@@ -1,0 +1,3 @@
+import Image from "next/image";
+import type { Faction } from "@/data/factions";
+export function FactionCard({ faction }: { faction: Faction }) { return <article id={faction.id} className={`faction-card faction-${faction.accent}`}><div className="faction-image"><Image src={faction.image} alt={`${faction.name} character concept artwork`} fill sizes="(max-width: 767px) 100vw, 50vw"/><span className="art-label">Character concept</span></div><div className="faction-body"><div className="eyebrow">{faction.role}</div><h3>{faction.name}</h3><p>{faction.description}</p><ul>{faction.traits.map(trait => <li key={trait}><span aria-hidden="true">◇</span>{trait}</li>)}</ul></div></article>; }

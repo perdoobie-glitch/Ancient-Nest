@@ -1,0 +1,92 @@
+extends SceneTree
+var game
+var checks=0
+var failures=0
+func _initialize(): call_deferred("run")
+func check(ok: bool, text: String):
+	checks+=1
+	if ok: print("PASS: "+text)
+	else: failures+=1; push_error("FAIL: "+text)
+func frames(count=3):
+	for i in range(count): await process_frame
+func aim_at(actor,target):
+	var offset=target-actor.camera.global_position
+	actor.rotation.y=atan2(-offset.x,-offset.z); actor.eye.rotation.x=atan2(offset.y,Vector2(offset.x,offset.z).length()); actor.apply_aim_rotation()
+func screenshot(name):
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png("/workspace/work/sound_"+name+".png")
+func run():
+	root.size=Vector2i(1440,900); game=load("res://scenes/main.tscn").instantiate(); root.add_child(game); await frames()
+	check(game.audio.ready_for_audio and game.audio.stream_cache.size()>750,"Native audio preloads all original Ogg variations")
+	game.mode=0; game.fair_playing_field=false; game.show_lobby(); await frames()
+	var fair=game.screen.find_child("FairPlayingField",true,false); var health=game.screen.find_child("FairHealthType",true,false)
+	check(fair!=null and health!=null and health.item_count==2,"Lobby has Enable/Disable control and exactly two health types")
+	check(not fair.visible and not health.get_parent().visible,"Fair Playing Field controls are hidden for Extraction")
+	game.lobby_mode.select(2); game.lobby_mode.item_selected.emit(2); await frames()
+	check(fair.visible and health.get_parent().visible,"Fair Playing Field is available for Team Deathmatch")
+	fair.button_pressed=true; health.select(0); health.item_selected.emit(0)
+	check(game.fair_playing_field and game.fair_health_type=="naki","Lobby callbacks apply the selected shared Naki model")
+	await screenshot("lobby")
+	game.selected_faction=1; game.bot_fill=false; game.starting_primary="battle_rifle_scoped"; game.starting_secondary="magnum"; game.begin_match(); await frames()
+	check(game.player.damage_model()=="naki" and game.protection_bars.size()==1 and game.hud_protection.text.contains("SHIELD"),"Annu character receives the Naki shield HUD in Fair Playing Field")
+	game.set_physics_process(false); var actor=game.player; actor.set_physics_process(false)
+	actor.global_position=Vector3(80,25,80); actor.reset_physics_interpolation(); actor.rotation=Vector3.ZERO; actor.eye.rotation=Vector3.ZERO; actor.update_visual(.016)
+	var target=NestActor.new(); target.game=game; target.faction=0; game.add_child(target); game.actors.append(target); target.set_physics_process(false)
+	target.global_position=Vector3(80,25,70); target.reset_physics_interpolation(); target.update_visual(.016); await frames()
+	aim_at(actor,target.hitboxes[0].global_position); await frames()
+	check(game.hud_crosshair.enemy_hover and game.hud_crosshair.hover_head,"Actual head hitbox turns the reticle red")
+	aim_at(actor,target.hitboxes[1].global_position); await frames()
+	check(game.hud_crosshair.enemy_hover,"Actual body hitbox also turns the reticle red")
+	target.faction=actor.faction; await frames()
+	check(not game.hud_crosshair.enemy_hover,"Teammates never turn the reticle red")
+	target.faction=0; target.global_position.z=-120; target.update_visual(.016); target.reset_physics_interpolation(); aim_at(actor,target.hitboxes[0].global_position); await frames()
+	check(not game.hud_crosshair.enemy_hover,"Enemy beyond the weapon's red range keeps the normal reticle")
+	target.global_position.z=70; target.update_visual(.016); aim_at(actor,target.hitboxes[0].global_position); await frames()
+	var wall=Node3D.new(); game.add_child(wall); game.arena.kit.box(wall,Vector3(80,26,75),Vector3(4,4,.2),game.arena.kit.stone,true); await frames()
+	check(not game.hud_crosshair.enemy_hover,"Cover blocks enemy hover feedback")
+	wall.queue_free(); await frames(); actor.rotation.y=PI/2; await frames()
+	check(not game.hud_crosshair.enemy_hover,"Reticle returns immediately when aim leaves the enemy")
+	aim_at(actor,target.hitboxes[0].global_position); actor.toggle_scope(); actor.update_aim(1); await frames()
+	check(actor.scoped_overlay() and game.hud_crosshair.scope_mask.visible,"Scoped battle rifle uses the existing scope overlay")
+	var zoom=tan(deg_to_rad(game.prefs.values.fov)*.5)/tan(deg_to_rad(actor.camera.fov)*.5)
+	check(absf(zoom-3)<.01,"Scoped battle rifle uses its data-driven three-times zoom")
+	await screenshot("scope")
+	target.shield=200; target.update_visual(.016)
+	check(not target.presentation.hit_electricity.low_shield,"Full shields have no low-shield warning")
+	target.shield=20; target.update_visual(.016)
+	check(target.presentation.hit_electricity.low_shield,"Low shields use a small electrical warning")
+	target.shield=0; target.update_visual(.016)
+	check(not target.presentation.hit_electricity.low_shield,"Broken shields stop the low-shield warning")
+	game.fair_health_type="annu"; actor.respawn(); target.respawn(); game.create_hud(); game.hud.visible=true; actor.update_visual(.016); target.update_visual(.016); await frames()
+	check(game.protection_bars.size()==2 and game.hud_protection.text.contains("HEALTH"),"Annu health type creates the correct health/armor HUD")
+	check(not target.presentation.hit_electricity.low_shield,"Annu health type has no base shield glow")
+	actor.health=20; actor.update_visual(.016)
+	check(actor.combat_audio.loops.has("annu_low_health") and not actor.combat_audio.loops.has("naki_shield_low_warning"),"Only the selected model's local warning plays")
+	actor.health=100; actor.update_visual(.016)
+	check(not actor.combat_audio.loops.has("annu_low_health"),"Health warning stops on restored health")
+	game.announcer.reset(); game.announcer.say("lead_taken"); game.announcer.say("kill_double")
+	check(game.announcer.current=="kill_double","Higher-priority announcer line interrupts lower priority")
+	check(not game.announcer.say("kill_double"),"Duplicate announcer cue is suppressed inside its cooldown")
+	for id in ["lead_lost","lead_tied","team_lead_taken","team_lead_lost"]: game.announcer.say(id)
+	check(game.announcer.queue.size()<=3,"Announcer pending queue is bounded to three lines")
+	game.announcer.reset(); game.audio.stop_all()
+	for i in range(25): game.audio.play_sound("assault_rifle_fire",actor.eye.global_position)
+	check(game.audio.pool.active_count("assault_rifle_fire_crack")<=6 and game.audio.pool.active_count()<=96,"Mass gunfire respects per-layer and global voice limits")
+	var recorder=AudioEffectRecord.new(); AudioServer.add_bus_effect(0,recorder); recorder.set_recording_active(true)
+	game.audio.play_sound("sniper_rifle_fire",actor.eye.global_position); game.announcer.say("match_start")
+	await create_timer(1.2).timeout; recorder.set_recording_active(false)
+	var recording=recorder.get_recording(); check(recording!=null and recording.data.size()>1000,"Native mixer produces real combat/voice audio")
+	if recording!=null: recording.save_to_wav("/workspace/work/sound-native-mix.wav")
+	AudioServer.remove_bus_effect(0,AudioServer.get_bus_effect_count(0)-1)
+	game.announcer.reset(); game.audio.stop_all()
+	check(game.audio.pool.active_count()==0,"Stopping gameplay releases all active audio voices")
+	game.stop_game(); game.open_settings("main"); game.settings_tab="Audio"; game.show_settings(); await frames()
+	var labels=[]
+	for label in game.screen.find_children("*","Label",true,false): labels.append(label.text)
+	var all_sliders=true
+	for bus in game.prefs.audio_buses:
+		if not labels.has(bus.slider.label+" volume"): all_sliders=false
+	check(all_sliders,"Every bus has its own data-driven settings slider")
+	await screenshot("audio_settings")
+	print("NATIVE SOUND: %d checks, %d failures"%[checks,failures])
+	game.queue_free(); await create_timer(.75).timeout; quit(1 if failures else 0)

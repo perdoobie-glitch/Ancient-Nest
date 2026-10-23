@@ -1,0 +1,6 @@
+{
+  "characters": [
+    {"id":"naki","index":0,"name":"Naki","visual":"res://scenes/characters/NakiVisual.tscn","model":"res://models/Naki.glb","portrait":"res://assets/characters/naki_reference.png","damage_model":"naki","defaults":{"show_low_health_vignette":true}},
+    {"id":"annu","index":1,"name":"Annu","visual":"res://scenes/characters/AnnuVisual.tscn","model":"res://models/Annu.glb","portrait":"res://assets/characters/annu_reference.png","damage_model":"annu","defaults":{"show_low_health_vignette":false}}
+  ]
+}

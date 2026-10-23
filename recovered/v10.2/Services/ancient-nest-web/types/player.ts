@@ -1,0 +1,1 @@
+export interface Player { id: string; username: string; rank: string; rankStage: number; rankPoints: number; playerRating: number | null; emblem: string; level: number; wins: number; kills: number; deaths: number; assists: number; customMaps: number; isDemo: boolean; }
