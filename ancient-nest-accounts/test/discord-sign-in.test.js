@@ -103,3 +103,13 @@ test('failed Discord grants, invalid PKCE, external redirects and banned profile
   await db.prepare('UPDATE users SET banned = 1').run();
   assert.equal((await request('/auth/discord/exchange', data)).status, 403);
 });
+
+test('an existing game username or synthetic contact cannot preclaim a Discord identity', async () => {
+  await db.prepare(`INSERT INTO users (id, username, password_hash, password_salt, email)
+    VALUES ('different-owner', ?, 'legacy-password', 'salt', ?)`)
+    .bind('Dis_' + discordId, discordId + '@discord.identity.invalid').run();
+  const signed = await login();
+  assert.notEqual(signed.user.id, 'different-owner');
+  assert.match(signed.user.username, /^Player_[a-f0-9]{16}$/);
+  assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM users').first()).n, 2);
+});

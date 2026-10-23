@@ -49,21 +49,25 @@ function discordSignIn({
     if (!user) {
       const id = crypto.randomUUID();
       const stem = String(discordUser.username ?? "Player").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 3) || "P";
-      const username = stem + "_" + discordId;
-      try {
-        await db.prepare(`INSERT INTO users (id, username, password_hash, password_salt, email, discord_id,
-          discord_username, auth_provider, created_at) VALUES (?, ?, 'DISCORD_ONLY', '', ?, ?, ?, 'discord', ?)`).bind(
-          id,
-          username,
-          discordId + "@discord.identity.invalid",
-          discordId,
-          String(discordUser.username ?? discordId).slice(0, 80),
-          Math.floor(Date.now() / 1e3)
-        ).run();
-      } catch (error) {
-        if (!/UNIQUE constraint failed/.test(String(error))) throw error;
+      let username = stem + "_" + discordId;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          await db.prepare(`INSERT INTO users (id, username, password_hash, password_salt, email, discord_id,
+            discord_username, auth_provider, created_at) VALUES (?, ?, 'DISCORD_ONLY', '', ?, ?, ?, 'discord', ?)`).bind(
+            id,
+            username,
+            id + "@discord.identity.invalid",
+            discordId,
+            String(discordUser.username ?? discordId).slice(0, 80),
+            Math.floor(Date.now() / 1e3)
+          ).run();
+        } catch (error) {
+          if (!/UNIQUE constraint failed/.test(String(error))) throw error;
+        }
+        user = await db.prepare("SELECT * FROM users WHERE discord_id = ?").bind(discordId).first();
+        if (user) break;
+        username = "Player_" + crypto.randomUUID().replaceAll("-", "").slice(0, 16);
       }
-      user = await db.prepare("SELECT * FROM users WHERE discord_id = ?").bind(discordId).first();
       if (!user) throw new HttpError2(409, "username_conflict");
     }
     if (user.banned) throw new HttpError2(403, "account_banned");
