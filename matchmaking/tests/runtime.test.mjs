@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Miniflare } from "miniflare";
@@ -14,7 +15,7 @@ const pem = (bytes) =>
 async function setup(options = {}) {
   const mf = new Miniflare({
     modules: true,
-    scriptPath: new URL("../dist/worker.js", import.meta.url).pathname,
+    scriptPath: fileURLToPath(new URL("../dist/worker.js", import.meta.url)),
     compatibilityDate: "2026-08-06",
     durableObjects: {
       MATCHMAKER: { className: "Matchmaker", useSQLite: true },
@@ -363,7 +364,7 @@ test('real accounts Worker issues key-bound assertions accepted by the matchmaki
   const { build } = await import('esbuild');
   const { readFile, readdir } = await import('node:fs/promises');
   const accountRoot = new URL('../../ancient-nest-accounts/', import.meta.url);
-  const bundle = await build({ entryPoints: [new URL('src/index.js', accountRoot).pathname], bundle: true, write: false, format: 'esm', platform: 'browser' });
+  const bundle = await build({ entryPoints: [fileURLToPath(new URL('src/index.js', accountRoot))], bundle: true, write: false, format: 'esm', platform: 'browser' });
   const accounts = new Miniflare({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-08-01', d1Databases: ['DB'],
     bindings: { JWT_SECRET: 'test-cross-worker-jwt-secret-at-least-32', COORDINATOR_API_KEY: 'test-cross-worker-coordinator-secret-at-least-32', DISCORD_CLIENT_ID: '1562796619722793010', DISCORD_CLIENT_SECRET: 'test-cross-worker-discord-secret' },
     serviceBindings: { DISCORD_HTTP: async request => {

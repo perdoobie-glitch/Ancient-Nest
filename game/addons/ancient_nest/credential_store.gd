@@ -2,7 +2,7 @@ extends RefCounted
 ## Adapter for https://github.com/shomykohai/godot-keyring (Windows/Linux).
 ## Ship its native addon for each target platform; there is no plaintext fallback.
 
-const PACKAGE := "net.ancientnest.game"
+const PACKAGE := "net.ancientnest.reforged20261023"
 const SERVICE := "accounts-refresh-token"
 const DEVICE := "current-os-user"
 var service := SERVICE

@@ -21,11 +21,18 @@ const mf = new Miniflare({
 });
 await mf.ready;
 console.log("READY http://127.0.0.1:18080");
-process.on("SIGTERM", async () => {
+let stopping = false;
+async function shutdown() {
+  if (stopping) return;
+  stopping = true;
   await mf.dispose();
   process.exit(0);
-});
-process.on("SIGINT", async () => {
-  await mf.dispose();
-  process.exit(0);
+}
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+// Windows terminate() does not deliver SIGTERM to Node. The native test harness
+// uses this private stdin pipe so workerd releases its SQLite files before exit.
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", chunk => {
+  if (chunk.trim() === "shutdown") shutdown();
 });
