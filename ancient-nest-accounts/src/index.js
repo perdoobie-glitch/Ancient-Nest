@@ -1,5 +1,6 @@
 import { profile, publicServiceCard, internalRatings, coordinator as rankedCoordinator, reviewSummary, ServiceError } from './stats.js';
 import { discordSignIn } from './discord-sign-in.js';
+import { publicGameUser } from './game-profile.js';
 import { gameIdentity } from './game-identity.js';
 import { liveTestRoute } from './live-test-page.js';
 import { SignJWT, jwtVerify } from 'jose';
@@ -116,9 +117,7 @@ async function rateLimit(db, key, scope, identity, limit) {
   if (row.attempts > limit) throw new HttpError(429, 'rate_limited', { 'Retry-After': String(expires - now) });
 }
 
-function publicUser(user) {
-  return { id: user.id, username: user.username, created_at: user.created_at };
-}
+function publicUser(user) { return publicGameUser(user); }
 
 async function accessToken(user, key, ttl, id, sessionExpires) {
   const now = Math.floor(Date.now() / 1000);

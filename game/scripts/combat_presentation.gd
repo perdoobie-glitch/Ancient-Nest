@@ -80,8 +80,11 @@ func update_view(delta: float) -> void:
 	# First-person bob follows render cadence; locomotion, contacts and remote
 	# skeleton poses still advance in fixed simulation. Never move the camera.
 	var speed: float=Vector2(actor.velocity.x,actor.velocity.z).length()
-	view_speed=move_toward(view_speed,speed,actor.tuning.ground_acceleration*maxf(0,delta))
-	view_gait_phase=fposmod(view_gait_phase+maxf(0,delta)*view_speed*2.0,TAU)
+	if not actor.locomotion_grounded():
+		view_speed=0
+	else:
+		view_speed=move_toward(view_speed,speed,actor.tuning.ground_acceleration*maxf(0,delta))
+		view_gait_phase=fposmod(view_gait_phase+maxf(0,delta)*view_speed*2.0,TAU)
 	update_view_weapon(view_speed)
 func update_landing(delta: float) -> void:
 	presentation_clock+=delta
@@ -141,7 +144,7 @@ func update_view_weapon(speed: float) -> void:
 	var kick=exp(-maxf(0,shot_age())*23.0) if shot_age()>=0 and shot_age()<.35 else 0.0
 	var profiles={"rifle":Vector3(.8,.7,.025),"ak47":Vector3(1.15,1.0,.04),"burst":Vector3(.9,.65,-.025),"burst_scoped":Vector3(.7,.6,.015),"sidearm":Vector3(1.2,.65,.07),"sniper":Vector3(1.7,1.45,-.02),"shotgun":Vector3(1.8,1.6,.05),"rocket":Vector3(.65,1.8,-.06),"smg":Vector3(.5,.45,.035),"plasma_pistol":Vector3(.45,.35,-.04),"plasma_br":Vector3(.65,.6,.035),"plasma_auto":Vector3(.4,.45,-.035),"plasma_smg":Vector3(.3,.3,.025),"plasma_sniper":Vector3(1.1,1.1,-.025)}
 	var profile=profiles.get(actor.weapons[actor.slot].kind,Vector3.ONE)
-	var movement=minf(speed/actor.tuning.ground_speed,1)
+	var movement=minf(speed/actor.tuning.ground_speed,1) if actor.locomotion_grounded() else 0.0
 	var bob_phase=view_gait_phase if actor.local_player else gait_phase
 	var bob=Vector3(sin(bob_phase)*.009,(absf(cos(bob_phase))-.5)*.012,0)*movement
 	actor.weapon_view.position=Vector3(.24,-.22,-.48)+bob+Vector3(-.055*tilt,.075*tilt,kick*.046*profile.y+.055*tilt)
@@ -358,7 +361,9 @@ func update_locomotion(delta: float) -> void:
 	var dt=maxf(0,delta)
 	var target=actor.global_transform.basis.inverse()*Vector3(actor.velocity.x,0,actor.velocity.z)
 	var grounded=actor.net_grounded if actor.game.is_client() and not actor.local_player else actor.is_on_floor()
-	if not grounded:target=Vector3.ZERO
+	if not actor.locomotion_grounded():
+		locomotion_velocity=Vector3.ZERO;locomotion_weight=0
+		return
 	var blend=1.0-exp(-dt*14.0)
 	locomotion_velocity=locomotion_velocity.lerp(target,blend)
 	var speed=Vector2(locomotion_velocity.x,locomotion_velocity.z).length()

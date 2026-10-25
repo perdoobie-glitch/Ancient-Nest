@@ -56,7 +56,20 @@ static func plasma_lettering(control:Control,size:int=0)->void:
  control.add_theme_color_override("font_outline_color",Color("f1c827"))
  control.add_theme_constant_override("outline_size",1)
  if size>0:control.add_theme_font_size_override("font_size",size)
-static func main_button(control:Button)->void:
+static func main_button(control:Button,transparent:bool=false)->void:
+ if transparent:
+  control.add_theme_font_size_override("font_size",19)
+  control.add_theme_color_override("font_color",Color("e6ede7"))
+  for state in ["hover","focus"]:control.add_theme_color_override("font_"+state+"_color",Color("f4cf32"))
+  control.add_theme_color_override("font_pressed_color",Color("80e9b4"))
+  control.add_theme_color_override("font_outline_color",Color(0,0,0,.95))
+  control.add_theme_constant_override("outline_size",4)
+  for state in ["normal","hover","pressed","focus","disabled"]:
+   var box=StyleBoxFlat.new();box.draw_center=false;box.border_color=Color("d9bd80")
+   box.set_border_width_all(1 if state in ["hover","pressed","focus"] else 0)
+   box.content_margin_left=16;box.content_margin_right=16;box.content_margin_top=8;box.content_margin_bottom=8
+   control.add_theme_stylebox_override(state,box)
+  return
  plasma_lettering(control,19)
  for state in ["normal","hover","pressed","focus","disabled"]:
   control.add_theme_stylebox_override(state,glossy_white(state in ["hover","pressed","focus"],state=="pressed"))

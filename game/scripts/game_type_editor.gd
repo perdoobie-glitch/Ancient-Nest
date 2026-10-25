@@ -235,6 +235,7 @@ func apply_changes() -> void:
 func close_editor() -> void:
  hide();game.call_deferred("show_pause" if game.running else "show_lobby");queue_free()
 func _unhandled_key_input(event: InputEvent) -> void:
+ if AncientNestDiscordShortcut.is_open():return
  if event is InputEventKey and event.pressed and event.keycode==KEY_F and (event.ctrl_pressed or event.meta_pressed):
   search_box.grab_focus();search_box.select_all();get_viewport().set_input_as_handled()
  elif event.is_action_pressed("ui_cancel"):

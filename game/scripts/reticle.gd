@@ -19,6 +19,8 @@ func _process(_delta: float) -> void:
 	var scoped=is_instance_valid(game.player) and game.player.scoped_overlay() and game.context=="playing"
 	scope_mask.visible=scoped
 	if scoped: scope_material.set_shader_parameter("viewport_size",size)
+	if game.replay_active:
+		enemy_hover=bool(game.replay_state.get("hover",false));hover_head=false;queue_redraw();return
 	var previous=enemy_hover; enemy_hover=false; hover_head=false
 	if is_instance_valid(game.player) and game.player.alive and game.context=="playing":
 		var actor=game.player

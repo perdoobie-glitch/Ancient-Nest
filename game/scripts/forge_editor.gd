@@ -137,6 +137,7 @@ func release_mouse() -> void:Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;game.clea
 func tell(text: String) -> void:
  if is_instance_valid(status):status.text=text
 func _process(delta: float) -> void:
+ if AncientNestDiscordShortcut.is_open():return
  if not editing:return
  if get_viewport().get_visible_rect().size!=last_view_size:update_layout()
  if Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and game.input_window_focused:
@@ -145,11 +146,13 @@ func _process(delta: float) -> void:
   camera.global_position+=direction.limit_length()*drag_distance*(3 if Input.is_physical_key_pressed(KEY_SHIFT) else 1)*delta
  if moving and is_instance_valid(ghost):ghost.global_position=aim_position()
 func _input(event: InputEvent) -> void:
+ if AncientNestDiscordShortcut.is_open():return
  if not editing:return
  if event is InputEventMouseMotion and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
   camera.rotation.y-=event.screen_relative.x*.0025;camera.rotation.x=clampf(camera.rotation.x-event.screen_relative.y*.0025,-1.5,1.5);get_viewport().set_input_as_handled()
  if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT and not event.pressed:release_mouse()
 func _unhandled_input(event: InputEvent) -> void:
+ if AncientNestDiscordShortcut.is_open():return
  if not editing:return
  var focus=get_viewport().gui_get_focus_owner()
  if event is InputEventKey and (focus is LineEdit or focus is TextEdit) and event.keycode!=KEY_ESCAPE:return

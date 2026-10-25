@@ -34,8 +34,12 @@ func can_remember_device() -> bool:
 
 
 func restore_session() -> Dictionary:
+	if not _age_eligible():
+		return {"ok": false, "error": "age_confirmation_required"}
 	if _auth_busy or _refreshing:
 		return {"ok": false, "error": "busy"}
+	if not current_user.is_empty() and not _access_token.is_empty() and _access_expires_at > int(Time.get_unix_time_from_system()) + 30:
+		return {"ok": true, "user": current_user, "remembered": _remember_device}
 	if not can_remember_device():
 		return {"ok": false, "error": "account_required"}
 	_refresh_token = credential_store.read_token()
@@ -149,6 +153,7 @@ func _accept_session(data: Dictionary) -> Dictionary:
 	_access_expires_at = int(data.expires_at)
 	_refresh_token = data.refresh_token
 	current_user = data.user
+	AncientNestAgePolicy.remember_authenticated_confirmation()
 	var remembered := false
 	if _remember_device:
 		remembered = credential_store.write_token(_refresh_token) == OK
@@ -179,7 +184,25 @@ func authenticated_request(path: String, method: int = HTTPClient.METHOD_GET, da
 	return await _request(path, method, data, PackedStringArray(["Authorization: Bearer " + auth.token]))
 
 
+func update_game_username(username: String) -> Dictionary:
+	var name_pattern := RegEx.new()
+	name_pattern.compile("^[a-zA-Z0-9_-]{3,24}$")
+	var chosen := username.strip_edges()
+	if name_pattern.search(chosen) == null:
+		return {"ok": false, "error": "invalid_game_username", "status": 400}
+	var response := await authenticated_request("/profile/username", HTTPClient.METHOD_POST, {"username": chosen})
+	if response.ok:
+		if not response.data.get("user") is Dictionary or response.data.user.get("id") != current_user.get("id"):
+			return {"ok": false, "error": "invalid_response"}
+		current_user.merge(response.data.user, true)
+		current_user["needs_username"] = false
+		session_changed.emit(current_user)
+	return response
+
+
 func _request(path: String, method: int, data: Variant = null, extra_headers: PackedStringArray = []) -> Dictionary:
+	if not _age_eligible():
+		return {"ok": false, "error": "age_confirmation_required", "status": 0}
 	var local_debug := OS.is_debug_build() and (api_url.begins_with("http://127.0.0.1:") or api_url.begins_with("http://localhost:"))
 	if not api_url.begins_with("https://") and not local_debug:
 		return {"ok": false, "error": "invalid_api_url"}
@@ -213,6 +236,8 @@ func _process(_delta: float) -> void:
 
 
 func sign_in_discord(remember: bool = true) -> Dictionary:
+	if not _age_eligible():
+		return {"ok": false, "error": "age_confirmation_required"}
 	if _auth_busy or _refreshing:
 		return {"ok": false, "error": "busy"}
 	if not ClassDB.class_exists(&"DiscordClient"):
@@ -235,8 +260,27 @@ func sign_in_discord(remember: bool = true) -> Dictionary:
 	return await discord_sign_in_completed
 
 
+func _age_eligible() -> bool:
+	var policy := get_node_or_null("/root/AncientNestAgePolicy")
+	return policy != null and policy.is_eligible()
+
+
 func _on_discord_authorized(result: Variant, code: String, redirect_uri: String) -> void:
 	var response: Dictionary = {"ok": false, "error": "discord_not_approved"}
+	if not result.successful():
+		# Restrict diagnostic text to a fixed vocabulary; arbitrary SDK strings may contain URLs/data.
+		var diagnostic_text := str(result.error()).to_lower() + " " + str(result.response_body()).to_lower()
+		var diagnostic_terms: Array[String] = []
+		for term in ["invalid_scope", "invalid_request", "invalid_client", "unauthorized_client", "access_denied", "invalid_redirect_uri", "redirect_uri", "code_challenge", "code_verifier", "pkce", "public client", "client secret", "not enabled", "not approved", "not authorized", "not whitelisted", "social sdk", "social_layer", "timeout", "cancelled", "canceled", "state mismatch", "invalid state", "invalid_grant", "unsupported_response_type", "application does not exist", "missing", "scope", "redirect", "rpc", "oauth2"]:
+			if term in diagnostic_text:
+				diagnostic_terms.append(term)
+		print("Discord authorization diagnostic categories: ", ", ".join(diagnostic_terms))
+		# Numeric SDK diagnostics only: never log OAuth codes, callback queries or bodies.
+		for diagnostic_method in ["type", "error_code", "status"]:
+			if result.has_method(diagnostic_method):
+				var diagnostic: Variant = result.call(diagnostic_method)
+				if diagnostic is int or diagnostic is float:
+					print("Discord authorization SDK %s: %d" % [diagnostic_method, int(diagnostic)])
 	if result.successful():
 		response = await _post("/auth/discord/exchange", {"code": code,
 			"code_verifier": _discord_verifier.verifier(), "redirect_uri": redirect_uri})
@@ -250,8 +294,9 @@ func _on_discord_authorized(result: Variant, code: String, redirect_uri: String)
 			else:
 				store.clear_token()
 			var voice_tokens: Dictionary = response.data.discord
+			# Seed the verified account's voice tokens before session_changed starts voice setup.
+			get_node("/root/AncientNestDiscordVoice").set_pending_tokens(voice_tokens, str(response.data.user.id))
 			response = _accept_session(response.data)
-			get_node("/root/AncientNestDiscordVoice").set_pending_tokens(voice_tokens)
 	_discord_verifier = null
 	_discord_client = null
 	_auth_busy = false

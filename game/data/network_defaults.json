@@ -1,0 +1,17 @@
+{
+  "host_heartbeat_seconds": 20,
+  "host_stale_seconds": 60,
+  "browser_refresh_seconds": 15,
+  "queue_fallback_seconds": 5,
+  "request_timeout_seconds": 10,
+  "retry_cap_seconds": 30,
+  "socket_keepalive_seconds": 20,
+  "socket_stale_seconds": 90,
+  "authority_lease_seconds": 60,
+  "continuity_seconds": 5,
+  "clock_skew_seconds": 2,
+  "simulation_hz": 60,
+  "input_hz": 60,
+  "snapshot_min_hz": 20,
+  "snapshot_max_hz": 30
+}

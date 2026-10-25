@@ -4,7 +4,12 @@ func run():
  var game=load("res://scenes/main.tscn").instantiate();root.add_child(game)
  for i in range(5):await physics_frame
  assert(not game.accounts.linked())
- assert(game.NETWORK_VERSION=="10.5-discord1")
+ assert(game.NETWORK_VERSION=="10.5-discord2")
+ var navigation=game.screen.get_node("MainNavigation")
+ assert(navigation.anchor_top==1.0 and navigation.anchor_bottom==1.0)
+ var labels=[]
+ for entry in navigation.find_children("*","Button",true,false):labels.append(entry.text)
+ assert(labels==["Play","Nest Forge","Armory","Settings","Quit Game","[I] Discord dashboard"])
  game.accounts.show_panel();await process_frame
  assert(game.current_screen=="account")
  game.accounts.show_service_card();await process_frame

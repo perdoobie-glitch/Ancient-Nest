@@ -43,6 +43,7 @@ var pending_reconcile: Dictionary = {}
 var view_correction = Vector3.ZERO
 var cmd_queue: Array = [] # host: received, unprocessed commands sorted by sequence
 var cmd_last_seq: int = -1
+var command_aims: Dictionary = {}
 var cmd_credit: float = 0
 var cmd_starved: int = 0
 var cmd_template: Dictionary = {}
@@ -101,6 +102,7 @@ var cloak_meshes: Array[MeshInstance3D] = []
 var cloak_shadow_modes: Array[int] = []
 var camo_renderer: NestCamoPresentation
 var applied_cloak: int = -1
+var team_cape_key: String = ""
 var skeleton: Skeleton3D
 var animation: AnimationPlayer
 var clips: Dictionary = {}
@@ -329,6 +331,7 @@ func cache_cloak_meshes() -> void:
 		cloak_meshes.append(item);cloak_shadow_modes.append(item.cast_shadow)
 func refresh_model_visibility() -> void:
 	if model==null:return
+	refresh_team_cape()
 	model.visible=alive and (not local_player or (game.nu!=null and game.nu.birds.has(net_id)))
 	if nu_perch_area!=null:
 		var visible_nu=alive and not nu_used and game.game_type.nu_enabled
@@ -342,6 +345,22 @@ func refresh_model_visibility() -> void:
 	applied_cloak=cloaked
 	for i in range(cloak_meshes.size()):
 		if is_instance_valid(cloak_meshes[i]):cloak_meshes[i].cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY if cloaked==1 else cloak_shadow_modes[i]
+func refresh_team_cape() -> void:
+	var mirror=game.team_characters[0]==game.team_characters[1]
+	var key=str([model.get_instance_id(),mirror,faction])
+	if key==team_cape_key:return
+	team_cape_key=key
+	for mesh in model.find_children("Cape","MeshInstance3D",true,false):
+		for surface in range(mesh.mesh.get_surface_count()):
+			var base_key="team_cape_base_"+str(surface)
+			if not mesh.has_meta(base_key):mesh.set_meta(base_key,mesh.get_active_material(surface))
+			var base=mesh.get_meta(base_key)
+			if not mirror:
+				mesh.set_surface_override_material(surface,base)
+			elif base is StandardMaterial3D:
+				var cloth=base.duplicate()
+				cloth.albedo_color=Color("a52d35") if faction==0 else Color("36834b")
+				mesh.set_surface_override_material(surface,cloth)
 func build_enemy_name_tag() -> void:
 	pass # World names are disabled; avoid allocating hidden labels.
 func name_tag_eligible(viewer: NestActor) -> bool:
@@ -441,7 +460,7 @@ func gameplay_move() -> Vector2:
 	return value.limit_length(1)
 func clear_local_input() -> void:
 	# Keep held physical keys suppressed until their release, including OS repeats.
-	for action in ["left","right","forward","backward","jump","crouch","fire","aim","zoom","interact","reload","grenade","melee","switch_weapon"]:
+	for action in ["left","right","forward","backward","jump","crouch","fire","aim","zoom","interact","reload","grenade","melee","switch_weapon","primary_weapon","secondary_weapon","sword"]:
 		if Input.is_action_pressed(action):suppressed_actions[action]=true
 	hover_look_gain=1.0
 	jump_pending_until=-INF;fire_pending_until=-INF;jump_key_down=false;fire_key_down=false
@@ -524,7 +543,11 @@ func _input(event: InputEvent) -> void:
 		if game.is_client():game.request_remote_action("bomb",command)
 		else:game.bomb_control(self,command)
 		get_viewport().set_input_as_handled();return
-	if event.is_action_pressed("sword"):wield_sword()
+	if event.is_action_pressed("primary_weapon") and not suppressed_actions.has("primary_weapon"):select_weapon_slot(0)
+	if event.is_action_pressed("secondary_weapon") and not suppressed_actions.has("secondary_weapon"):select_weapon_slot(1)
+	if event.is_action_pressed("sword") and not suppressed_actions.has("sword"):
+		if character==0:wield_sword()
+		else:melee()
 	if event.is_action_pressed("melee") and not suppressed_actions.has("melee"): melee()
 	if event.is_action_pressed("switch_weapon") and not suppressed_actions.has("switch_weapon"): switch_weapon()
 	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]: switch_weapon()
@@ -616,7 +639,8 @@ func movement_step(move: Vector2, jump: bool, crouch_want: int, yaw: float, delt
 		var old_horizontal=horizontal
 		horizontal=air_move(horizontal,wish,tuning,delta*air_multiplier,mult*move_scale) if air_multiplier>0 else horizontal
 		if air_multiplier==0:horizontal=old_horizontal
-		controlled.y=maxf(-35,controlled.y-tuning.gravity*(rules.gravity_percent/100.0)*delta)
+		var fall_multiplier=1.10 if controlled.y+external.y<=0 else 1.0
+		controlled.y=maxf(-35,controlled.y-tuning.gravity*(rules.gravity_percent/100.0)*fall_multiplier*delta)
 	controlled.x=horizontal.x; controlled.z=horizontal.z
 	external=external.move_toward(Vector3.ZERO,(8 if is_on_floor() else 1)*delta)
 	# Analytic lift volume runs in shared movement, including prediction replay.
@@ -763,6 +787,8 @@ func process_remote_commands(delta: float) -> void:
 	game.run_deferred_commands(self)
 func apply_remote_command(c: Dictionary, delta: float) -> void:
 	cmd_last_seq=c.seq
+	command_aims[c.seq]=-(Basis(Vector3.UP,c.yaw)*Basis(Vector3.RIGHT,c.pitch)).z
+	while command_aims.size()>128:command_aims.erase(command_aims.keys()[0])
 	var previous: Dictionary=game.command_received.get(remote_peer,{})
 	var barrier=int(previous.get("barrier",-1))
 	if c.seq<=barrier: c={"seq":c.seq,"move":Vector2.ZERO,"yaw":c.yaw,"pitch":c.pitch,"jump":false,"crouch":-1,"interact":false}
@@ -1016,6 +1042,14 @@ func switch_weapon() -> void:
 	if game.is_client(): game.request_remote_action("switch")
 	slot=(slot+1)%weapons.size(); action_state="switching"; action_until=game.now+float(NestWeaponCatalog.for_kind(weapons[slot].kind).get("switch_seconds",0)); burst_left=0
 	game.remote_shot_clocks.erase(remote_peer)
+func select_weapon_slot(index: int) -> void:
+	if index not in [0,1] or index>=weapons.size() or weapons[index].kind in ["none","plasma_sword"] or slot==index:return
+	if bomb_equipped or not alive or (game.now<action_until and action_state!="reloading"):return
+	if combat_audio!=null:combat_audio.weapon_event("unequip_sound","handling");combat_audio.stop_reload()
+	reset_aim()
+	if game.is_client():game.request_remote_action("select_weapon",index)
+	slot=index;action_state="switching";action_until=game.now+float(NestWeaponCatalog.for_kind(weapons[slot].kind).get("switch_seconds",0));burst_left=0
+	game.remote_shot_clocks.erase(remote_peer)
 func reload_weapon() -> void:
 	if bomb_equipped:return
 	if game.is_interacting(self):return
@@ -1077,7 +1111,9 @@ func shoot_round() -> void:
 		pending_shots.append({"id":shot_id,"slot":slot,"kind":w.kind,"spray_reset":ak_spray_count==1})
 		# The command sequence orders the shot against movement on the host; the
 		# view time lets the host rewind targets to what this client displayed.
-		game.authorize_shot.rpc_id(1,shot_id,life_id,game.round_number,w.kind,aim.origin,aim_direction(),game.match_session,scope_level,game.command_sequence,game.remote_view_time)
+		# Local fire runs before record_client_command in this physics tick.
+		# Bind its aim to the upcoming command rather than the previous view.
+		game.authorize_shot.rpc_id(1,shot_id,life_id,game.round_number,w.kind,aim.origin,aim_direction(),game.match_session,scope_level,game.command_sequence+1,game.remote_view_time)
 	for i in range(directions.size()):game.launch_bullet(self,w,aim.origin,directions[i],i,game.is_client(),shot_id+i,burst_left==0)
 	if combat_audio!=null:combat_audio.on_fire(burst_left==0)
 	flash_until=game.now+.15
@@ -1431,6 +1467,8 @@ func bot_intent(delta: float) -> Dictionary:
 	var intent=bot_movement.update(delta)
 	game.bot_interact(self,delta)
 	return intent
+func locomotion_grounded() -> bool:
+	return net_grounded if game.is_client() and not local_player else is_on_floor() and controlled.y<=.01
 func update_visual(delta: float) -> void:
 	if belt_sword!=null:belt_sword.visible=alive and (weapons.is_empty() or weapons[slot].kind!="plasma_sword") and action_state!="melee"
 	if perched_nu!=null:perched_nu.visible=alive and not nu_used and game.game_type.nu_enabled
@@ -1442,7 +1480,7 @@ func update_visual(delta: float) -> void:
 	if animation==null: return
 	var wanted="idle"
 	if not alive: wanted="death"
-	elif not (net_grounded if game.is_client() and not local_player else is_on_floor()): wanted="jump_air"
+	elif not locomotion_grounded(): wanted="jump_air"
 	else:
 		var local_velocity=global_transform.basis.inverse()*velocity
 		if Vector2(local_velocity.x,local_velocity.z).length()>0.2:
@@ -1450,7 +1488,7 @@ func update_visual(delta: float) -> void:
 			else: wanted="walk_forward" if local_velocity.z<0 else "walk_backward"
 		if crouched: wanted="crouch_idle" if wanted=="idle" else "crouch_"+wanted.trim_prefix("walk_")
 	if not clips.has(wanted): wanted="idle"
-	if clips.has(wanted) and animation.current_animation!=clips[wanted]: animation.play(clips[wanted],0.12)
+	if clips.has(wanted) and animation.current_animation!=clips[wanted]: animation.play(clips[wanted],0.0 if wanted=="jump_air" else 0.12)
 	animation.advance(delta)
 	if presentation!=null: presentation.pose_upper_body()
 	if skeleton!=null:

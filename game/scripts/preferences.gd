@@ -1,8 +1,8 @@
 class_name NestPreferences
 extends RefCounted
 const PATH = "user://preferences.cfg"
-const DEFAULTS = {"username":"Player", "sensitivity": 2.0, "aim_sensitivity": 1.0, "nu_sensitivity": 2.0, "nu_flight_assist": true, "zoom_feel_tweak": 1.0, "hover_sensitivity_multiplier": 0.7125, "invert_y": false, "fov": 90.0, "vsync": true, "graphics_quality": 0, "shadows": true, "fullscreen": true, "resolution_width":1920, "resolution_height":1080, "exclusive_fullscreen":false, "render_scale":1.0, "antialiasing":0, "aspect_ratio":0, "fps_limit": 120, "master": 0.65, "effects": 0.8, "hud_scale": 1.0, "hud_opacity": 0.95, "radar": true, "crosshair": true, "crosshair_color": 2, "crosshair_size": 7.0, "crosshair_gap": 3.0, "dynamic_crosshair": true, "chat": true, "naki_radar_size": 170.0, "annu_radar_size": 170.0, "naki_radar_corner": 0, "annu_radar_corner": 1, "radar_background_opacity": 0.65, "radar_sweep": false, "radar_colorblind": false}
-const KEYS = {"forward": KEY_W, "backward": KEY_S, "left": KEY_A, "right": KEY_D, "jump": KEY_SPACE, "crouch": KEY_CTRL, "reload": KEY_R, "zoom": KEY_Z, "interact": KEY_E, "melee": KEY_F, "grenade": KEY_G, "grenade_type": KEY_B, "nu_boost": KEY_SHIFT, "nu": KEY_Q, "sword": KEY_3, "scoreboard": KEY_TAB, "pause": KEY_ESCAPE, "chat": KEY_ENTER, "connections": KEY_O, "switch_weapon": KEY_1}
+const DEFAULTS = {"record_films":true, "allow_host":true, "username":"Player", "sensitivity": 2.0, "aim_sensitivity": 1.0, "nu_sensitivity": 2.0, "nu_flight_assist": true, "zoom_feel_tweak": 1.0, "hover_sensitivity_multiplier": 0.7125, "invert_y": false, "fov": 90.0, "vsync": true, "graphics_quality": 0, "shadows": true, "fullscreen": true, "resolution_width":1920, "resolution_height":1080, "exclusive_fullscreen":false, "render_scale":1.0, "antialiasing":0, "aspect_ratio":0, "fps_limit": 120, "master": 0.65, "effects": 0.8, "hud_scale": 1.0, "hud_opacity": 0.95, "radar": true, "crosshair": true, "crosshair_color": 2, "crosshair_size": 7.0, "crosshair_gap": 3.0, "dynamic_crosshair": true, "chat": true, "naki_radar_size": 170.0, "annu_radar_size": 170.0, "naki_radar_corner": 0, "annu_radar_corner": 1, "radar_background_opacity": 0.65, "radar_sweep": false, "radar_colorblind": false}
+const KEYS = {"film_previous":KEY_PAGEUP,"film_next":KEY_PAGEDOWN, "forward": KEY_W, "backward": KEY_S, "left": KEY_A, "right": KEY_D, "jump": KEY_SPACE, "crouch": KEY_CTRL, "reload": KEY_R, "zoom": KEY_Z, "interact": KEY_E, "melee": KEY_F, "grenade": KEY_G, "grenade_type": KEY_B, "nu_boost": KEY_SHIFT, "nu": KEY_Q, "sword": KEY_3, "scoreboard": KEY_TAB, "pause": KEY_ESCAPE, "chat": KEY_ENTER, "connections": KEY_O, "switch_weapon": KEY_C, "primary_weapon": KEY_1, "secondary_weapon": KEY_2}
 var values: Dictionary = DEFAULTS.duplicate(true)
 var keys: Dictionary = KEYS.duplicate(true)
 var audio_buses: Array = []
@@ -28,6 +28,9 @@ func load_saved() -> void:
 		if int(cfg.get_value("meta","schema",1))<3 and cfg.has_section_key("personal","hover_sensitivity_multiplier"):
 			values.hover_sensitivity_multiplier*=0.95
 		if int(cfg.get_value("meta","schema",1))<5 and keys.grenade_type==KEY_Q:keys.grenade_type=KEY_B
+		if int(cfg.get_value("meta","schema",1))<6 and keys.switch_weapon==KEY_1:
+			for candidate in [KEY_C,KEY_BACKSLASH,KEY_BRACKETRIGHT,KEY_END]:
+				if not keys.values().has(candidate):keys.switch_weapon=candidate;break
 	validate()
 	apply()
 func validate() -> void:
@@ -62,7 +65,7 @@ func validate() -> void:
 func save() -> Error:
 	validate()
 	var cfg = ConfigFile.new()
-	cfg.set_value("meta", "schema", 5)
+	cfg.set_value("meta", "schema", 6)
 	for k in values: cfg.set_value("personal", k, values[k])
 	for k in keys: cfg.set_value("bindings", k, keys[k])
 	return cfg.save(PATH)
@@ -105,5 +108,5 @@ static func normalize_username(text: String) -> String:
 		var code=character.unicode_at(0)
 		if code<32 or (code>=127 and code<=159) or (code>=0x202a and code<=0x202e) or (code>=0x2066 and code<=0x2069) or (code>=0x200b and code<=0x200f) or code in [0x2028,0x2029,0xfeff] or character in ["[","]"]:continue
 		result+=character
-		if result.length()>=20:break
+		if result.length()>=24:break
 	return result.strip_edges()

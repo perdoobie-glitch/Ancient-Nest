@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Miniflare } from "miniflare";
@@ -14,7 +15,7 @@ const pem = (bytes) =>
 async function setup(options = {}) {
   const mf = new Miniflare({
     modules: true,
-    scriptPath: new URL("../dist/worker.js", import.meta.url).pathname,
+    scriptPath: fileURLToPath(new URL("../dist/worker.js", import.meta.url)),
     compatibilityDate: "2026-08-06",
     durableObjects: {
       MATCHMAKER: { className: "Matchmaker", useSQLite: true },
@@ -99,8 +100,11 @@ test("monitor requires dedicated bearer token and exposes no private coordinatio
   const vote=await a.wait("voting");for(const c of clients)c.ws.send(JSON.stringify({type:"vote",epoch:vote.epoch,stage:"setup",mode:0,map:0}));
   await Promise.race(clients.map(c=>c.wait("host_offer")));const host=clients.find(c=>c.events.some(e=>e.type==="host_offer"));const offer=host.events.findLast(e=>e.type==="host_offer");host.ws.send(JSON.stringify({type:"host_ready",epoch:offer.epoch}));
   for(const c of clients){await c.wait("connect");c.ws.send(JSON.stringify({type:"loaded",epoch:offer.epoch}));}
-  await a.wait("resume");host.ws.send(JSON.stringify({type:"heartbeat",epoch:offer.epoch,live:{scores:[7,3],elapsed:25}}));await pause(100);
+  await a.wait("resume");const statusGrant=await host.wait("host_status_grant");host.ws.send(JSON.stringify({type:"heartbeat",match:offer.match,epoch:offer.epoch,revision:1,grant:statusGrant.grant,live:{scores:[7,3],elapsed:25}}));await pause(100);
   response=await read();view=await response.json();assert.equal(view.summary.playing_matches,1);assert.equal(view.game_types.find(m=>m.id===0).playing,1);assert.deepEqual(view.matches[0].live.scores,[7,3]);assert.equal(view.summary.started,1);
+  host.ws.send(JSON.stringify({type:"heartbeat",match:offer.match,epoch:offer.epoch,revision:1,grant:statusGrant.grant,live:{scores:[999,999],elapsed:99}}));
+  const other=clients.find(c=>c!==host);other.ws.send(JSON.stringify({type:"heartbeat",match:offer.match,epoch:offer.epoch,revision:999,grant:statusGrant.grant,live:{scores:[888,888],elapsed:99}}));await pause(50);
+  assert.deepEqual((await (await read()).json()).matches[0].live.scores,[7,3],"Duplicate and non-host updates cannot overwrite newer authoritative status");
   const raw=JSON.stringify(view);for(const field of ["public_key","iceServers","grant","account_assertion","nonce",monitorKey])assert(!raw.includes(field));
   const peer=clients.find(c=>c!==host);peer.ws.close();await pause(100);view=await (await read()).json();assert.equal(view.summary.disconnected_slots,1);assert.equal(view.matches[0].online,1);
  }finally{for(const c of clients){try{c.ws.close();}catch{}}await mf.dispose();}

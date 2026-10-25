@@ -1,11 +1,33 @@
+// ../game/data/network_defaults.json
+var network_defaults_default = {
+  host_heartbeat_seconds: 20,
+  host_stale_seconds: 60,
+  browser_refresh_seconds: 15,
+  queue_fallback_seconds: 5,
+  request_timeout_seconds: 10,
+  retry_cap_seconds: 30,
+  socket_keepalive_seconds: 20,
+  socket_stale_seconds: 90,
+  authority_lease_seconds: 60,
+  continuity_seconds: 5,
+  clock_skew_seconds: 2,
+  simulation_hz: 60,
+  input_hz: 60,
+  snapshot_min_hz: 20,
+  snapshot_max_hz: 30
+};
+
+// src/control_policy.ts
+var CONTROL = Object.freeze(network_defaults_default);
+
 // src/core.ts
-var VERSION = "10.5-discord1";
+var VERSION = "10.5-discord2";
 var PLAYLISTS = {
-  duel_1v1: { size: 2, mode: 1, name: "1v1 Duel" },
-  doubles_2v2: { size: 4, mode: 2, name: "2v2 Doubles" },
-  tactical_3v3: { size: 6, mode: 4, name: "3v3 Tactical" },
-  arena_4v4: { size: 8, mode: 2, name: "4v4 Arena" },
-  bomb_defuse_5v5: { size: 10, mode: 4, name: "5v5 Bomb Defuse" }
+  duel_1v1: { size: 2, mode: 1, name: "1 v 1 Loners" },
+  doubles_2v2: { size: 4, mode: 2, name: "2 v 2 Couples" },
+  tactical_3v3: { size: 6, mode: 4, name: "3 v 3 Trios" },
+  arena_4v4: { size: 8, mode: 2, name: "4 v 4 Quads" },
+  bomb_defuse_5v5: { size: 10, mode: 4, name: "5 v 5 Squads" }
 };
 function modesForPlaylist(playlist) {
   return playlist === "duel_1v1" ? [2, 1, 3, 0, 4] : [2, 3, 0, 4];
@@ -22,12 +44,20 @@ function percentile(a, q) {
   return s.length ? s[Math.floor(x)] + (s[Math.ceil(x)] - s[Math.floor(x)]) * (x % 1) : 0;
 }
 var MIN_PEER_UPLOAD_MBPS = 0.55;
+function snapshotTicksForHost(host, people, reports, capacity, maximumHz = CONTROL.snapshot_max_hz) {
+  if (maximumHz <= 20) return 3;
+  const routes = people.filter((peer) => peer !== host).map((peer) => reports[peer]?.[host]);
+  const upload = routes.length ? Math.min(...routes.map((route) => route && Number.isFinite(route.bytes) && Number.isFinite(route.seconds) && route.seconds > 0 ? route.bytes * 8 / route.seconds / 1e6 : 0)) : 0;
+  if (people.length >= 6 && upload < 0.9) return 3;
+  if (maximumHz >= 60 && capacity && capacity.cpu_p95_ms >= 0 && capacity.cpu_p95_ms <= 8 && capacity.samples >= 15 && upload >= (people.length <= 2 ? 1.2 : 2)) return 1;
+  return 2;
+}
 function rankHosts(people, reports, capacity = {}) {
   const candidates = [];
   for (const id of people) {
     const pings = [], jitter = [], upload = [], losses = [];
     const hardware = capacity[id];
-    if (hardware && (!Number.isFinite(hardware.cpu_p95_ms) || hardware.cpu_p95_ms > 12 || hardware.cpu_p95_ms < 0 || hardware.logical_cpus < 2 || hardware.samples < 15)) continue;
+    if (hardware && (hardware.allow_host === false || !Number.isFinite(hardware.cpu_p95_ms) || hardware.cpu_p95_ms > 12 || hardware.cpu_p95_ms < 0 || hardware.logical_cpus < 2 || hardware.samples < 15)) continue;
     let valid = true;
     for (const peer of people.filter((p) => p !== id)) {
       const r = reports[peer]?.[id], reverse = reports[id]?.[peer];
@@ -148,6 +178,7 @@ export {
   percentile,
   publicKey,
   rankHosts,
+  snapshotTicksForHost,
   supportedIceServers,
   unb64
 };

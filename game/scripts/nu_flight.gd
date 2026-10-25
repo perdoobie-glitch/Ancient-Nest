@@ -101,6 +101,7 @@ func submit_controls(seq: int, life: int, round_id: int, session: int, yaw: floa
  var sender=game.multiplayer.get_remote_sender_id()
  var actor=game.actor_for_peer(sender)
  if actor==null or not birds.has(actor.net_id):return
+ if not game.network_policy.admit(sender,"flight",game.local_clock(),75,20):return
  var bird=birds[actor.net_id]
  if life!=bird.life or seq<=bird.last_seq or not is_finite(yaw) or not is_finite(pitch) or not controls.is_finite():return
  bird.assist_enabled=assist;bird.boost_active=boost;bird.last_seq=seq;bird.yaw=wrapf(yaw,-PI,PI);bird.pitch=clampf(pitch,deg_to_rad(-80),deg_to_rad(80));bird.controls=controls.clamp(Vector3(-1,-1,-1),Vector3.ONE);bird.control_at=game.now

@@ -1,6 +1,6 @@
 class_name NestHybridNetwork
 extends Node
-## Live WSS control + DTLS ENet gameplay integration. Control is NOT a gameplay RPC.
+## WSS master control; native WebRTC gameplay, with the legacy ENet path retained.
 var master_authenticated=false
 var master_last_reply=-1.0
 var cloud=false
@@ -32,6 +32,8 @@ var probe_records={}
 var probe_epoch=0
 var probe_seen={}
 var reflector_ip=""
+var resolve_request=-1
+var legacy_refresh_at=0.0
 var probe_nonces={}
 var observed={}
 var heartbeat_at=0.0
@@ -58,6 +60,13 @@ var failure_reason=""
 var completion_sent=false
 var account_preflight=false
 var cpu_samples: Array[float]=[]
+var scheduler
+var continuity
+var queue_fallback
+var pending_results
+var control_metrics={"messages_received":0,"messages_sent":0,"handler_us_sum":0,"handler_us_max":0,"text_bytes_sent":0}
+var film_transport_until=0.0
+var film_drain_at=0.0
 func _ready() -> void:
  name="HybridNetwork";add_child(session);rtc.bridge=self;add_child(rtc)
  session.freeze_simulation.connect(freeze_game)
@@ -66,12 +75,19 @@ func _ready() -> void:
  session.resume_simulation.connect(resume_game)
  session.return_to_queue.connect(fail)
  session.report_unhealthy.connect(func(_epoch):send({"type":"unhealthy","epoch":session.epoch}))
+ scheduler=load("res://scripts/master_scheduler.gd").new();scheduler.hub=self;add_child(scheduler)
+ continuity=load("res://scripts/authority_continuity.gd").new();continuity.hub=self;continuity.name="AuthorityContinuity";add_child(continuity)
+ queue_fallback=load("res://scripts/queue_fallback.gd").new();queue_fallback.hub=self;add_child(queue_fallback)
+ pending_results=load("res://scripts/pending_results.gd").new();pending_results.hub=self;add_child(pending_results)
 func clock() -> float:return Time.get_ticks_msec()/1000.0
 func server_time() -> float:return clock()+server_offset
 func sha(bytes: PackedByteArray) -> PackedByteArray:
  var h=HashingContext.new();h.start(HashingContext.HASH_SHA256);h.update(bytes);return h.finish()
 func send(message: Dictionary) -> void:
- if ws.get_ready_state()==WebSocketPeer.STATE_OPEN:ws.send_text(JSON.stringify(message))
+ if message.get("type","") not in ["hello","proof","ping","result_report"] and not str(message.get("type","")).begins_with("party_") and not session.match_id.is_empty():message["match"]=session.match_id
+ if message.get("type","")=="hello" and scheduler.reconnecting and game.running and not session.match_id.is_empty():message["control_resume"]={"match":session.match_id,"epoch":session.epoch}
+ if ws.get_ready_state()==WebSocketPeer.STATE_OPEN:
+  var text=JSON.stringify(message);control_metrics.messages_sent+=1;control_metrics.text_bytes_sent+=text.to_utf8_buffer().size();ws.send_text(text)
 func load_identity() -> void:
  identity=CryptoKey.new()
  if not FileAccess.file_exists("user://hybrid_identity.key") or identity.load("user://hybrid_identity.key")!=OK:
@@ -83,7 +99,7 @@ static func valid_hub_url(url: String) -> bool:
  if netloc.contains("@"):return false
  return netloc.get_slice(":",0) in ["localhost","127.0.0.1"]
 func master_connected() -> bool:
- return enabled and master_authenticated and ws.get_ready_state()==WebSocketPeer.STATE_OPEN and clock()-master_last_reply<6.0
+ return enabled and master_authenticated and ws.get_ready_state()==WebSocketPeer.STATE_OPEN and clock()-master_last_reply<float(NestControlPolicy.settings().socket_keepalive_seconds)+float(NestControlPolicy.settings().request_timeout_seconds)
 func master_status() -> String:
  if not enabled or not failure_reason.is_empty():return "MASTER SERVER · DISCONNECTED"
  if not master_authenticated:return "MASTER SERVER · CONNECTING"
@@ -93,10 +109,11 @@ func connect_hub(url: String,as_worker: bool=false,token: String="",port: int=0)
  if not valid_hub_url(url):
   mm.status="Use a secure wss:// hub URL (plain WS is permitted only on loopback).";mm.phase="error";return ERR_INVALID_PARAMETER
  if enabled:leave()
+ current_event={}
  session.epoch=0;session.lease_until=0;session.pending_resume=false;session.authority="";session.match_id="";authenticated.clear();consumed.clear();roster.clear();checkpoint_data=PackedByteArray();checkpoint_digest="";checkpoint_tick=0
  cloud=false;rtc.stop();load_identity();worker=as_worker;worker_token=token;listen_port=port;enabled=true;mm.active=true;mm.dedicated=worker;mm.phase="connecting";hub_url=url;game.lobby_kind="matchmaking"
  master_authenticated=false;master_last_reply=-1.0
- hello_sent=false;account_preflight=false;control_deadline=clock()+25;failure_reason="";staged=false;session.frozen=true
+ hello_sent=false;account_preflight=false;control_deadline=clock()+float(NestControlPolicy.settings().request_timeout_seconds);failure_reason="";staged=false;session.frozen=true;scheduler.reset()
  if worker:
   authority=true
   var error=open_listener(listen_port)
@@ -105,7 +122,10 @@ func connect_hub(url: String,as_worker: bool=false,token: String="",port: int=0)
  var error=ws.connect_to_url(url)
  if error!=OK:fail("Unable to open matchmaking control connection");return error
  mm.status="Connecting to hybrid matchmaking hub…";mm.changed();return error
-func leave() -> void:
+func leave(abandon: bool=false) -> void:
+ if resolve_request>=0:IP.erase_resolve_item(resolve_request);resolve_request=-1
+ scheduler.reset();scheduler.retry_at=0
+ if abandon and master_connected():send({"type":"leave_match"});ws.poll()
  master_authenticated=false;master_last_reply=-1.0
  close_game_transport() # A departing player-host must not broadcast end_network_match.
  rtc.stop();enabled=false;ws.close();udp.close();session.frozen=true;authority=false;game.multiplayer.auth_callback=Callable();game.multiplayer.auth_timeout=3
@@ -113,9 +133,22 @@ func _process(_delta: float) -> void:
  cpu_samples.append(1000.0*(Performance.get_monitor(Performance.TIME_PROCESS)+Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)))
  if cpu_samples.size()>180:cpu_samples.pop_front()
  if not enabled:return
+ if game.film_retaining_transport:
+  if game.film_recorder.transfer.pending_work():film_drain_at=0
+  elif film_drain_at<=0:film_drain_at=clock()+2
+  if clock()>=film_transport_until or (film_drain_at>0 and clock()>=film_drain_at):release_film_transport("Perspective collection finished or timed out")
  if control_deadline>0 and clock()>control_deadline:
-  control_deadline=0;fail("Matchmaking hub did not respond within 12 seconds. Check the URL and hosting service.");ws.close();return
+  control_deadline=0;scheduler.lost();ws.close(4000,"Control request timeout");return
  ws.poll()
+ if resolve_request>=0 and IP.get_resolve_item_status(resolve_request) in [IP.RESOLVER_STATUS_DONE,IP.RESOLVER_STATUS_ERROR]:
+  if IP.get_resolve_item_status(resolve_request)==IP.RESOLVER_STATUS_DONE:reflector_ip=IP.get_resolve_item_address(resolve_request)
+  IP.erase_resolve_item(resolve_request);resolve_request=-1
+ if not cloud and not authority and not cookie.is_empty() and not reflector_ip.is_empty() and clock()>=legacy_refresh_at:
+  legacy_refresh_at=clock()+float(NestControlPolicy.settings().socket_keepalive_seconds)
+  for index in range(2):
+   var nonce=Crypto.new().generate_random_bytes(12).hex_encode()
+   var signature=Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA256,sha((cookie+nonce+str(index)).to_utf8_buffer()),identity))
+   udp_send(reflector_ip,reflector_port+index,{"type":"hello","cookie":cookie,"nonce":nonce,"signature":signature})
  if ws.get_ready_state()==WebSocketPeer.STATE_OPEN:
   if not worker and not hello_sent and game.get("accounts")!=null and game.accounts.linked() and not account_preflight:
    account_preflight=true
@@ -125,26 +158,21 @@ func _process(_delta: float) -> void:
   if not hello_sent:
    hello_sent=true
    if worker:send({"type":"worker","token":worker_token,"public_key":identity.save_to_string(true),"certificate":"" if cloud else certificate.save_to_string()})
-   else:send({"type":"hello","lobby_only":mm.party_mode,"playlist":mm.playlist,"name":game.current_username(),"version":game.NETWORK_VERSION,"public_key":identity.save_to_string(true),"rating":game.ranked.profile.summary(),"local_ips":IP.get_local_addresses(),"account_assertion":game.accounts.account_assertion if game.get("accounts")!=null else ""})
-  while ws.get_available_packet_count()>0:
-   var value=JSON.parse_string(ws.get_packet().get_string_from_utf8())
+   else:send({"type":"hello","lobby_only":mm.party_mode,"resume":mm.resume_reserved_match,"playlist":mm.playlist,"name":game.current_username(),"version":game.NETWORK_VERSION,"public_key":identity.save_to_string(true),"rating":game.ranked.profile.summary(),"local_ips":IP.get_local_addresses(),"account_assertion":game.accounts.account_assertion if game.get("accounts")!=null else ""})
+  var parsed=0
+  while ws.get_available_packet_count()>0 and parsed<8:
+   parsed+=1
+   var packet=ws.get_packet()
+   if packet.size()>1500000:continue
+   var raw=packet.get_string_from_utf8()
+   if raw=="nest-pong":master_last_reply=clock();continue
+   var value=JSON.parse_string(raw)
    if value is Dictionary:control(value)
  elif ws.get_ready_state()==WebSocketPeer.STATE_CLOSED and hello_sent:
   while ws.get_available_packet_count()>0:
    var pending=JSON.parse_string(ws.get_packet().get_string_from_utf8())
    if pending is Dictionary:control(pending)
-  if failure_reason.is_empty():fail("Matchmaking connection closed (%d): %s. Reconnect through matchmaking."%[ws.get_close_code(),ws.get_close_reason() if not ws.get_close_reason().is_empty() else "network disconnected"])
- if master_authenticated and clock()>=heartbeat_at:
-  heartbeat_at=clock()+1
-  send({"type":"ping"})
-  var heartbeat={"type":"heartbeat","epoch":session.epoch,"host_capacity":host_capacity()}
-  if authority and game.running:heartbeat["live"]={"scores":game.scores,"elapsed":minf(10800.0,float(game.now))}
-  send(heartbeat)
-  if not cloud and not authority and not cookie.is_empty():
-   for index in range(2):
-    var nonce=Crypto.new().generate_random_bytes(12).hex_encode()
-    var signature=Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA256,sha((cookie+nonce+str(index)).to_utf8_buffer()),identity))
-    udp_send(udp_host,reflector_port+index,{"type":"hello","cookie":cookie,"nonce":nonce,"signature":signature})
+  if failure_reason.is_empty():scheduler.lost(ws.get_close_code() in [1008,4001,4003])
  if authority:
   for peer in admission_until.keys():
    if clock()>admission_until[peer]:
@@ -153,37 +181,57 @@ func _process(_delta: float) -> void:
  if not cloud and not authority:poll_probes()
  if cloud and game.running and game.finished and clock()>=result_report_at:
   result_report_at=clock()+1;send_result_report()
- if authority and not session.frozen and game.running and game.finished and not completion_sent:
+ if authority and master_connected() and not session.frozen and game.running and game.finished and not completion_sent:
   completion_sent=true;send({"type":"complete","epoch":session.epoch})
  if authority and not session.frozen and game.running and clock()>=checkpoint_at:
   checkpoint_at=clock()+2;checkpoint_tick+=1
   checkpoint_data=NestMigrationState.pack(game)
   if checkpoint_data.size()<=1048576:send({"type":"checkpoint","epoch":session.epoch,"tick":checkpoint_tick,"state":Marshalls.raw_to_base64(checkpoint_data)})
 func control(e: Dictionary) -> void:
+ var started=Time.get_ticks_usec();handle_control(e)
+ var elapsed=Time.get_ticks_usec()-started
+ control_metrics.messages_received+=1;control_metrics.handler_us_sum+=elapsed;control_metrics.handler_us_max=maxi(int(control_metrics.handler_us_max),elapsed)
+func handle_control(e: Dictionary) -> void:
  var kind=str(e.get("type",""))
+ if game.film_retaining_transport and kind in ["collect_telemetry","voting","host_offer","connect"]:release_film_transport("A new match started before every perspective was available")
+ master_last_reply=clock()
+ if kind=="failed" and not e.has("epoch"):
+  scheduler.lost(true);ws.close();return
  if e.has("server_time"):server_offset=float(e.server_time)-clock()
  match kind:
   "challenge":send({"type":"proof","signature":Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA256,sha(str(e.nonce).to_utf8_buffer()),identity))})
   "hello":
+   mm.resume_reserved_match=true
    master_authenticated=true;master_last_reply=clock()
    control_deadline=0
    cloud=e.get("transport","")=="webrtc"
    if e.get("playlist","") in NestMatchmaking.PLAYLIST_IDS:mm.playlist=str(e.playlist)
-   player_id=e.player;cookie=e.cookie;udp_host=e.udp_host;reflector_ip="" if cloud else IP.resolve_hostname(udp_host,IP.TYPE_IPV4);reflector_port=int(e.udp_port)
+   player_id=e.player;cookie=e.cookie;udp_host=e.udp_host;reflector_ip="";reflector_port=int(e.udp_port)
+   if not cloud:resolve_request=IP.resolve_hostname_queue_item(udp_host,IP.TYPE_IPV4)
    if not cloud:
     udp_port=randi_range(22000,55000)
     if udp.bind(udp_port,"*")!=OK:fail("Unable to bind a P2P UDP probe port. Retry matchmaking.");return
     if DisplayServer.get_name()!="headless":game.lobby_network._start_upnp(udp_port)
-   session.public_key.load_from_string(e.public_key,true);session.local_player=player_id;session.master_clock=server_time
+   if session.configure(session.match_id if scheduler.reconnecting and game.running else "",player_id,str(e.public_key),server_time)!=OK:fail("Master server returned an invalid signing key.");return
+   scheduler.restored()
+   if game.running and not session.match_id.is_empty():return
    mm.status="Opening party lobby…" if mm.party_mode else "Connected to matchmaking hub · waiting for this playlist to fill";mm.phase="connecting" if mm.party_mode and cloud else "queue";mm.changed()
   "party":
+   if mm.queue_cancelled:e["searching"]=false
    mm.party=e
+   if e.has("custom"):mm.browser_mode=true
    mm.playlist=str(e.playlist);mm.save_connection()
    if mm.phase not in ["probing","voting","loading","rejoining","playing","results","migrating"]:
     mm.phase="queue" if e.get("searching",false) else "party"
     mm.public_state={"capacity":mm.team_size()*2,"connected":0,"members":{}}
     mm.status="Finding an opposing team…" if e.get("searching",false) else "Invite friends or search solo. Your party stays on the same team."
+    if e.has("custom"):mm.status="Preparing custom game…" if e.get("searching",false) else "Custom lobby · Unranked · The lobby owner starts the game."
+    elif mm.browser_mode:mm.status="Browse public custom games or create a lobby."
    mm.changed()
+  "server_list":
+   if game.running or game.current_screen!="server_browser" or str(e.get("request_id",""))!=mm.browser_pending:return
+   mm.browser_pending="";mm.browser_failures=0
+   mm.browser_lobbies=e.get("lobbies",[]);mm.browser_loaded=true;mm.changed()
   "party_error":
    mm.status=str(e.get("reason","Unable to update party"));mm.changed()
   "allocated":
@@ -191,10 +239,22 @@ func control(e: Dictionary) -> void:
    player_id=e.authority;roster=e.roster;session.configure(e.match,player_id,e.public_key,server_time);session.epoch=int(e.epoch);session.authority=player_id
    current_event=e;session.frozen=true;mm.phase="loading";game.match_session=session_number();configure_auth()
   "pong":master_last_reply=clock()
+  "heartbeat_ack":scheduler.acknowledge(int(e.get("revision",-1)))
+  "host_status_grant":
+   if scheduler.host_grant.is_empty():scheduler.status_due=clock()+.05
+   scheduler.host_grant=str(e.get("grant",""))
+  "control_restored":
+   current_event=e;roster=e.roster;mm.status="Master connection restored";scheduler.restored()
+   if game.running:mm.phase="results" if game.finished else "playing"
+   if game.finished:completion_sent=false
+  "result_receipt":pending_results.acknowledge(str(e.get("match_id","")),str(e.get("receipt","")))
   "queue":
+   if mm.queue_cancelled:return
+   queue_fallback.accept_ticket(str(e.get("queue_token",queue_fallback.ticket)))
    mm.status=str(e.get("status","Finding players for your playlist…"))
    mm.phase="queue";mm.public_state={"capacity":int(e.get("capacity",6)),"connected":int(e.connected),"members":integer_members(e.members),"votes":{},"seconds":0};mm.changed()
   "voting":
+   if mm.queue_cancelled and not game.running:send({"type":"leave_match"});return
    current_event=e;roster=e.roster;session.match_id=e.match;mm.local_slot=int(roster[player_id].slot)
    var ballots={}
    for id in e.votes:ballots[int(roster[id].slot)]=e.votes[id]
@@ -225,8 +285,13 @@ func control(e: Dictionary) -> void:
   "result_status":
    mm.status=str(e.get("message",""));game.messages.append(mm.status);mm.changed()
   "return_queue":
-   close_game_transport()
+   var keep_film=game.film_recorder.ended and not game.film_recorder.track_owner.is_empty() and game.network_active
+   var active_transport=game.network_active;game.network_active=false
    if game.running:game.stop_game()
+   game.network_active=active_transport
+   if keep_film:
+    game.film_retaining_transport=true;film_transport_until=clock()+1800;film_drain_at=0
+   else:close_game_transport()
    if worker:get_tree().quit();return
    authority=false;staged=false;completion_sent=false;checkpoint_data=PackedByteArray();checkpoint_digest="";checkpoint_tick=0;roster.clear();authenticated.clear();admission_until.clear();current_event={}
    session.epoch=0;session.lease_until=0;session.pending_resume=false;session.frozen=true;session.authority="";session.match_id="";mm.local_slot=0
@@ -343,6 +408,7 @@ func open_listener(port: int) -> Error:
  configure_auth();game.multiplayer.server_relay=false;game.multiplayer.multiplayer_peer=transport;game.network_active=true
  return OK
 func start_host(_epoch: int,_offer: String,_checkpoint: String) -> void:
+ if not bool(game.prefs.values.get("allow_host",true)):send({"type":"host_failed","epoch":session.epoch});return
  authority=true;mm.phase="loading";mm.status="Creating the elected host’s lobby…";authenticated.clear();consumed.clear()
  var error=open_listener(udp_port)
  if error!=OK:send({"type":"host_failed","epoch":session.epoch});return
@@ -371,6 +437,12 @@ func close_game_transport() -> void:
   NestNetworkCleanup.retire_rpc_cache([game,mm,game.nu,self]);game.multiplayer.multiplayer_peer.close()
   game.multiplayer.multiplayer_peer=OfflineMultiplayerPeer.new()
  game.network_active=false;game.clear_held_input()
+ game.film_retaining_transport=false
+func release_film_transport(reason: String="Perspective source disconnected"):
+ if not game.film_retaining_transport:return
+ game.film_recorder.metadata["perspective_status"]=reason
+ game.film_recorder.queue.append({"id":game.film_recorder.id,"payload":{"metadata":game.film_recorder.metadata.duplicate(true)}})
+ close_game_transport()
 func peer_connected(_peer: int) -> void:
  if authority:call_deferred("try_stage")
 func game_connected() -> void:
@@ -394,8 +466,12 @@ func try_stage() -> void:
  else:
   game.match_session=session_number()
   if state.is_empty():
-   mm.configure_rules(int(current_event.config.mode),int(current_event.config.map),int(current_event.config.get("matchup",1)));game.game_type.max_players=roster.size();game.game_type.max_players_per_team=roster.size()/2;game.game_type.validate();game.sync_game_type_to_legacy();game.match_session=session_number();game.begin_network_match(game.active_config(),members)
+   mm.configure_rules(int(current_event.config.mode),int(current_event.config.map),int(current_event.config.get("matchup",1)))
+   game.snapshot_interval_ticks=clampi(int(current_event.config.get("snapshot_ticks",2)),1,3)
+   if current_event.config.get("custom",false):game.game_type.matchup=int(current_event.config.matchup)
+   game.game_type.max_players=roster.size();game.game_type.max_players_per_team=ceili(roster.size()/2.0);game.game_type.validate();game.sync_game_type_to_legacy();game.match_session=session_number();game.begin_network_match(game.active_config(),members)
   elif not NestMigrationState.restore(game,state,members,session_number()):fail("Unable to restore complete checkpoint");return
+  game.snapshot_interval_ticks=clampi(int(current_event.config.get("snapshot_ticks",2)),1,3)
   staged=true
  game.lobby_members=members
  for actor in game.actors:
@@ -409,10 +485,12 @@ func try_stage() -> void:
  mm.public_state={"connected":authenticated.size(),"members":members,"mode":game.mode,"map":game.game_type.map_selection,"loaded":authenticated.size()};mm.changed()
 @rpc("authority","call_remote","reliable")
 func stage(epoch: int,config: Dictionary,members: Dictionary,state: PackedByteArray,number: int,is_rejoin: bool) -> void:
+ if game.film_retaining_transport:return
  if not enabled or authority or epoch!=session.epoch or state.size()>1048576:return
  if game.running and state.is_empty():return
  if state.is_empty():game.begin_network_match(config,members);game.match_session=number
  elif not NestMigrationState.restore(game,state,members,number):fail("Checkpoint restoration failed");return
+ game.snapshot_interval_ticks=clampi(int(config.get("snapshot_ticks",3)),1,3)
  game.match_session=number;game.player=game.actor_by_id(mm.local_slot);game.lobby_members=members;staged=true
  mm.public_state={"connected":members.values().filter(func(m):return int(m.peer)>0).size(),"members":members,"mode":game.mode,"map":game.game_type.map_selection,"loaded":members.size()}
  if is_instance_valid(game.player):game.player.local_player=true;game.player.camera.current=true
@@ -420,6 +498,7 @@ func stage(epoch: int,config: Dictionary,members: Dictionary,state: PackedByteAr
  ready_on_host.rpc_id(1,session.epoch)
 @rpc("any_peer","call_remote","reliable")
 func ready_on_host(epoch: int) -> void:
+ if game.film_retaining_transport:return
  if not authority or epoch!=session.epoch:return
  admission_until.erase(game.multiplayer.get_remote_sender_id())
 func freeze_game(reason: String) -> void:
@@ -446,29 +525,34 @@ func disconnected(peer: int) -> void:
   if actor!=null:mm.reset_owner_commands(actor);actor.remote_peer=0
 func lost() -> void:
  if not enabled:return
+ if game.film_retaining_transport:release_film_transport();return
  session.freeze("Authority connection lost · waiting for migration");mm.phase="migrating";send({"type":"unhealthy","epoch":session.epoch});mm.changed()
 func fail(reason: String) -> void:
  master_authenticated=false
  control_deadline=0
- if reason.contains("No reachable") or reason.contains("eligible player"):
+ if not cloud and (reason.contains("No reachable") or reason.contains("eligible player")):
   reason+=" · Open/forward P2P UDP port %d or add dedicated capacity. No relay is configured."%udp_port
  failure_reason=reason;session.freeze(reason);close_game_transport();mm.phase="error";mm.status=reason;mm.changed();print("HYBRID FAILED: ",reason)
 
 func account_handshake() -> void:
- if not await game.accounts.refresh_session():fail("Account sign-in expired or unavailable. Open Account in the main menu.");return
+ if not await game.accounts.refresh_session():
+  if game.running and scheduler.reconnecting:scheduler.lost(true)
+  else:fail("Account sign-in expired or unavailable. Open Account in the main menu.")
+  return
  if not enabled or ws.get_ready_state()!=WebSocketPeer.STATE_OPEN:return
- hello_sent=true;control_deadline=clock()+12
- send({"type":"hello","lobby_only":mm.party_mode,"playlist":mm.playlist,"name":game.current_username(),"version":game.NETWORK_VERSION,"public_key":identity.save_to_string(true),"rating":game.ranked.profile.summary(),"local_ips":IP.get_local_addresses(),"account_assertion":game.accounts.account_assertion})
+ hello_sent=true;control_deadline=clock()+float(NestControlPolicy.settings().request_timeout_seconds)
+ send({"type":"hello","lobby_only":mm.party_mode,"resume":mm.resume_reserved_match,"playlist":mm.playlist,"name":game.current_username(),"version":game.NETWORK_VERSION,"public_key":identity.save_to_string(true),"rating":game.ranked.profile.summary(),"local_ips":IP.get_local_addresses(),"account_assertion":game.accounts.account_assertion})
 
 func send_result_report() -> void:
+ if mm.custom_match():return
  var players=[]
  for who in roster:
   var actor=game.actor_by_id(int(roster[who].slot))
   if actor==null:return
   players.append({"player":who,"kills":actor.kills,"deaths":actor.deaths,"assists":actor.assists,"flags_captured":actor.captures,"flags_stopped":actor.flag_returns})
  var winner=null if game.mode==1 or game.scores[0]==game.scores[1] else (0 if game.scores[0]>game.scores[1] else 1)
- send({"type":"result_report","epoch":session.epoch,"winner_team":winner,"players":players})
+ pending_results.enqueue({"type":"result_report","epoch":session.epoch,"winner_team":winner,"players":players})
 
 func host_capacity() -> Dictionary:
- var measured=cpu_samples.duplicate();measured.sort()
- return {"cpu_p95_ms":float(measured[mini(measured.size()-1,int(measured.size()*.95))]) if not measured.is_empty() else 1000.,"logical_cpus":OS.get_processor_count(),"samples":measured.size()}
+ var measured=(game.physics_samples if game.running and game.physics_samples.size()>=15 else cpu_samples).duplicate();measured.sort()
+ return {"allow_host":bool(game.prefs.values.get("allow_host",true)),"cpu_p95_ms":float(measured[mini(measured.size()-1,int(measured.size()*.95))]) if not measured.is_empty() else 1000.,"logical_cpus":OS.get_processor_count(),"samples":measured.size()}

@@ -61,17 +61,17 @@ const LOBBY_ONLY_KEYS = ["mode","matchup","map_selection","cs_defuse_kits","max_
 @export_range(0, 10, 0.25) var spawn_protection_seconds: float = 0.0
 
 @export_group("Player Traits - Movement")
-@export_range(25, 400, 1) var movement_speed_percent: float = 100.0
+@export_range(25, 400, 1) var movement_speed_percent: float = 110.0
 @export_range(25, 400, 1) var walk_speed_percent: float = 100.0
 @export_range(25, 400, 1) var crouch_speed_percent: float = 100.0
 @export_range(25, 400, 1) var backpedal_speed_percent: float = 100.0
 @export_range(25, 400, 1) var strafe_speed_percent: float = 100.0
 @export_range(25, 400, 1) var acceleration_percent: float = 100.0
 @export_range(25, 400, 1) var deceleration_percent: float = 100.0
-@export_range(10, 400, 1) var gravity_percent: float = 100.0
-@export_range(0, 500, 1) var jump_height_percent: float = 100.0
+@export_range(10, 400, 1) var gravity_percent: float = 145.0
+@export_range(0, 500, 1) var jump_height_percent: float = 125.0
 @export_range(1, 5, 1) var jump_count: int = 1
-@export_range(0, 300, 1) var air_control_percent: float = 100.0
+@export_range(0, 300, 1) var air_control_percent: float = 115.0
 @export_range(0, 10, 1) var wall_kicks: int = 0
 @export_range(25, 400, 1) var wall_kick_strength_percent: float = 100.0
 @export var ledge_grab: bool = false

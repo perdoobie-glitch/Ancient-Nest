@@ -78,8 +78,37 @@ test('game username changes remain attached to Discord ID and cannot take anothe
   discordId = '223456789012345678';
   const other = await login();
   assert.equal((await request('/profile/username', { username: 'NestPlayer' }, other.token)).status, 409);
+  assert.equal((await request('/profile/username', { username: 'nestplayer' }, other.token)).status, 409);
   assert.equal((await request('/profile/username', { username: 'fake' })).status, 401);
   assert.equal((await request('/profile/username', { username: '<script>' }, first.token)).status, 400);
+});
+
+test('new Discord players choose a private game alias before matchmaking and retain it on restore', async () => {
+  const first = await login();
+  assert.equal(first.user.needs_username, true);
+  assert.match(first.user.username, /^Player_[a-f0-9]{16}$/);
+  assert(!first.user.username.includes(discordId));
+  assert.deepEqual(Object.keys(first.user).sort(), ['created_at','id','needs_username','username']);
+  const denied = await request('/api/game/assertion', { public_key: 'not-a-key' }, first.token);
+  assert.equal(denied.status, 409);
+  assert.equal((await denied.json()).error, 'game_username_required');
+  await db.prepare('UPDATE users SET metadata = ? WHERE id = ?').bind('{"favorite":"gold"}', first.user.id).run();
+  const response = await request('/profile/username', { username: 'ChosenNestName' }, first.token);
+  assert.equal(response.status, 200);
+  const chosen = (await response.json()).user;
+  assert.equal(chosen.needs_username, false);
+  assert.equal(chosen.id, first.user.id);
+  assert(!('discord_username' in chosen) && !('discord_id' in chosen) && !('metadata' in chosen));
+  const record = await db.prepare('SELECT metadata, discord_username FROM users WHERE id = ?').bind(first.user.id).first();
+  assert.deepEqual(JSON.parse(record.metadata), { favorite: 'gold', game_username_chosen: true });
+  assert.equal(record.discord_username, 'DiscordUser');
+  const again = await login();
+  assert.equal(again.user.username, 'ChosenNestName');
+  assert.equal(again.user.needs_username, false);
+  const restored = await (await request('/refresh', { refresh_token: again.refresh_token })).json();
+  assert.equal(restored.user.username, 'ChosenNestName');
+  assert.equal(restored.user.needs_username, false);
+  assert.equal((await request('/api/game/assertion', { public_key: 'not-a-key' }, again.token)).status, 400);
 });
 test('verified Discord login reuses a previously linked legacy profile without merging by username', async () => {
   await db.prepare(`INSERT INTO users (id, username, password_hash, password_salt, email, discord_id)
@@ -117,8 +146,11 @@ test('an existing game username or synthetic contact cannot preclaim a Discord i
 test('Discord profiles retain isolated playlist ranks, reject custom results and commit each match once', async () => {
   const { generateKeyPairSync, createHash, randomUUID } = await import('node:crypto');
   const first = await login();
+  assert.equal((await request('/profile/username', { username: 'RankedPlayerOne' }, first.token)).status, 200);
+  first.user.username = 'RankedPlayerOne';
   discordId = '223456789012345678';
   const second = await login();
+  assert.equal((await request('/profile/username', { username: 'RankedPlayerTwo' }, second.token)).status, 200);
   const { publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
   const pem = publicKey.export({ type: 'spki', format: 'pem' });
   const key_hash = createHash('sha256').update(pem).digest('hex');
