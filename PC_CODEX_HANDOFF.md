@@ -33,21 +33,21 @@ The SDK installer pins Discord binding 5.0.0 and keyring 1.0.0 with checksums. R
 ```cmd
 godot --headless --path godot-client --script res://tests/keyring_smoke.gd
 ```
-For the historical coordinator, from its folder:
+For the current integrated coordinator, open CMD in the canonical repository root:
 ```cmd
+cd matchmaking
 npm ci
 npm run typecheck
 npm run build
 npm test
+cd ..
 ```
-Baseline game editor (offline only until integration):
+Canonical game editor and launch, from the repository root:
 ```cmd
-godot --editor --path recovered10.2\Game
+godot --editor --path game
+godot --path game
 ```
-Baseline launch:
-```cmd
-godot --path recovered10.2\Game
-```
+Historical baseline paths belong to the preserved recovery branch, not this active checkout. See matchmaking/README.md for current coordinator checks and explicitly historical 10.2 notes.
 Run Setup Ancient Nest.cmd for dependencies and native SDKs, then Play Ancient Nest.cmd for the canonical full game. Existing godot-client is a test fixture only. Export/build commands target the full game; publish nothing until release gates pass.
 
 ## 4. Reconcile contracts before deployment

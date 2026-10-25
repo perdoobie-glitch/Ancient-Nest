@@ -1,3 +1,50 @@
+# Ancient Nest matchmaking coordinator — 10.5-dev
+
+The current integrated source uses protocol `10.5-discord2` in both the game and coordinator. This is a development integration, not a certified public release. Start with [AGENTS.md](../AGENTS.md), [the Windows Codex handoff](../PC_CODEX_HANDOFF.md) and [VALIDATION.md](../VALIDATION.md). Use the exact verified source commit supplied with the handoff and record `git rev-parse HEAD`; do not silently substitute latest main.
+
+Canonical folders are `game/`, `matchmaking/`, `ancient-nest-accounts/` and `monitor/`. The account service's `godot-client/` is an authentication/native SDK test fixture, not the game launcher. Cloudflare coordinates matchmaking; the elected player's PC simulates the match.
+
+## Current Windows checks (CMD)
+
+Install the handoff's tools: Git for Windows, Node.js 24 LTS, Python 3.11+, Godot 4.6.3 and Discord desktop. Use each project's locked Wrangler dependency. From the canonical repository root, run:
+
+```cmd
+set "NODE_OPTIONS=--dns-result-order=ipv4first"
+cd matchmaking
+npm ci
+npm run typecheck
+npm run build
+npm test
+cd ..
+```
+
+Follow the handoff for account tests, pinned SDK installation and the real Windows keyring check. From the repository root, run `Setup Ancient Nest.cmd`, then `Play Ancient Nest.cmd` for the full game. The local two-client transport check is `python scripts/native-smoke.py`; it uses loopback-only guest fixtures, not production credentials. Keep production `ALLOW_GUESTS=false`.
+
+## Recorded verification and remaining gates
+
+[VALIDATION.md](../VALIDATION.md) records the 2026-10-23 results; these are not newly run tests or evidence of live deployment:
+
+- 37 coordinator tests: the existing 36 plus one real-account-Worker integration test. The cross-service test uses local D1, mocked Discord identities and simulated game load acknowledgments.
+- Two real Godot clients entered one playable match through native WebRTC on loopback using local guest fixtures, with two actors and exactly one host.
+- Accounts passed 51 Node tests with mocked Discord provider calls. The native Linux SDK/auth fixture did not involve real Discord authorization.
+- A clean locked installation still needs repeating on Windows: the recorded environment hit ENOSPC and used ignored dependency links.
+
+Real Windows export/startup and credential storage, real Discord consent and microphone/team isolation, and two PCs on separate internet connections with direct ICE and actual TURN relay remain required. Larger real-player playlists, GPU/performance and human balance tests are also outstanding. Local fixtures and health/readiness responses do not certify those gates. Publish no executable until the required release tests pass.
+
+## Production work is a separate, gated step
+
+Use sections 4–6 of the Windows handoff for contract reconciliation, inspected configuration, backup and deployment prerequisites. The source expects release `10.5-dev` and protocol `10.5-discord2`; no live service state is asserted here.
+
+Preserve existing Worker names, bindings, Durable Object namespace/migration history, cloud data and working secrets. Verify the actual account binding/database before migrations; export, hash, inspect and test restoration of a private backup first. The historical 10.2 statement that no account migration was needed does not apply to the integration's new migration 0006.
+
+Retain the verified `ACCOUNT_API` origin, the shared `COORDINATOR_API_KEY`, `MONITOR_TOKEN`, `TURN_KEY_ID` and `TURN_KEY_API_TOKEN`; never copy secret values into documentation, game exports or website code. Do not change production services, Access rules or credentials as part of these documentation/local checks. Any subsequent service work must follow the handoff's inspected and tested procedure.
+
+## Historical 10.2 release notes — retained verbatim
+
+The following is the original 10.2 release documentation. Its version/protocol, kit paths, Steam references, migration statement and test counts describe that historical release only. They are not current setup or deployment instructions. The preserved source is on [the recovery baseline](https://github.com/perdoobie-glitch/Ancient-Nest/tree/fe249599b46a5bcc25edaf91bf856bc200b64b11).
+
+---
+
 # Ancient Nest 10.2 matchmaking master
 
 This is the coordinated 10.2 map update. All players and the matchmaking Worker must use protocol `10.2-peerhost2`. Monitor 10.2 understands all six map names. Accounts/website 10.1 APIs and database remain compatible; no new account migration is needed for this map update.
