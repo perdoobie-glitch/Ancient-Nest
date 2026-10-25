@@ -229,7 +229,7 @@ func handle_control(e: Dictionary) -> void:
     elif mm.browser_mode:mm.status="Browse public custom games or create a lobby."
    mm.changed()
   "server_list":
-   if game.running or game.current_screen!="server_browser" or str(e.get("request_id",""))!=mm.browser_pending:return
+   if not mm.browser_visible() or mm.browser_pending.is_empty() or str(e.get("request_id",""))!=mm.browser_pending:return
    mm.browser_pending="";mm.browser_failures=0
    mm.browser_lobbies=e.get("lobbies",[]);mm.browser_loaded=true;mm.changed()
   "party_error":

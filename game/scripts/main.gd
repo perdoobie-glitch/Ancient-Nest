@@ -1182,6 +1182,7 @@ func open_server_browser() -> void:
 	if running:return
 	if network_active and not film_retaining_transport:lobby_network.leave_lobby()
 	matchmaking.browser_mode=true;matchmaking.browser_lobbies.clear();matchmaking.browser_loaded=false;matchmaking.browser_refresh_at=0
+	matchmaking.invalidate_browser_view()
 	if not matchmaking.active:
 		matchmaking.active=true;matchmaking.phase="idle";matchmaking.open_party()
 	show_server_browser()

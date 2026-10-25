@@ -33,10 +33,25 @@ var browser_deadline=0.0
 var browser_generation=0
 var browser_manual_at=-100.0
 var browser_failures=0
+var browser_was_visible=false
 var queue_cancelled=false
+func browser_window_visible() -> bool:
+ # Headless fixtures have logical screens but no native window to minimize.
+ if DisplayServer.get_name()=="headless":return true
+ return game.get_window().visible and game.get_window().mode!=Window.MODE_MINIMIZED
+func browser_visible() -> bool:
+ return browser_mode and not game.running and game.current_screen=="server_browser" and phase=="party" and game.screen.is_visible_in_tree() and browser_window_visible()
+func invalidate_browser_view() -> void:
+ browser_pending="";browser_generation+=1;browser_was_visible=false;browser_refresh_at=0
+func update_browser_visibility() -> bool:
+ var visible=browser_visible()
+ if visible!=browser_was_visible:
+  browser_was_visible=visible;browser_pending="";browser_generation+=1
+  if visible:browser_refresh_at=0
+ return visible
 func custom_match() -> bool:return party.has("custom") or hybrid.current_event.get("config",{}).get("custom",false)
 func refresh_browser(manual: bool=true) -> void:
- if not browser_mode or game.running or game.current_screen!="server_browser":return
+ if not update_browser_visibility():return
  if not browser_pending.is_empty():return
  if manual and clock()-browser_manual_at<2:return
  if not hybrid.master_connected() or not party.get("server_browser_supported",false):return
@@ -165,6 +180,7 @@ func leave(abandon: bool=true) -> void:
  cancel_search_countdown()
  if hybrid.enabled:hybrid.leave(abandon)
  party.clear();party_mode=false;browser_mode=false;browser_lobbies.clear();browser_loaded=false
+ invalidate_browser_view()
  active=false;retry_at=0;connect_until=0
  if game.running:game.stop_game()
  game.close_connection();phase="idle";game.lobby_kind="custom"
@@ -174,12 +190,11 @@ func blocks_simulation() -> bool:
 func is_authority() -> bool:return dedicated or (hybrid!=null and hybrid.enabled and hybrid.authority)
 func _process(_delta: float) -> void:
  advance_search_countdown()
- var browser_visible=browser_mode and not game.running and game.current_screen=="server_browser" and phase=="party"
- if not browser_visible:browser_pending=""
- elif not browser_pending.is_empty() and clock()>=browser_deadline:
+ var visible=update_browser_visibility()
+ if visible and not browser_pending.is_empty() and clock()>=browser_deadline:
   browser_pending="";browser_failures+=1;status="Directory offline / showing the previous server list"
   browser_refresh_at=clock()+maxf(float(NestControlPolicy.settings().browser_refresh_seconds),NestControlPolicy.retry_delay(browser_failures,randf()));changed()
- if browser_visible and not game.get_meta("server_create_form",false) and clock()>=browser_refresh_at:refresh_browser(false)
+ if visible and not game.get_meta("server_create_form",false) and clock()>=browser_refresh_at:refresh_browser(false)
  if phase=="queue" and queue_previous_phase!="queue":queue_started_at=clock()
  queue_previous_phase=phase
  if not active:return
