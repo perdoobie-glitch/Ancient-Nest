@@ -1,5 +1,10 @@
 # Ancient Nest — The Last Departure
 
+The subsequent [materials and performance pass](CAMPAIGN_VISUALS.md) adds campaign
+surface detail and scenery batching, with measured renderer results and the
+updated private Windows build path. The original blockout notes below describe
+the first implementation milestone.
+
 The current campaign begins on Connectuct, then returns to Old Earth. Earlier
 Sanctuary-first campaign proposals are superseded; historical release documents
 and multiplayer maps remain intact. Nine missions are planned; only Mission 1

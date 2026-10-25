@@ -1,6 +1,11 @@
 # Windows Codex handoff
 
 ## Identity and source
+
+Latest campaign visual/performance update: see [measured results and current
+private build](docs/CAMPAIGN_VISUALS.md). The updated executable is in
+`C:\Users\Corey\Games\AncientNest-Campaign-Visual-20261025`; the Campaign Private Test
+desktop shortcut points there. Prior private builds remain intact.
 Repository: https://github.com/perdoobie-glitch/Ancient-Nest
 Integration branch: integration/unified-2026-10-23 (promote to main only by fast-forward after checks).
 Use the exact verified commit supplied in the accompanying cloud response; do not silently move to another branch or latest main. Record git rev-parse HEAD before changes.

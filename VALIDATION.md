@@ -1,6 +1,15 @@
 # Unified integration validation — 2026-10-23
 
 ## Changes verified locally
+
+Campaign materials/performance follow-up (2026-10-25): see
+[CAMPAIGN_VISUALS.md](docs/CAMPAIGN_VISUALS.md) for the exact before/after renderer
+table, methodology and limits. Scenery/route equivalence passed 24 checks across
+High/Low quality; campaign state/UI, mission/spawn/combat and all 36 four-client
+ENet checkpoints passed. Forest scenery draw calls fell 74–81% in three fixed
+views with added detail. These short uncapped scenery samples do not establish
+sustained full-game FPS or physical-PC co-op performance.
+
 - Full 10.2 game/maps retained; Discord startup/account adapter now also exposes playlist profiles and service cards used by game UI.
 - New migration 0006 adds ranking/results tables linked to existing Discord user IDs. No production migration was run.
 - Shared game/master protocol 10.5-discord1, development release 10.5-dev; monitor updated.
