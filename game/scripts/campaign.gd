@@ -22,6 +22,7 @@ var original_tuning: NestTuning
 var original_bot_rules={}
 var original_selection={}
 var cinematic: NestCampaignCinematic
+var guide: NestCampaignGuide
 var phase_elapsed=0.0
 var phase_epoch=0
 var sync_at=0.0
@@ -162,7 +163,7 @@ func set_world(region: String):
   original_arena=game.arena;game.remove_child(original_arena)
  if world!=null:game.remove_child(world);world.queue_free()
  world=NestCampaignWorld.new();world.name="CampaignWorld";world.region=region;world.quality=int(game.prefs.values.graphics_quality);game.arena=world;game.add_child(world)
- world.sun.shadow_enabled=bool(game.prefs.values.shadows)
+ world.sun.shadow_enabled=NestGraphicsQuality.shadows_enabled(game.prefs.values)
 func make_actor(id: int,hero: bool,peer: int,name: String) -> NestActor:
  var actor=NestActor.new();actor.game=game;actor.net_id=id;actor.faction=0 if hero else 1;actor.character_choice=0 if hero else 1;actor.username=name;actor.remote_peer=peer;actor.local_player=hero and id==local_slot;actor.name="CampaignActor_"+str(id);game.add_child(actor);game.actors.append(actor)
  if actor.local_player:game.player=actor
@@ -188,6 +189,7 @@ func choose_spawn(actor: NestActor) -> Vector3:
 func ensure_cinematic():
  if cinematic!=null:return
  cinematic=NestCampaignCinematic.new();cinematic.campaign=self;add_child(cinematic)
+ guide=NestCampaignGuide.new();guide.campaign=self;add_child(guide)
 func set_phase(next: String):
  if game.is_client():return
  if state.phase!=next and not state.transition(next):return
@@ -249,7 +251,8 @@ func practice_complete(slot: int) -> bool:
  return PRACTICE.all(func(key):return progress.get(key,false))
 func observe_practice(actor: NestActor):
  var id=str(actor.net_id)
- if not personal.has(id):personal[id]={"start":actor.global_position,"yaw":actor.rotation.y,"pitch":actor.eye.rotation.x,"slot":actor.slot};state.practice[id]={}
+ if not personal.has(id):personal[id]={"start":actor.global_position,"yaw":actor.rotation.y,"pitch":actor.eye.rotation.x,"slot":actor.slot}
+ if not state.practice.has(id):state.practice[id]={}
  var p=state.practice[id];var origin=personal[id]
  if absf(actor.rotation.y-float(origin.yaw))>.35 or absf(actor.eye.rotation.x-float(origin.pitch))>.25:p.look=true
  if actor.global_position.distance_to(origin.start)>3:p.walk=true
@@ -458,7 +461,7 @@ func objective() -> String:
    var progress=state.practice.get(str(local_slot),{});var missing=[]
    for key in PRACTICE:
     if not progress.get(key,false):missing.append(key.capitalize())
-   return "COMPLETE DEPARTURE READINESS\n"+("Complete • waiting for squad" if missing.is_empty() else "Personal checks: "+", ".join(missing))+"\nEquipment terminal → Shield calibration → Safe firing bay → Dark inspection passage"
+   return "COMPLETE DEPARTURE READINESS\n"+("Complete • waiting for squad" if missing.is_empty() else "%d / %d personal checks complete"%[PRACTICE.size()-missing.size(),PRACTICE.size()])+"\nFollow Brutus's instructions and the cyan waypoint."
   "BOARDING":return "BOARD THE EXPEDITION SHIP\nInspect sealed charge at manifest terminal; each member boards when ready."
   "CRASH_ORIENTATION":return "EXIT THE WRECK • LOCATE AND SECURE THE DEMOLITION CHARGE" if state.completed_waves==0 else "LOCATE AND SECURE THE DEMOLITION CHARGE"
   "RADIO_READY":return "RETURN TO THE SHIP'S EMERGENCY RADIO"
@@ -474,6 +477,7 @@ func present_phase():
  if state.phase=="DEFEAT":NestCampaignUI.defeat(self);return
  if state.phase=="COMPLETE":NestCampaignUI.complete(self);return
  game.clear_screen();game.current_screen="campaign_playing";game.context="cinematic" if state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"] else "playing"
+ if game.context=="cinematic" and guide!=null:guide.stop_voice();guide.spoken_step=""
  if game.context=="playing":
   game.create_hud();game.hud.visible=true
   if game.player!=null and game.player.camera!=null:game.player.camera.current=true
@@ -492,6 +496,9 @@ func handle_input(event: InputEvent) -> bool:
   return true
  if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_ENTER and state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"]:send_action("skip",{});return true
  if game.context=="playing" and event.is_action_pressed("flashlight"):send_action("flashlight",{});return true
+ if game.context=="playing" and event.is_action_pressed("campaign_hint"):
+  if guide!=null:guide.repeat_current()
+  return true
  return false
 func send_action(action: String,extra: Dictionary):
  if not active:return
@@ -576,6 +583,7 @@ func _process(delta: float):
   if held!=last_sprint or (held and game.now>=next_sprint):last_sprint=held;next_sprint=game.now+.2;send_action("sprint",{"held":held})
   if state.phase=="PREPARATION" and game.now>=next_aim and not state.practice.get(str(local_slot),{}).get("aim",false) and (Input.is_action_pressed("aim") or Input.is_action_pressed("zoom")):next_aim=game.now+.2;send_action("aim",{})
  update_flashlights();update_objective_ui()
+ if guide!=null:guide.update()
  if world!=null and world.region=="forest":
   var carrier=game.actor_by_id(charge_carrier)
   world.charge_mesh.position=(carrier.global_position+Vector3(.4,.6,0)) if state.bomb=="carried" and carrier!=null else world.locations["charge"+str(state.charge_site)]+Vector3.UP*.45;world.charge_mesh.visible=state.bomb!="secured";world.secure_mesh.visible=state.bomb=="secured";world.ancient_light.visible=state.phase in ["ENDING","COMPLETE"]
@@ -601,6 +609,10 @@ func update_objective_ui():
  objective_label.add_theme_color_override("font_outline_color",Color.BLACK);objective_label.add_theme_constant_override("outline_size",4)
  objective_label.offset_right=minf(620,game.get_viewport().get_visible_rect().size.x-22)
  objective_label.text="THE LAST DEPARTURE • Difficulty: "+state.difficulty+"\n"+objective()
+ if guide!=null and not guide.next_step().is_empty():
+  objective_label.offset_top=132 if game.get_viewport().get_visible_rect().size.y>600 else 62
+  objective_label.text="THE LAST DEPARTURE • Difficulty: "+state.difficulty
+ else:objective_label.offset_top=150
  if game.player!=null and not game.player.alive:objective_label.text+="\nDOWNED • Hold position for a teammate. Full squad down: checkpoint retry."
  if game.player!=null and not game.player.alive:
   if game.hud_death!=null:game.hud_death.text="DOWNED"
@@ -630,5 +642,6 @@ func exit_campaign():
  if was_active:
   game.running=false;game.audio.stop_all();clear_actors();game.close_connection()
   if cinematic!=null:cinematic.queue_free();cinematic=null
+  if guide!=null:guide.queue_free();guide=null
   restore_game();game.finished=false;game.break_until=0;game.menu_camera.current=true
  members.clear();credentials.clear();state=NestCampaignState.new();last_present_phase="";NestCampaignUI.menu(self)

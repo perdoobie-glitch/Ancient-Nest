@@ -2,6 +2,12 @@
 
 ## Identity and source
 
+Newest campaign build: `C:\Users\Corey\Games\AncientNest-Campaign-Guided-20261025`.
+See [guided Connectuct/atmosphere and voice status](docs/CAMPAIGN_GUIDANCE.md).
+The tutorial, key labels, waypoint route and cabin boarding are integrated.
+Actor recordings are still unavailable; local OS speech is an unverified
+device-dependent fallback. No human recording or generated voice asset is claimed.
+
 Latest campaign visual/performance update: see [measured results and current
 private build](docs/CAMPAIGN_VISUALS.md). The updated executable is in
 `C:\Users\Corey\Games\AncientNest-Campaign-Visual-20261025`; the Campaign Private Test

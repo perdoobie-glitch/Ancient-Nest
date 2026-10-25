@@ -1,7 +1,7 @@
 import {spawn} from 'node:child_process';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));const engine=process.env.GODOT_BIN||'C:/Users/Corey/Documents/AncientNest-Unified-Setup-e0bf594/Tools/Godot-4.6.3/Godot_v4.6.3-stable_win64_console.exe';
 const out=fs.mkdtempSync(path.join(os.tmpdir(),'nest-campaign-validation-'));console.log('Reports: '+out);
-const fixtures=process.argv.slice(2);if(!fixtures.length)fixtures.push('campaign_state','campaign_ui','campaign_mission','campaign_spawn','campaign_combat','unified_account','falling_and_weapon_controls','server_browser','master_control','network_policy','film_playback','age_policy','discord_dashboard_layout');
+const fixtures=process.argv.slice(2);if(!fixtures.length)fixtures.push('campaign_state','campaign_ui','campaign_guidance','campaign_mission','campaign_scenery','campaign_spawn','campaign_combat','unified_account','falling_and_weapon_controls','server_browser','master_control','network_policy','film_playback','age_policy','discord_dashboard_layout');
 const results=[];
 for(const name of fixtures){
  if(!/^[a-z_]+$/.test(name))throw Error('Invalid fixture name');

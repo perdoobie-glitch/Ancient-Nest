@@ -34,6 +34,7 @@ common/physics_interpolation=true
 3d/default_gravity=7.34693877
 [audio]
 driver/enable_input=false
+general/text_to_speech=true
 
 [autoload]
 AncientNestAgePolicy="*res://addons/ancient_nest/age_policy.gd"

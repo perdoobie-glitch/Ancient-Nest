@@ -26,6 +26,9 @@ charge recovery, five Annu waves and radio ending, with solo saves and direct
 is missing and uses subtitles/replaceable slots. See
 [Mission 1 and Windows/co-op handoff](docs/CAMPAIGN_MISSION1.md) for setup,
 controls, actual tests and limits. Historical multiplayer modes remain available.
+The newest [guided introduction](docs/CAMPAIGN_GUIDANCE.md) adds clear controls,
+waypoints, cabin boarding and a damaged-atmosphere sky. It supports recordings
+and local system-speech fallback; recorded actor assets remain unavailable.
 
 Install Git, Node.js 24 LTS, Python 3.11+ and Godot 4.6.3 (matching export templates if building). Ensure `node`, `npm`, `python` and `godot` work in CMD. Read [the PC handoff](PC_CODEX_HANDOFF.md), then run **Setup Ancient Nest.cmd** and **Play Ancient Nest.cmd**. The launch script now opens the full game. Native Discord/keyring downloads are pinned and checksum-verified; WebRTC runtime dependencies are included.
 

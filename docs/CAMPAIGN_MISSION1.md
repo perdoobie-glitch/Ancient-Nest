@@ -1,5 +1,10 @@
 # Ancient Nest — The Last Departure
 
+The latest [guided Connectuct introduction and atmosphere](CAMPAIGN_GUIDANCE.md)
+adds step-by-step controls, waypoints, cabin boarding, and recording/system-speech
+playback support. Recorded actor assets remain missing; see that handoff for the
+exact limitation and newest private PC build.
+
 The subsequent [materials and performance pass](CAMPAIGN_VISUALS.md) adds campaign
 surface detail and scenery batching, with measured renderer results and the
 updated private Windows build path. The original blockout notes below describe

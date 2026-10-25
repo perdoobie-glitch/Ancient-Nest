@@ -1,5 +1,10 @@
 # Campaign materials and performance pass — 2026-10-25
 
+This is the earlier materials milestone. The subsequent
+[guided introduction and atmosphere](CAMPAIGN_GUIDANCE.md) supersedes its build
+path and corrects Low/High campaign quality handling. The benchmark below is
+historical; the current runner explicitly selects viewport quality/MSAA.
+
 Campaign-only visual work above `4b341b8`; existing multiplayer maps, weapons,
 movement, difficulty, prescribed waves and 60 Hz physics are unchanged.
 

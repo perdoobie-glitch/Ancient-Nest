@@ -8,8 +8,9 @@ const engine=process.env.GODOT_BIN||'C:/Users/Corey/Documents/AncientNest-Unifie
 const out=fs.mkdtempSync(path.join(os.tmpdir(),'nest-campaign-render-'));
 const fd=fs.openSync(path.join(out,'renderer.log'),'w');
 const report=path.join(out,'render.json');
+const quality=Number(process.argv[2]??2);if(![0,1,2].includes(quality))throw Error('Quality must be 0 Low, 1 Balanced or 2 High');
 console.log('Rendered scenery benchmark, isolated profile: '+out);
-const child=spawn(engine,['--path',path.join(root,'game'),'--script','res://tests/campaign_render.gd'],{cwd:root,env:{...process.env,APPDATA:path.join(out,'user'),NEST_ISOLATED_QA:'1',NEST_RENDER_REPORT:report},stdio:['ignore',fd,fd],windowsHide:true});
+const child=spawn(engine,['--path',path.join(root,'game'),'--script','res://tests/campaign_render.gd'],{cwd:root,env:{...process.env,APPDATA:path.join(out,'user'),NEST_ISOLATED_QA:'1',NEST_RENDER_REPORT:report,NEST_RENDER_QUALITY:String(quality)},stdio:['ignore',fd,fd],windowsHide:true});
 let timeout=false;const timer=setTimeout(()=>{timeout=true;child.kill();},90000);
 const code=await new Promise(resolve=>{child.once('exit',resolve);child.once('error',()=>resolve(-1));});clearTimeout(timer);fs.closeSync(fd);
 const log=fs.readFileSync(path.join(out,'renderer.log'),'utf8');

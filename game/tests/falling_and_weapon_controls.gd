@@ -72,6 +72,9 @@ func run() -> void:
 	var migrated=NestPreferences.new();migrated.load_saved()
 	assert(migrated.keys.primary_weapon==KEY_1 and migrated.keys.secondary_weapon==KEY_2)
 	assert(migrated.keys.switch_weapon not in [KEY_1,KEY_C] and migrated.keys.crouch==KEY_C)
+	cfg.set_value("bindings","interact",KEY_H);assert(cfg.save(NestPreferences.PATH)==OK)
+	var guidance_migration=NestPreferences.new();guidance_migration.load_saved()
+	assert(guidance_migration.keys.interact==KEY_H and guidance_migration.keys.campaign_hint!=KEY_H)
 	game.queue_free();await process_frame
 	print("MOVEMENT/CONTROLS: unchanged ascending arc/apex, 10% stronger fall and replay, no airborne running bob, direct weapon keys, host validation and saved-binding migration passed")
 	quit()

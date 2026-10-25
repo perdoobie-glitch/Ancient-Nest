@@ -2,7 +2,7 @@ class_name NestPreferences
 extends RefCounted
 const PATH = "user://preferences.cfg"
 const DEFAULTS = {"campaign_dialogue":0.85,"campaign_music":0.65,"campaign_effects":0.8,"record_films":true, "allow_host":true, "username":"Player", "sensitivity": 2.0, "aim_sensitivity": 1.0, "nu_sensitivity": 2.0, "nu_flight_assist": true, "zoom_feel_tweak": 1.0, "hover_sensitivity_multiplier": 0.7125, "invert_y": false, "fov": 90.0, "vsync": true, "graphics_quality": 0, "shadows": true, "fullscreen": true, "resolution_width":1920, "resolution_height":1080, "exclusive_fullscreen":false, "render_scale":1.0, "antialiasing":0, "aspect_ratio":0, "fps_limit": 120, "master": 0.65, "effects": 0.8, "hud_scale": 1.0, "hud_opacity": 0.95, "radar": true, "crosshair": true, "crosshair_color": 2, "crosshair_size": 7.0, "crosshair_gap": 3.0, "dynamic_crosshair": true, "chat": true, "naki_radar_size": 170.0, "annu_radar_size": 170.0, "naki_radar_corner": 0, "annu_radar_corner": 1, "radar_background_opacity": 0.65, "radar_sweep": false, "radar_colorblind": false}
-const KEYS = {"flashlight":KEY_T,"sprint":KEY_SHIFT,"film_previous":KEY_PAGEUP,"film_next":KEY_PAGEDOWN, "forward": KEY_W, "backward": KEY_S, "left": KEY_A, "right": KEY_D, "jump": KEY_SPACE, "crouch": KEY_CTRL, "reload": KEY_R, "zoom": KEY_Z, "interact": KEY_E, "melee": KEY_F, "grenade": KEY_G, "grenade_type": KEY_B, "nu_boost": KEY_SHIFT, "nu": KEY_Q, "sword": KEY_3, "scoreboard": KEY_TAB, "pause": KEY_ESCAPE, "chat": KEY_ENTER, "connections": KEY_O, "switch_weapon": KEY_C, "primary_weapon": KEY_1, "secondary_weapon": KEY_2}
+const KEYS = {"campaign_hint":KEY_H,"flashlight":KEY_T,"sprint":KEY_SHIFT,"film_previous":KEY_PAGEUP,"film_next":KEY_PAGEDOWN, "forward": KEY_W, "backward": KEY_S, "left": KEY_A, "right": KEY_D, "jump": KEY_SPACE, "crouch": KEY_CTRL, "reload": KEY_R, "zoom": KEY_Z, "interact": KEY_E, "melee": KEY_F, "grenade": KEY_G, "grenade_type": KEY_B, "nu_boost": KEY_SHIFT, "nu": KEY_Q, "sword": KEY_3, "scoreboard": KEY_TAB, "pause": KEY_ESCAPE, "chat": KEY_ENTER, "connections": KEY_O, "switch_weapon": KEY_C, "primary_weapon": KEY_1, "secondary_weapon": KEY_2}
 var values: Dictionary = DEFAULTS.duplicate(true)
 var keys: Dictionary = KEYS.duplicate(true)
 var audio_buses: Array = []
@@ -18,6 +18,12 @@ func load_saved() -> void:
 		for k in KEYS:
 			var v = cfg.get_value("bindings", k, KEYS[k])
 			if v is int and v > 0 and v < (1 << 25): keys[k] = v
+		if not cfg.has_section_key("bindings","campaign_hint"):
+			for candidate in [KEY_H,KEY_F6,KEY_F7,KEY_F8]:
+				var occupied=false
+				for action in keys:
+					if action!="campaign_hint" and int(keys[action])==candidate:occupied=true
+				if not occupied:keys.campaign_hint=candidate;break
 		for bus in audio_buses:
 			if bus.slider.key!="master": values[bus.slider.key]=cfg.get_value("personal",bus.slider.key,1.0)
 		# Schema 1 used radians-per-pixel/100. Preserve the player's old turn distance

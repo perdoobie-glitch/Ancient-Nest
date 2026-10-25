@@ -39,6 +39,11 @@ static func pause(c):
  var body=page(c,"MISSION PAUSED" if not c.game.network_active else "SQUAD MISSION CONTINUES");var game=c.game;game.current_screen="campaign_pause";game.context="pause"
  body.add_child(game.label("THE LAST DEPARTURE\nDifficulty: "+c.state.difficulty,20,game.GOLD));body.add_child(game.label(c.objective(),15,game.MUTED))
  body.add_child(game.button("Resume",func():c.resume()))
+ if c.guide!=null and not c.guide.current.is_empty():
+  body.add_child(game.button("Repeat Brutus / Resume",func():c.resume();c.guide.repeat_current()))
+  var recorded=ResourceLoader.exists("res://audio/campaign/guide_"+str(c.guide.current.id)+".wav")
+  var voice_status="Narration: recorded briefing" if recorded else ("Narration: local system speech" if c.guide.voice_supported else "Voice unavailable on this device; subtitles and control guidance remain available.")
+  body.add_child(game.label(voice_status,14,game.MUTED))
  body.add_child(game.button("Settings / Controls",func():game.open_settings("pause")))
  for item in [["Dialogue","campaign_dialogue"],["Music","campaign_music"],["Effects","campaign_effects"]]:
   body.add_child(game.label(item[0],14));var slider=HSlider.new();slider.min_value=0;slider.max_value=1;slider.step=.05;slider.value=float(game.prefs.values.get(item[1],.8));var key=item[1];slider.value_changed.connect(func(v):game.prefs.values[key]=v;game.prefs.save());body.add_child(slider)

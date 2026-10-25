@@ -2,6 +2,13 @@
 
 ## Changes verified locally
 
+Guided Connectuct follow-up: [CAMPAIGN_GUIDANCE.md](docs/CAMPAIGN_GUIDANCE.md)
+records tutorial/boarding changes, damaged-atmosphere rendering, corrected quality
+levels, actual High/Low renderer samples and outstanding actor/audio validation.
+Local speech file generation was denied; no voice asset or human performance is
+claimed. Cue integration uses reviewed recordings when present, otherwise local
+OS speech when available, with subtitles always preserved.
+
 Campaign materials/performance follow-up (2026-10-25): see
 [CAMPAIGN_VISUALS.md](docs/CAMPAIGN_VISUALS.md) for the exact before/after renderer
 table, methodology and limits. Scenery/route equivalence passed 24 checks across

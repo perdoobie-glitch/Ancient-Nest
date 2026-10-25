@@ -10,6 +10,9 @@ var subtitle: Label
 var title: Label
 var last_slot=""
 var subtitle_override=""
+var speech_cue=""
+var speaking_os=false
+var last_volumes={}
 func _ready():
  camera=Camera3D.new();camera.name="CampaignCamera";camera.near=.1;camera.fov=62;add_child(camera)
  for bus in ["Campaign_Dialogue","Campaign_Music","Campaign_Effects"]:
@@ -32,10 +35,15 @@ func engine_track() -> AudioStreamWAV:
   var t=i/22050.0;var sample=sin(t*TAU*55)*.22+sin(t*TAU*110)*.08+sin(t*TAU*1375)*.015
   bytes.encode_s16(i*2,int(sample*32767))
  var stream=AudioStreamWAV.new();stream.mix_rate=22050;stream.format=AudioStreamWAV.FORMAT_16_BITS;stream.data=bytes;stream.loop_mode=AudioStreamWAV.LOOP_FORWARD;stream.loop_end=22050;return stream
-func stop_tracks():voice.stop();music.stop();effects.stop();last_slot=""
+func stop_tracks():
+ voice.stop();music.stop();effects.stop();last_slot="";speech_cue=""
+ if speaking_os:DisplayServer.tts_stop();speaking_os=false
 func apply_volumes():
  for pair in [["Campaign_Dialogue","campaign_dialogue"],["Campaign_Music","campaign_music"],["Campaign_Effects","campaign_effects"]]:
-  var volume=float(campaign.game.prefs.values.get(pair[1],.8));AudioServer.set_bus_volume_db(AudioServer.get_bus_index(pair[0]),linear_to_db(maxf(.001,volume)));AudioServer.set_bus_mute(AudioServer.get_bus_index(pair[0]),volume<=0)
+  var volume=float(campaign.game.prefs.values.get(pair[1],.8))
+  if last_volumes.get(pair[0],-1.0)!=volume:
+   AudioServer.set_bus_volume_db(AudioServer.get_bus_index(pair[0]),linear_to_db(maxf(.001,volume)));AudioServer.set_bus_mute(AudioServer.get_bus_index(pair[0]),volume<=0);last_volumes[pair[0]]=volume
+ if speaking_os and (float(campaign.game.prefs.values.campaign_dialogue)<=0 or float(campaign.game.prefs.values.master)<=0):DisplayServer.tts_stop();speaking_os=false
 func present(elapsed: float):
  apply_volumes()
  if not active():
@@ -52,33 +60,64 @@ func present(elapsed: float):
   var ends=[Vector3(34,38,14),Vector3(-30,4,0),Vector3(-6,23,27),Vector3(-25,11,-3),Vector3(-8,4,-9),Vector3(8,5,10)]
   var aims=[Vector3(0,12,-38),Vector3(-34,1,-7),Vector3(0,3,-26),Vector3(-34,2,-7),Vector3(-7,2,-8),Vector3(-2,2,-17)]
   camera.position=starts[index].lerp(ends[index],smoothstep(0,1,u));camera.look_at(aims[index]);title.text="THE WORLD WE BUILT • CONNECTUCT"
+  if index==2:camera.look_at(Vector3(0,48,-90))
   # Short, complete phrases replace a single unreadable paragraph at the bottom.
-  var phrases=str(cue.text).split("\n\n",false);var part=mini(phrases.size()-1,int(u*phrases.size()))
+  var phrases=str(cue.text).split("\n\n",false);var part=phrase_index(phrases,u)
   subtitle.text="NARRATOR: "+phrases[part]
-  play_slot("intro_"+str(index),str(cue.audio),elapsed-index*20)
+  if campaign.all_loaded():
+   play_slot("intro_"+str(index),str(cue.audio),elapsed-index*20)
+   if not ResourceLoader.exists(str(cue.audio)) and not ResourceLoader.exists(str(cue.audio).get_basename()+".wav"):speak_fallback("intro_%d_%d"%[index,part],phrases[part],.84)
  elif phase=="DEPARTURE":
   campaign.world.ship_root.position=Vector3(0,maxf(0,elapsed-3)*2.6,-maxf(0,elapsed-5)*1.1)
   var u=clampf(elapsed/20,0,1);camera.position=Vector3(4+u*30,6+u*32,5+u*23);camera.look_at(Vector3(-2,1,-17));title.text="DEPARTURE • CONNECTUCT"
   subtitle.text=dialogue_line("departure",elapsed,10)
+  speak_dialogue("departure",elapsed,10)
  elif phase=="CRASH":
   var crash_progress=clampf(elapsed/24,0,1);campaign.world.ship_root.position=Vector3(-12*(1-crash_progress),25*(1-crash_progress),-15*(1-crash_progress));campaign.world.ship_root.rotation.z=sin(crash_progress*PI)*.14
   var u=clampf(elapsed/24,0,1);camera.position=Vector3(-17+u*18,31*(1-u)+2,43*(1-u)+13);camera.look_at(Vector3(0,2,6));camera.rotation.z=sin(u*PI)*.12
   title.text="OLD EARTH • EXPEDITION DAY 46";subtitle.text=dialogue_line("crash",elapsed,6)
+  speak_dialogue("crash",elapsed,6)
  else:
   camera.position=Vector3(-9+sin(elapsed*.07)*2,4,17);camera.look_at(Vector3(-4,1.5,5));title.text="THE LAST DEPARTURE • EXPEDITION RELAY";subtitle.text=dialogue_line("ending",elapsed,5)
+  speak_dialogue("ending",elapsed,5)
  var votes=campaign.skip_votes.size();var people=campaign.connected_slots().size()
  title.text+="   •   ENTER: SKIP %d/%d"%[votes,people]
  if not campaign.all_loaded():subtitle.text="Waiting for connected squad members to finish loading…"
- if game.context=="pause":voice.stream_paused=true;music.stream_paused=true
- else:voice.stream_paused=false;music.stream_paused=false
+ var paused=campaign.paused() or not campaign.all_loaded()
+ voice.stream_paused=paused;music.stream_paused=paused;effects.stream_paused=paused
+ if speaking_os:
+  if paused:DisplayServer.tts_pause()
+  else:DisplayServer.tts_resume()
+func phrase_index(phrases: PackedStringArray,u: float) -> int:
+ var weights=[];var total=0.0
+ for phrase in phrases:
+  var weight=str(phrase).split(" ",false).size()+2;weights.append(weight);total+=weight
+ var position=0.0
+ for i in range(weights.size()):
+  position+=weights[i]/total
+  if u<position:return i
+ return phrases.size()-1
+func speak_fallback(id: String,text: String,pitch=1.0):
+ if speech_cue==id or campaign.paused() or not campaign.all_loaded():return
+ speech_cue=id
+ var guide=campaign.guide;var gain=float(campaign.game.prefs.values.campaign_dialogue)*float(campaign.game.prefs.values.master)
+ if guide!=null and guide.voice_supported and gain>0 and DisplayServer.get_name()!="headless":
+  DisplayServer.tts_speak(text,guide.voice_id,roundi(gain*100),pitch,.98,100000+id.hash()%10000,true);speaking_os=true
+func speak_dialogue(key: String,elapsed: float,seconds: float):
+ var cues=campaign.data.dialogue[key];var i=clampi(int(elapsed/seconds),0,cues.size()-1);var speaker=str(cues[i][0]);var path="res://audio/campaign/"+key+"_%02d.wav"%(i+1)
+ if speaker.is_empty():return
+ if ResourceLoader.exists(path):play_slot(key+"_"+str(i),path,fmod(elapsed,seconds))
+ else:speak_fallback(key+"_"+str(i),str(cues[i][1]),.9 if speaker=="Brutus" else 1.0)
 func dialogue_line(key: String,elapsed: float,seconds: float) -> String:
  var cues=campaign.data.dialogue[key];var i=clampi(int(elapsed/seconds),0,cues.size()-1)
  return str(cues[i][0]).to_upper()+": "+str(cues[i][1]) if str(cues[i][0])!="" else str(cues[i][1])
 func play_slot(id: String,path: String,offset: float):
  if last_slot==id:return
  voice.stop();last_slot=id
+ if not ResourceLoader.exists(path):path=path.get_basename()+".wav"
  if ResourceLoader.exists(path):
   voice.stream=load(path)
   if DisplayServer.get_name()!="headless":voice.play(offset)
 func _exit_tree():
+ stop_tracks()
  if is_instance_valid(overlay):overlay.queue_free()
