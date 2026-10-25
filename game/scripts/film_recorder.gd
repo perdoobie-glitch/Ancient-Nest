@@ -48,6 +48,8 @@ func begin():
 	active=true;ended=false;accum=0;flush_at=game.local_clock()+1;frames=[];views=[];events=[];connected_actors.clear();status="Recording film at 29 Hz"
 func _process(delta):
 	poll_worker()
+	# Campaign scene changes are not multiplayer arena Film reconstructions.
+	if game.campaign!=null and game.campaign.active:return
 	if game.replay_active:return
 	if game.running and game.match_session!=session and game.prefs.values.get("record_films",true):
 		if active:finish()

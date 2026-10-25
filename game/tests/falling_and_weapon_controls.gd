@@ -1,6 +1,8 @@
 extends SceneTree
 func _initialize() -> void: call_deferred("run")
 func run() -> void:
+	if OS.get_environment("NEST_ISOLATED_QA")!="1":
+		push_error("This migration fixture writes preferences. Run node scripts/campaign-validation.mjs falling_and_weapon_controls for an isolated profile.");quit(1);return
 	var game=load("res://scenes/main.tscn").instantiate()
 	root.add_child(game)
 	await process_frame

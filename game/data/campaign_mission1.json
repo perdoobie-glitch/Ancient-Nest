@@ -1,0 +1,279 @@
+{
+    "version":  1,
+    "mission":  "the_last_departure",
+    "title":  "THE LAST DEPARTURE",
+    "campaign_missions":  9,
+    "intro_seconds":  120,
+    "recovery_seconds":  18,
+    "preparation_seconds":  25,
+    "revive_seconds":  3,
+    "bleedout_seconds":  45,
+    "max_players":  4,
+    "weapons":  {
+                    "carbine":  "assault_rifle",
+                    "naki_pistol":  "plasma_pistol",
+                    "annu_primary":  "ak47",
+                    "annu_secondary":  "magnum"
+                },
+    "difficulties":  {
+                         "Easy":  {
+                                      "reaction":  0.65,
+                                      "aim_error":  0.48,
+                                      "tracking":  3.5,
+                                      "fire_chance":  0.6,
+                                      "burst_on":  0.65,
+                                      "burst_off":  1.3,
+                                      "awareness":  32,
+                                      "cover":  0.7,
+                                      "flank":  0.1,
+                                      "aggression":  0.35,
+                                      "spacing":  3.8,
+                                      "spawn_gap":  3,
+                                      "coordination":  0.2
+                                  },
+                         "Medium":  {
+                                        "reaction":  0.32,
+                                        "aim_error":  0.21,
+                                        "tracking":  7,
+                                        "fire_chance":  0.78,
+                                        "burst_on":  0.85,
+                                        "burst_off":  0.85,
+                                        "awareness":  38,
+                                        "cover":  0.8,
+                                        "flank":  0.35,
+                                        "aggression":  0.55,
+                                        "spacing":  3.4,
+                                        "spawn_gap":  2.4,
+                                        "coordination":  0.4
+                                    },
+                         "Hard":  {
+                                      "reaction":  0.19,
+                                      "aim_error":  0.11,
+                                      "tracking":  10,
+                                      "fire_chance":  0.88,
+                                      "burst_on":  1,
+                                      "burst_off":  0.65,
+                                      "awareness":  44,
+                                      "cover":  0.9,
+                                      "flank":  0.65,
+                                      "aggression":  0.7,
+                                      "spacing":  2.8,
+                                      "spawn_gap":  1.8,
+                                      "coordination":  0.7
+                                  },
+                         "Angel":  {
+                                       "reaction":  0.14,
+                                       "aim_error":  0.075,
+                                       "tracking":  12,
+                                       "fire_chance":  0.93,
+                                       "burst_on":  1.15,
+                                       "burst_off":  0.5,
+                                       "awareness":  48,
+                                       "cover":  0.95,
+                                       "flank":  0.85,
+                                       "aggression":  0.82,
+                                       "spacing":  2.6,
+                                       "spawn_gap":  1.4,
+                                       "coordination":  0.9
+                                   }
+                     },
+    "waves":  [
+                  {
+                      "count":  3,
+                      "name":  "CONTACT",
+                      "approaches":  [
+                                         0
+                                     ]
+                  },
+                  {
+                      "count":  5,
+                      "name":  "PERIMETER",
+                      "approaches":  [
+                                         0,
+                                         1
+                                     ]
+                  },
+                  {
+                      "count":  6,
+                      "name":  "PRESSURE",
+                      "approaches":  [
+                                         0,
+                                         1
+                                     ]
+                  },
+                  {
+                      "count":  8,
+                      "name":  "BREACH",
+                      "approaches":  [
+                                         0,
+                                         1,
+                                         2
+                                     ]
+                  },
+                  {
+                      "count":  12,
+                      "name":  "SEIZURE",
+                      "approaches":  [
+                                         0,
+                                         1,
+                                         2
+                                     ]
+                  }
+              ],
+    "intro":  [
+                  {
+                      "start":  0,
+                      "end":  20,
+                      "speaker":  "Narrator",
+                      "text":  "For millennia, Connectuct has been our home.\n\nWe raised cities above its valleys. Built machines that carried us beyond its skies.\n\nHere, our children grew up knowing the world our ancestors left behind only by its name.\n\nOld Earth.",
+                      "audio":  "res://audio/campaign/intro_01.ogg"
+                  },
+                  {
+                      "start":  20,
+                      "end":  40,
+                      "speaker":  "Narrator",
+                      "text":  "We learned to mend the body. To surround it with shields.\n\nOur intelligence became something we could build--and teach.\n\nThrough every discovery ran the same precious material.\n\nGold.\n\nWithin our power systems. Our cities. The minds of our machines.",
+                      "audio":  "res://audio/campaign/intro_02.ogg"
+                  },
+                  {
+                      "start":  40,
+                      "end":  60,
+                      "speaker":  "Narrator",
+                      "text":  "But above us, the protection we were born beneath is failing.\n\nConnectuct\u0027s ozone layer is thinning.\n\nEach year, the safe ground retreats.\n\nEach year, more of what we build must be given to keeping the world we already have.",
+                      "audio":  "res://audio/campaign/intro_03.ogg"
+                  },
+                  {
+                      "start":  60,
+                      "end":  80,
+                      "speaker":  "Narrator",
+                      "text":  "We have the knowledge to fight it.\n\nWhat we no longer have is enough gold.\n\nNow, one district goes dark so another can remain protected.\n\nA railway stops so a hospital can stay open.\n\nAnd the repairs cannot keep pace.",
+                      "audio":  "res://audio/campaign/intro_04.ogg"
+                  },
+                  {
+                      "start":  80,
+                      "end":  100,
+                      "speaker":  "Narrator",
+                      "text":  "Our oldest records speak of reserves beneath Old Earth.\n\nOf cities built upon them.\n\nOf an intelligence entrusted with their care.\n\nAncient AI.\n\nIf those systems remain, we may recover enough to give Connectuct a future.\n\nBut no one has returned in millennia.",
+                      "audio":  "res://audio/campaign/intro_05.ogg"
+                  },
+                  {
+                      "start":  100,
+                      "end":  120,
+                      "speaker":  "Narrator",
+                      "text":  "So we prepare to cross the distance our ancestors once crossed.\n\nWe carry their maps.\n\nTheir unfinished history.\n\nAnd the lives of everyone waiting for us to return.\n\nWe are Naki.\n\nWe are going back to the Ancient Nest.",
+                      "audio":  "res://audio/campaign/intro_06.ogg"
+                  }
+              ],
+    "dialogue":  {
+                     "boarding":  [
+                                      [
+                                          "Technician",
+                                          "Excavation charge secured. Arming circuit isolated."
+                                      ],
+                                      [
+                                          "Anki",
+                                          "It stays isolated until we reach the survey site."
+                                      ]
+                                  ],
+                     "departure":  [
+                                       [
+                                           "Brutus",
+                                           "Departure authorized. Connectuct traffic control has cleared our ascent."
+                                       ],
+                                       [
+                                           "",
+                                           "Interstellar transit â€¢ Expedition day 46 â€¢ Old Earth approach"
+                                       ]
+                                   ],
+                     "crash":  [
+                                   [
+                                       "Anki",
+                                       "There were cities here."
+                                   ],
+                                   [
+                                       "Brutus",
+                                       "There may still be."
+                                   ],
+                                   [
+                                       "Ancient AI",
+                                       "Return vessel identified. Approach record incomplete."
+                                   ],
+                                   [
+                                       "Brutus",
+                                       "That signal is older than our navigation system."
+                                   ]
+                               ],
+                     "orientation":  [
+                                         [
+                                             "Brutus",
+                                             "Anki. Respond."
+                                         ],
+                                         [
+                                             "Anki",
+                                             "Here."
+                                         ],
+                                         [
+                                             "Brutus",
+                                             "Then keep moving. The hull is unstable."
+                                         ],
+                                         [
+                                             "Brutus",
+                                             "The excavation charge is missing from its cradle."
+                                         ],
+                                         [
+                                             "Anki",
+                                             "Is it armed?"
+                                         ],
+                                         [
+                                             "Brutus",
+                                             "The last reading says no. I need a physical confirmation."
+                                         ],
+                                         [
+                                             "Annu radio",
+                                             "Wreck confirmed. Armed survivors."
+                                         ],
+                                         [
+                                             "Annu command",
+                                             "Establish a perimeter. Secure the vessel and its cargo."
+                                         ]
+                                     ],
+                     "ending":  [
+                                    [
+                                        "Anki",
+                                        "Expedition relay, this is Anki. We are down on Old Earth. Survivors at the crash site. Requesting extraction."
+                                    ],
+                                    [
+                                        "Relay",
+                                        "Anki, signal received. Transmit your position."
+                                    ],
+                                    [
+                                        "Anki",
+                                        "Sending now."
+                                    ],
+                                    [
+                                        "Relay",
+                                        "Hold your position. We\u0027re finding a route through."
+                                    ],
+                                    [
+                                        "Anki",
+                                        "There are people here."
+                                    ],
+                                    [
+                                        "Relay",
+                                        "Say again?"
+                                    ],
+                                    [
+                                        "Anki",
+                                        "Old Earth is inhabited."
+                                    ],
+                                    [
+                                        "Ancient AI",
+                                        "Your arrival has been recorded."
+                                    ],
+                                    [
+                                        "Brutus",
+                                        "That was not the relay."
+                                    ]
+                                ]
+                 }
+}

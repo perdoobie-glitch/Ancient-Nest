@@ -16,6 +16,17 @@ Current source adds host-only master scheduling, queue recovery, bounded retries
 | scripts | Shared local setup and native two-client transport test |
 
 ## Start on Windows
+
+Campaign entry: run **Play Ancient Nest Campaign.cmd**, choose **Campaign • Play
+offline** after the age notice or enter Campaign from the main menu. Choose
+**Difficulty** (Easy, Medium, Hard, Angel), then New Campaign. Mission 1 includes
+the 120-second Connectuct intro, personal preparation, boarding, forest crash,
+charge recovery, five Annu waves and radio ending, with solo saves and direct
+1–4 player co-op. Environment art is a functional blockout; recorded narration
+is missing and uses subtitles/replaceable slots. See
+[Mission 1 and Windows/co-op handoff](docs/CAMPAIGN_MISSION1.md) for setup,
+controls, actual tests and limits. Historical multiplayer modes remain available.
+
 Install Git, Node.js 24 LTS, Python 3.11+ and Godot 4.6.3 (matching export templates if building). Ensure `node`, `npm`, `python` and `godot` work in CMD. Read [the PC handoff](PC_CODEX_HANDOFF.md), then run **Setup Ancient Nest.cmd** and **Play Ancient Nest.cmd**. The launch script now opens the full game. Native Discord/keyring downloads are pinned and checksum-verified; WebRTC runtime dependencies are included.
 
 The account service's `godot-client` folder is a native/auth test fixture. It is not the game launcher. The old adapter-only root launcher and duplicate historical trees have been removed from the working tree. Recovery history remains intact.
@@ -44,6 +55,10 @@ From ancient-nest-accounts: `npm ci --ignore-scripts`, `npm test`, `npx wrangler
 From matchmaking: `npm ci`, `npm run typecheck`, `npm run build`, `npm test`, then `npx wrangler deploy`. Game and coordinator must both use **10.5-discord2**. Preserve Durable Object migration history and existing Worker names. There is no dedicated simulation server: the elected player's PC runs the match.
 
 ## Checks
+
+Tests that write preferences must use isolated profiles. Run
+`node scripts/campaign-validation.mjs` (or pass fixture names) rather than running
+the age-policy or controls-migration scripts directly against live user data.
 - Accounts: `npm --prefix ancient-nest-accounts test`
 - Coordinator: `npm --prefix matchmaking run build` then `npm --prefix matchmaking test`
 - Native account/SDK fixture: run `npm run test:godot` inside ancient-nest-accounts.

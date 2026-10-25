@@ -9,6 +9,7 @@ var film_retaining_transport: bool = false
 var replay_state: Dictionary = {}
 var film_recorder
 var film_viewer
+var campaign
 var nu_sightings: Array[Dictionary]=[{},{}]
 var nu: NestNuFlight
 var player: NestActor
@@ -185,6 +186,7 @@ func _ready() -> void:
 	multiplayer.peer_disconnected.connect(network_peer_left)
 	matchmaking=NestMatchmaking.new();matchmaking.name="Matchmaking";matchmaking.game=self;add_child(matchmaking)
 	film_recorder=load("res://scripts/film_recorder.gd").new();film_recorder.name="FilmRecorder";film_recorder.game=self;add_child(film_recorder)
+	campaign=load("res://scripts/campaign.gd").new();campaign.name="Campaign";campaign.game=self;add_child(campaign)
 func next_event() -> int:
 	event_sequence+=1
 	return event_sequence
@@ -270,12 +272,14 @@ func reset_round() -> void:
 	reset_flags()
 	if round_number>1: announce("round_start")
 func choose_spawn(actor: NestActor) -> Vector3:
+	if campaign!=null and campaign.active:return campaign.choose_spawn(actor)
 	var side=0 if actor.is_attacker() else 1
 	if mode not in [0,MODE_CS]: side=actor.faction
 	return NestPlacementSafety.spawn(self,actor,arena.spawns[side])
 func _physics_process(delta: float) -> void:
 	if replay_active:return
 	physics_started=Time.get_ticks_usec()
+	if campaign!=null and campaign.paused():return
 	if not running or matchmaking.blocks_simulation(): return
 	if bool(arena.get_meta("placement_blocked",false)):return
 	now+=delta
@@ -296,6 +300,7 @@ func _physics_process(delta: float) -> void:
 		for actor in actors:
 			if actor.remote_peer>1: update_remote_interaction(actor,delta)
 	if finished: return
+	if campaign!=null and campaign.active:campaign.tick(delta);return
 	if break_until>0:
 		if now>=break_until:
 			round_number+=1
@@ -363,6 +368,7 @@ func pickup_choice(actor: NestActor) -> Dictionary:
 	if nearest<0:return {}
 	return {"key":"pickup:"+str(nearest),"pad":nearest,"seconds":0.0,"site":-1,"text":"Press %s · Pick up %s"%[prefs.key_label("interact"),NestWeaponCatalog.profile(arena.pad_kinds[nearest]).title]}
 func interaction_for(actor: NestActor) -> Dictionary:
+	if campaign!=null and campaign.active:return campaign.interaction(actor)
 	if not actor.alive or (nu!=null and nu.blocked(actor)): return {}
 	var pickup=pickup_choice(actor)
 	if not pickup.is_empty():return pickup
@@ -403,6 +409,7 @@ func update_player_interaction(delta: float) -> void:
 		if interaction_progress>=chosen.seconds: complete_interaction(player,chosen); interaction_progress=0; interaction_key=""
 	else: interaction_progress=0
 func complete_interaction(actor: NestActor, choice: Dictionary) -> bool:
+	if campaign!=null and campaign.active:return campaign.interact(actor,choice)
 	if not actor.alive or finished or break_until>now or (now>=deadline and not (mode==MODE_CS and cs_planted())): return false
 	var current=interaction_for(actor)
 	if current.is_empty() or current.key!=choice.key: return false
@@ -460,6 +467,7 @@ func nearest_objective_actor(actor: NestActor, position: Vector3) -> bool:
 		if b<a-.1 or (absf(a-b)<=.1 and other.net_id<actor.net_id):return false
 	return true
 func bot_goal(actor: NestActor) -> Vector3:
+	if campaign!=null and campaign.active:return campaign.enemy_goal(actor)
 	if mode==MODE_CS and bot_play_objectives:return cs_bot_goal(actor)
 	if mode==MODE_CTF and bot_play_objectives and flags.size()==2: return arena.nav_points[arena.nearest_nav(ctf_bot_goal(actor))]
 	if mode==0 and bot_play_objectives:
@@ -500,6 +508,7 @@ func end_round(reason: String) -> void:
 	announce("round_end")
 	bags.clear()
 func finish_match() -> void:
+	if campaign!=null and campaign.active:return
 	if finished:return
 	finished=true; interaction_progress=0; context="results"; Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	for actor in actors: actor.burst_left=0
@@ -924,6 +933,7 @@ func disable_unreliable_throttle(peer_id: int) -> void:
 		var peer=(multiplayer.multiplayer_peer as ENetMultiplayerPeer).get_peer(peer_id)
 		if peer!=null: peer.throttle_configure(ENetPacketPeer.PACKET_THROTTLE_SCALE,ENetPacketPeer.PACKET_THROTTLE_SCALE,0)
 func network_connected() -> void:
+	if campaign!=null and campaign.active:campaign.connected();return
 	disable_unreliable_throttle(1)
 	if matchmaking.active:matchmaking.connected();return
 	var local=lobby_members.get(0,{"name":current_username(),"faction":selected_faction})
@@ -931,6 +941,7 @@ func network_connected() -> void:
 	network_status="Connected · Waiting for host"
 	if lobby_network!=null: lobby_network.on_join_succeeded()
 func network_failed() -> void:
+	if campaign!=null and campaign.active:campaign.connection_failed();return
 	if matchmaking.active:matchmaking.connection_lost("Matchmaking connection failed");return
 	var reason="Connection failed. Check address, UDP port and host firewall."
 	if lobby_network!=null: lobby_network.on_join_failed(reason)
@@ -938,6 +949,7 @@ func network_failed() -> void:
 		close_connection(); network_status=reason
 		if has_method("network_ui_changed"): call("network_ui_changed")
 func network_lost() -> void:
+	if campaign!=null and campaign.active:campaign.host_lost();return
 	if matchmaking.active:matchmaking.connection_lost("Matchmaking server disconnected");return
 	if forge_session!=null:
 		forge_session.active=false;forge_session.testing=false
@@ -953,6 +965,7 @@ func network_peer_connected(peer: int) -> void:
 		disable_unreliable_throttle(peer)
 		if matchmaking.dedicated:matchmaking.anonymous[peer]=matchmaking.clock()+10
 func network_peer_left(peer: int) -> void:
+	if campaign!=null and campaign.active:campaign.disconnected(peer);return
 	if not network_active or not multiplayer.is_server(): return
 	if matchmaking.disconnected(peer):return
 	announcer.forget_player(peer)
@@ -976,6 +989,7 @@ func refresh_remaining_lobby() -> void:
 		if peer!=null and peer.get_state()==ENetPacketPeer.STATE_CONNECTED:update_lobby.rpc_id(id,lobby_members,config)
 @rpc("any_peer","call_remote","reliable")
 func register_member(alias: String, faction: int, version: String="",rating: Dictionary={}) -> void:
+	if campaign!=null and campaign.active:return # Campaign owns its separate enrolled-seat handshake.
 	if film_retaining_transport:return
 	if matchmaking.is_authority():return # Queue registration is the only matchmaking admission path.
 	if not network_active or not multiplayer.is_server(): return
@@ -1158,6 +1172,10 @@ func send_snapshot() -> void:
 			# Send only to registered, ready, currently connected players.
 			for peer in matchmaking.peers:
 				if matchmaking.can_send(peer) and not matchmaking.rejoin_deadlines.has(peer):snapshot_packet.rpc_id(peer,snapshot_sequence,index,total,chunk,match_session)
+		elif campaign!=null and campaign.active:
+			for slot in campaign.connected_slots():
+				var peer=int(campaign.members[slot].peer)
+				if peer>1:snapshot_packet.rpc_id(peer,snapshot_sequence,index,total,chunk,match_session)
 		else:snapshot_packet.rpc(snapshot_sequence,index,total,chunk,match_session)
 @rpc("authority","call_remote","unreliable_ordered",2)
 func receive_snapshot(match_state: Dictionary, states: Array) -> void:
@@ -2420,5 +2438,10 @@ func nearest_bot_enemy(actor: NestActor,limit: float=35.0) -> NestActor:
 	candidates.sort_custom(func(a,b):return a.distance<b.distance)
 	for entry in candidates:
 		var other: NestActor=entry.actor
-		if trace(actor.eye.global_position,other.global_position+Vector3(0,1.2*NestActor.SIZE,0),1,actor.ray_exclusions()).is_empty():return other
+		if campaign!=null and campaign.active and other.faction==0 and not campaign.members.get(other.net_id,{}).get("connected",false):continue
+		var point=other.global_position+Vector3(0,1.2*NestActor.SIZE,0)
+		if campaign!=null and campaign.active:
+			var offset=point-actor.eye.global_position
+			if (offset.length()>10 and actor.aim_direction().dot(offset.normalized())<-.15) or campaign.world.smoke_blocks(actor.eye.global_position,point):continue
+		if trace(actor.eye.global_position,point,1,actor.ray_exclusions()).is_empty():return other
 	return null

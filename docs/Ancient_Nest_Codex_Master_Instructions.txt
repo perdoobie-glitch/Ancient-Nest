@@ -1,0 +1,1573 @@
+ANCIENT NEST
+MASTER IMPLEMENTATION TASK
+LATEST LOCAL REPOSITORY + NETWORKING RELIABILITY + CAMPAIGN INTRO + MISSION 1
+
+Plain-text edition. Campaign menu label: Difficulty.
+Read all 23 sections before editing. The final line is END OF INSTRUCTIONS.
+If that final marker or any section is missing, the file is incomplete.
+
+Implement this work in the actual Ancient Nest Godot repository.
+
+This is a request to build and integrate working features, not merely write a proposal, design document, or sample code.
+
+Read the entire specification before editing. Then inspect the repository and its instructions, establish the latest verified baseline, and work through the implementation in runnable milestones.
+
+Do not assume you have access to earlier ChatGPT conversations. This file contains the requirements you need.
+
+
+==================================================
+1. PRIORITIES AND AUTHORIZATION
+==================================================
+
+Work in this order:
+
+1. Identify and preserve the latest Ancient Nest version on my PC.
+2. Reconcile it with the correct Git repository.
+3. Commit and push the verified baseline to a working branch.
+4. Improve Cloudflare/master-server communication.
+5. Implement the campaign menu and Difficulty selection.
+6. Implement the two-minute Connectuct introduction.
+7. Implement the complete playable first mission.
+8. Integrate and test solo/co-op behavior.
+9. Commit, push, and provide the final handoff.
+
+I authorize:
+- Reading relevant local game projects and repository files.
+- Creating a working branch.
+- Editing source, scenes, assets, configuration, and documentation.
+- Running relevant local builds and tests.
+- Creating recoverable checkpoints of project work.
+- Committing intended changes and pushing the working branch to the existing project remote.
+
+Do not:
+- Delete old game folders.
+- Discard unrelated local work.
+- Force-push.
+- Destructively reset a checkout.
+- Merge into the default branch.
+- Publish a release.
+- Deploy production Cloudflare services.
+- Change production credentials.
+- Purchase assets or services.
+- Upload private project material to unrelated third parties.
+- Claim unfinished assets or unrun tests are complete.
+
+Preserve existing:
+- Multiplayer playlists and game modes.
+- Movement and weapon behavior unless a required change is justified.
+- Accounts and authentication.
+- Discord integration.
+- Settings and controls.
+- Film/replay functionality.
+- Historical release information.
+- Unrelated user modifications.
+
+The request adds a campaign to the existing game. Older "multiplayer-only" plans do not prohibit this newly authorized campaign.
+
+Proceed independently on routine implementation choices. Ask only when a genuine unresolved decision blocks correct implementation.
+
+
+==================================================
+2. IDENTIFY THE LATEST LOCAL GAME FIRST
+==================================================
+
+This task is intended for Codex running on my Windows PC.
+
+Locate the Ancient Nest repository and relevant local project copies.
+
+Start with:
+- The current workspace.
+- Existing Git configuration.
+- Known project paths in repository documentation.
+- Relevant nearby game-development folders.
+
+Inspect:
+- Git remotes.
+- Active branches.
+- Commit history.
+- Working-tree changes.
+- project.godot files.
+- Game scripts and scenes.
+- Required assets.
+- Existing build and handoff documentation.
+
+Do not decide which version is newest solely from:
+- Folder names.
+- ZIP names.
+- File modification times.
+- A label such as "FINAL" or "LATEST."
+
+Fetch remote Git updates without overwriting local work.
+
+Compare:
+- The current checkout.
+- Relevant alternate local copies.
+- The latest remote commits.
+
+Determine:
+- Which local changes are missing remotely.
+- Which remote fixes are newer.
+- Which copy contains the latest complete project.
+- Whether any local copies contain unique work that must be preserved.
+
+Resolve ordinary differences independently. Ask if there are genuinely ambiguous repositories or incompatible gameplay changes that cannot be reconciled from evidence.
+
+Create a recoverable checkpoint of relevant uncommitted work before editing. Preserve binary assets and untracked project work where needed.
+
+Do not copy an unverified folder over the repository wholesale.
+
+Update the repository with the reconciled source and required assets:
+- Include what is needed to import, build, and run the game.
+- Preserve stable Godot resource references and UIDs.
+- Avoid needless filename changes.
+- Respect existing Git LFS rules and repository size limits.
+- Exclude generated .godot caches, temporary builds, temporary Film recordings, secrets, and unrelated files.
+- Check for accidental secret inclusion without printing secret values.
+
+Run available baseline checks:
+- Godot import.
+- Script parsing.
+- Existing automated tests.
+- Relevant launch/build checks.
+
+Document failures already present before this task so they are not confused with newly introduced regressions.
+
+Commit and push the baseline to a dedicated working branch.
+Verify that the remote contains the baseline commit.
+
+Record:
+- Source local project path.
+- Repository remote.
+- Working branch.
+- Baseline commit.
+- Important local/remote reconciliation decisions.
+
+If you cannot access my PC, explicitly report that. Do not claim a remote copy is the latest local version.
+
+If Git push is blocked by a service or authentication failure, preserve the local checkpoint and clearly report that the baseline is not remotely verified. Continue only independent local work that is safe; do not misrepresent the synchronization status.
+
+
+==================================================
+3. NETWORKING: SEPARATE GAMEPLAY AND COORDINATION
+==================================================
+
+Inspect the actual architecture before changing it.
+
+Cloudflare may already BE the master server. Do not create a duplicate service.
+
+Gameplay transport handles:
+- Player inputs.
+- Movement.
+- Shots.
+- Damage.
+- Physics-related state.
+- Entity snapshots.
+- Combat events.
+
+Cloudflare/master-server coordination handles:
+- Discovery.
+- Lobby listings.
+- Queues.
+- Reservations.
+- Match assignments.
+- Host authorization.
+- Match status.
+- Results.
+
+Gameplay should use the existing host connection or compatible relay transport. Do not send high-frequency gameplay snapshots through matchmaking HTTP endpoints.
+
+If the project already uses a different working architecture, document it and make a deliberate migration. Do not break connectivity by removing a required transport without a replacement.
+
+
+==================================================
+4. CENTRAL NETWORK SETTINGS
+==================================================
+
+Put coordination settings in one appropriate configuration module or resource.
+
+Defaults:
+- Host heartbeat interval: 20 seconds.
+- Host stale timeout: 60 seconds from receipt of the latest valid heartbeat.
+- Visible server-browser refresh interval: 15 seconds.
+- Matchmaking fallback polling interval: 5 seconds, only while queued.
+- Ordinary control-request timeout: 10 seconds.
+- Exponential retry backoff with jitter.
+- Normal retry-backoff cap: 30 seconds.
+- Respect a valid longer Retry-After instruction.
+
+Keep gameplay timing separate:
+- Desired authoritative simulation target: 60 Hz.
+- Input transmission target: up to 60 Hz.
+- Snapshot target: 20-30 Hz.
+
+These gameplay values are configurable targets, not instructions to replace existing tested values blindly.
+
+Do not change movement physics, hit registration, lag compensation, rendering FPS, or replication rates merely to reduce Cloudflare request counts.
+
+Do not tie network timers to rendering frame rate.
+
+
+==================================================
+5. HEARTBEATS, STATUS, DISCOVERY, AND QUEUES
+==================================================
+
+HOST HEARTBEATS
+
+Exactly one authorized host reports each match.
+Joining clients must not duplicate host heartbeats.
+
+Use:
+- Compact payloads.
+- Staggered heartbeat scheduling.
+- Match ID.
+- Authority epoch or equivalent.
+- Match status.
+- Occupancy/capacity where necessary.
+
+Use master-server receipt time for liveness, not client timestamps.
+
+After the stale timeout:
+- Remove the match from new allocations.
+- Exclude it from fresh discovery results.
+- Do not terminate an otherwise healthy gameplay session.
+
+Filter stale matches during reads/allocations even if background cleanup has not run.
+
+Cleanup must not delete a refreshed lease based on an old observation.
+
+Heartbeat expiry alone does not authorize creating a second gameplay host.
+
+
+IMPORTANT STATUS CHANGES
+
+Send prompt updates when:
+- A lobby becomes available.
+- Occupancy changes.
+- A match starts.
+- A match ends.
+- A host closes the lobby.
+- Supported host migration changes authority.
+
+Coalesce bursts of occupancy changes.
+
+Use revisions or sequence numbers so delayed updates cannot overwrite newer state.
+
+Authenticate host updates using appropriate short-lived, match-scoped authorization.
+
+Reject stale authority after migration.
+Never ship administrative service credentials in game clients.
+
+
+SERVER BROWSER
+
+- Refresh immediately when opened.
+- Refresh every 15 seconds while visible.
+- Provide a rate-limited manual Refresh action.
+- Stop polling when the screen closes or gameplay starts.
+- Keep the previous list visible while refreshing.
+- Show a concise stale/offline indication when appropriate.
+- Prevent overlapping equivalent requests.
+- Ignore responses belonging to abandoned UI states.
+
+
+MATCHMAKING
+
+Prefer an existing working push connection.
+Use five-second polling only as the fallback while actively queued.
+
+Do not run redundant push and polling loops.
+
+Make queue entry, cancellation, and assignment acceptance idempotent.
+
+Reserve match slots atomically.
+Use expiring reservations.
+Reclaim abandoned slots.
+
+Do not allocate from a cached player count.
+Reconnect to an existing queue ticket or assignment rather than creating duplicates.
+
+Cancel obsolete queue work immediately.
+
+
+==================================================
+6. NONBLOCKING REQUESTS, RETRIES, AND OUTAGES
+==================================================
+
+NONBLOCKING CLIENT
+
+- Use asynchronous network operations.
+- Never block rendering, input, or physics waiting for Cloudflare.
+- Avoid synchronous DNS/network work on the gameplay thread.
+- Bound response parsing and queued processing.
+- Reuse connections where supported.
+- Deduplicate equivalent concurrent requests.
+- Discard obsolete operations.
+- Cancel screen/session-owned requests when their owner ends.
+- Use monotonic time for local scheduling.
+- Keep token renewal separate from heartbeat frequency.
+- Renew authentication according to actual expiry and provider rules.
+
+
+RETRIES AND OUTAGES
+
+- Use exponential backoff with jitter for transient failures.
+- Respect Retry-After.
+- Do not blindly retry permanent validation/authentication failures.
+- Prevent failed requests from creating another request every frame.
+- Coordinate heartbeat retries with the normal heartbeat scheduler.
+- Do not create parallel retry loops for the same operation.
+- Bound retry queues and retained payloads.
+- Continue established gameplay during master-server outages when the gameplay transport remains healthy.
+- Show a concise connectivity message without interrupting play.
+- Recover registration and state safely when Cloudflare returns.
+- Stop retries when the operation is no longer relevant.
+
+A pending result may remain relevant after a match ends. Deliver it through the bounded results queue rather than keeping the entire match/session alive.
+
+
+==================================================
+7. MATCH RESULTS, STORAGE, COST, AND METRICS
+==================================================
+
+MATCH RESULTS
+
+- Give each match a unique ID.
+- Make result submission idempotent.
+- Persist a bounded pending-results queue where supported.
+- Configure queue size, retention, expiration, and retry behavior.
+- Record delivery/expiration status.
+- Never duplicate rewards or ranking changes.
+- Separate player-hosted results from trusted dedicated-server results.
+- Do not treat authentication as proof that a player-hosted result is honest.
+- Preserve existing ranking policy unless a required explicit configuration change is documented.
+- Campaign completion must not enter competitive ranking logic.
+- Solo campaign saves must work without Cloudflare availability.
+
+
+CLOUDFLARE STORAGE AND COST
+
+Inspect existing:
+- Workers.
+- Durable Objects.
+- D1.
+- KV.
+- Schedulers and cleanup jobs.
+
+Use strongly consistent coordination for reservations, assignments, and host ownership.
+
+Do not use eventually consistent cached listings as allocation authority.
+
+Avoid:
+- Unnecessary database writes.
+- Full-table scans.
+- Excessive cleanup frequency.
+- Large repeated discovery responses.
+- Verbose per-heartbeat logging by default.
+
+Use WebSocket hibernation only where compatible with the actual design.
+
+Add lightweight metrics for requests, failures, retries, stale matches, allocations, and queue latency.
+
+
+GAMEPLAY PERFORMANCE
+
+Measure whether coordination requests cause frame or simulation spikes.
+
+Distinguish:
+- Gameplay ping.
+- Master-server request latency.
+- Simulation overload.
+
+Do not claim reduced Cloudflare traffic automatically lowers gameplay ping.
+
+Document actual changes and measurements separately from expectations.
+
+
+==================================================
+8. CAMPAIGN MENU AND DIFFICULTY
+==================================================
+
+IMPORTANT NAMING CHANGE:
+
+The campaign's player-facing label is:
+DIFFICULTY
+
+Do NOT label it:
+"Bot Difficulty"
+
+Choices:
+- Easy
+- Medium
+- Hard
+- Angel
+
+This naming requirement applies to:
+- Campaign setup.
+- Co-op campaign lobby.
+- Mission summary.
+- Pause/settings UI where applicable.
+- Tooltips.
+- Subtitles or instructional text.
+- New campaign documentation.
+
+If existing internal bot-difficulty identifiers are reused, preserve compatibility where sensible. Map them behind the scenes; do not expose "Bot Difficulty" in campaign UI.
+
+Do not unnecessarily rename unrelated multiplayer bot settings.
+
+Add campaign options without removing current menu functionality:
+- New Campaign.
+- Continue, when a valid checkpoint exists.
+- Host Co-op.
+- Join Co-op.
+- Difficulty.
+- Back.
+
+Use the game's established visual style, navigation, input mapping, and accessibility conventions.
+
+Co-op host selects Difficulty.
+Clients see the selected value.
+Persist it in the campaign session/checkpoint.
+Avoid changing Difficulty silently during a mission.
+
+
+DIFFICULTY BEHAVIOR
+
+Use data-driven profiles that control:
+- Reaction time.
+- Aim error and accuracy.
+- Burst timing.
+- Awareness based on actual perception.
+- Cover use.
+- Flanking.
+- Coordination.
+- Aggression.
+
+Easy:
+Forgiving reactions and accuracy, readable approaches, generous recovery opportunities.
+
+Medium:
+Balanced reactions, reasonable accuracy, basic coordinated pressure.
+
+Hard:
+Faster reactions, stronger positioning, purposeful flanking, less wasted exposure.
+
+Angel:
+The strongest fair coordination and sustained pressure.
+Do not use omniscience, impossible accuracy, wall vision, or unexplained damage.
+
+Preserve established weapon and health rules where practical.
+Do not primarily increase difficulty by making enemies bullet sponges.
+
+All five waves progressively intensify within the selected Difficulty.
+Wave Five on Easy must still be balanced as Easy.
+Wave One on Angel may already be challenging.
+
+Enemy wave totals do not change with Difficulty or player count.
+
+
+==================================================
+9. CAMPAIGN CANON AND SCOPE
+==================================================
+
+Campaign plan:
+Nine missions total.
+
+Implement now:
+- Campaign entry.
+- Two-minute intro.
+- Mission 1: THE LAST DEPARTURE.
+- Solo and up to four-player cooperative play.
+- Mission checkpoints and completion.
+
+Do not expose unimplemented later missions as playable.
+
+This supersedes the older Mission 1 proposal beginning at Sanctuary.
+Sanctuary can appear later.
+
+
+STORY
+
+The Naki originally came from Old Earth, the Ancient Nest.
+They have lived on Connectuct for millennia.
+
+Connectuct's ozone layer is deteriorating.
+
+Gold is essential to:
+- Infrastructure.
+- Power systems.
+- Artificial intelligence.
+- Advanced control and protection technology.
+
+Gold is a necessary material in these systems, not simply something burned as fuel.
+
+The Naki have advanced medicine, weapons, body-suit shielding, engineering, and artificial intelligence.
+
+They have the knowledge to respond to Connectuct's crisis, but insufficient gold to repair and expand the systems quickly enough.
+
+Anki leads the first return expedition to Old Earth in millennia.
+
+Brutus is their battlefield AI.
+Ancient AI is a distinct, much older intelligence associated with Old Earth.
+
+The expedition expects abandoned infrastructure and mineral reserves.
+
+The Annu already inhabit Old Earth and defend it.
+The Naki initially do not know they will encounter them.
+
+The expedition crashes in a forest.
+Keep the crash's definitive cause unresolved in Mission 1.
+
+
+VISUAL CANON
+
+Naki:
+- White armor.
+- Restrained gold trim.
+- Plasma-green energy and shields.
+- Original advanced body-suit silhouette.
+- Anki has a narrow eye-only visor.
+- Avoid Halo/Spartan imitation.
+
+Connectuct:
+- Modern white-and-gold architecture.
+- Advanced transportation.
+- Sophisticated medicine and engineering.
+- A civilization under strain, not a completely ruined planet.
+
+Old Earth:
+- Very tall trees.
+- Full leafy canopies.
+- Dense branches.
+- Large roots.
+- Ancient stone and occasional gold circuitry.
+- Ash, fog, smoke, fire, and wreckage around the crash.
+
+
+==================================================
+10. INTRODUCTION: THE WORLD WE BUILT
+==================================================
+
+Build an in-engine cinematic first.
+
+Do not make an externally generated movie a prerequisite for a playable campaign.
+
+Runtime:
+Exactly 120 seconds when watched normally.
+
+Include:
+- Animated cameras.
+- Appropriate environments.
+- Character or machinery animation where available.
+- Lighting.
+- Atmospheric effects.
+- Subtitle cues.
+- Narration slots.
+- Music and effects tracks.
+- Reliable transition to gameplay.
+
+Use one authoritative cinematic timeline.
+
+Do not set gameplay physics or rendering to 29 FPS.
+The separate Film replay recording specification does not control this cinematic.
+
+NARRATOR DIRECTION
+Deep, resonant bass-baritone.
+Mature, restrained, slightly weathered.
+Quiet pride becomes concern, then determination.
+Avoid shouting, exaggerated growling, and imitation of a recognizable actor.
+
+Use existing authorized audio tools/assets where available.
+Do not start a paid service or send private project assets to a new external provider without authorization.
+
+If narration generation is unavailable:
+- Build the entire cinematic and subtitle timeline.
+- Create clearly labeled replaceable voiceover slots.
+- Include the exact script in repository documentation.
+- Explain what audio remains missing.
+- Continue implementing the mission.
+- Do not claim recorded narration exists.
+
+Preserve the following narration.
+
+
+00:00-00:20
+
+"For millennia, Connectuct has been our home.
+
+We raised cities above its valleys. Built machines that carried us beyond its skies.
+
+Here, our children grew up knowing the world our ancestors left behind only by its name.
+
+Old Earth."
+
+VISUAL
+Connectuct sunrise.
+Street-level life.
+Transportation.
+Camera rises to reveal the modern skyline.
+
+
+00:20-00:40
+
+"We learned to mend the body. To surround it with shields.
+
+Our intelligence became something we could build--and teach.
+
+Through every discovery ran the same precious material.
+
+Gold.
+
+Within our power systems. Our cities. The minds of our machines."
+
+VISUAL
+Advanced medical treatment.
+A body suit's green shield activates.
+AI-assisted infrastructure.
+Gold components inside power/control systems.
+
+
+00:40-01:00
+
+"But above us, the protection we were born beneath is failing.
+
+Connectuct's ozone layer is thinning.
+
+Each year, the safe ground retreats.
+
+Each year, more of what we build must be given to keeping the world we already have."
+
+VISUAL
+Atmospheric monitoring.
+Restricted outdoor districts.
+Maintenance crews.
+Protective infrastructure under strain.
+
+
+01:00-01:20
+
+"We have the knowledge to fight it.
+
+What we no longer have is enough gold.
+
+Now, one district goes dark so another can remain protected.
+
+A railway stops so a hospital can stay open.
+
+And the repairs cannot keep pace."
+
+VISUAL
+Gold components removed from idle transport equipment.
+Components transferred to critical systems.
+A hospital remains lit while surrounding districts dim.
+
+
+01:20-01:40
+
+"Our oldest records speak of reserves beneath Old Earth.
+
+Of cities built upon them.
+
+Of an intelligence entrusted with their care.
+
+Ancient AI.
+
+If those systems remain, we may recover enough to give Connectuct a future.
+
+But no one has returned in millennia."
+
+VISUAL
+Old Earth archives.
+Ancient architecture.
+Gold networks.
+Anki reviewing expedition information with Brutus.
+
+
+01:40-02:00
+
+"So we prepare to cross the distance our ancestors once crossed.
+
+We carry their maps.
+
+Their unfinished history.
+
+And the lives of everyone waiting for us to return.
+
+We are Naki.
+
+We are going back to the Ancient Nest."
+
+VISUAL
+The expedition prepares to depart.
+Anki approaches the launch facility.
+Ship engines remain on standby.
+
+IMPORTANT:
+End with the ship still docked.
+The player must complete preparation and board before the actual launch.
+Do not create a chronological contradiction by launching before the tutorial.
+
+At 02:00:
+Transition into the playable preparation area.
+
+Adjust pauses and camera holds to fit the timeline.
+Do not unnaturally accelerate voice recordings.
+Report a recording/timing conflict before rewriting approved narration.
+
+
+==================================================
+11. MISSION 1: THE LAST DEPARTURE
+==================================================
+
+Suggested duration:
+30-40 minutes including cinematics.
+
+This is a pacing target, not a requirement to add artificial waiting.
+
+Players:
+1-4.
+
+Solo:
+Player controls Anki.
+
+Co-op:
+Host controls Anki.
+Other players are Naki expedition members.
+
+Use existing character assets or documented placeholders.
+Do not introduce mandatory new named protagonists without a reason.
+
+
+PHASE A - DEPARTURE PREPARATION
+
+Objective:
+COMPLETE DEPARTURE READINESS
+
+Use believable equipment checks and service routes to teach:
+- Look.
+- Walk.
+- Sprint.
+- Jump.
+- Crouch.
+- Interact.
+- Aim.
+- Fire.
+- Reload.
+- Switch weapons.
+- Toggle flashlight.
+- Recover shields.
+
+Avoid building an unexplained obstacle course.
+
+Starting weapons:
+- Naki Carbine.
+- Naki pistol.
+
+Use approved existing weapon definitions.
+If absent, create clearly documented provisional definitions with configurable values.
+Do not silently substitute unrelated weapons.
+
+SHIELD CALIBRATION
+A controlled emitter loads the shield without lethal damage.
+The player moves behind a calibration barrier.
+Shield recharge follows established gameplay rules.
+
+Brutus:
+"The shield takes the first impact. Sustained fire will strip it."
+
+Brutus:
+"Break contact. Give the suit time to recover."
+
+Explain vulnerability after shield depletion without inventing incompatible health mechanics.
+
+FLASHLIGHT PRACTICE
+Use a short darkened inspection passage.
+Teach the configurable flashlight binding before the crash.
+
+CO-OP PREPARATION
+Each player can complete personal practice.
+Shared objectives must not incorrectly finish another player's required calibration.
+Finished players can wait near boarding.
+Provide a clear readiness state.
+Solo requires no second human.
+
+
+PHASE B - BOARD THE SHIP
+
+Objective:
+BOARD THE EXPEDITION SHIP
+
+Show:
+- Survey supplies.
+- Extraction tools.
+- Emergency equipment.
+- A sealed demolition charge.
+
+Technician:
+"Excavation charge secured. Arming circuit isolated."
+
+Anki:
+"It stays isolated until we reach the survey site."
+
+This establishes the later bomb-recovery objective.
+
+The charge is fictional industrial equipment.
+Use a simple fictional safety/recovery interaction.
+Do not provide real-world explosive assembly or disarming procedures.
+
+Once the squad is ready:
+- Board.
+- Secure positions.
+- Launch from Connectuct.
+- Show the planet receding.
+- Use a clear travel/time transition.
+
+Do not make Old Earth appear to be seconds away unless the travel mechanism is deliberately established.
+
+Do not repeat the entire opening narration.
+
+
+PHASE C - RETURN AND CRASH
+
+Reveal:
+- Old Earth's green forests.
+- Dense canopy.
+- Occasional ancient structures.
+
+Anki:
+"There were cities here."
+
+Brutus:
+"There may still be."
+
+An obsolete signal reaches the ship.
+
+Ancient AI:
+"Return vessel identified. Approach record incomplete."
+
+Brutus:
+"That signal is older than our navigation system."
+
+A flight-control fault follows.
+Do not confirm that Ancient AI caused it.
+
+The ship:
+- Loses stable flight.
+- Clips the canopy.
+- Breaks through branches.
+- Crashes into the forest.
+
+Use a staged cinematic with controlled animation and effects.
+Transition into a prepared wreck scene.
+Do not depend on uncontrolled physics to produce the required layout.
+
+Do not kill players through unavoidable cinematic damage.
+
+After the crash:
+Gradually restore sound and visibility.
+Brutus checks the squad.
+
+Brutus:
+"Anki. Respond."
+
+Anki:
+"Here."
+
+Brutus:
+"Then keep moving. The hull is unstable."
+
+
+PHASE D - ESCAPE AND RECOVER THE BOMB
+
+Objectives:
+EXIT THE WRECK
+LOCATE AND SECURE THE DEMOLITION CHARGE
+
+Brutus:
+"The excavation charge is missing from its cradle."
+
+Anki:
+"Is it armed?"
+
+Brutus:
+"The last reading says no. I need a physical confirmation."
+
+Place the charge among cargo debris in a small set of designed locations.
+
+Requirements:
+- Fair search area.
+- Short-range equipment locator.
+- Flashlight-readable case.
+- Clear interaction.
+- Confirm fictional safe status.
+- Secure the case in a surviving cargo compartment.
+
+Recovery is a shared squad objective.
+Any authorized squad member can complete it.
+Prevent two players from duplicating the item or interaction.
+
+Track recovery independently from wave progression.
+It can happen before or during combat.
+Mission completion requires it.
+
+Allow a brief preparation window before the first Annu wave.
+
+Annu radio:
+"Wreck confirmed. Armed survivors."
+
+Annu command:
+"Establish a perimeter. Secure the vessel and its cargo."
+
+The Annu are investigating and containing an armed crash.
+Represent them as organized defenders, not unexplained enemies appearing from nowhere.
+
+
+==================================================
+12. CRASH-SITE ARENA
+==================================================
+
+Central landmark:
+The crashed Naki ship.
+
+Required spaces:
+- Main exterior fighting area.
+- Surviving accessible ship interior.
+- Radio location.
+- Secure bomb compartment.
+- Cargo-search areas.
+- Weapon/ammunition locations.
+- Several cover routes.
+- Three controlled forest approaches.
+
+Surround the area with:
+- Very tall trees.
+- Full leaves and branches.
+- Thick roots.
+- Fallen timber.
+- Sloped terrain.
+- Dense vegetation.
+
+Outer boundaries:
+Thicker fog plus physical obstructions.
+Do not rely entirely on invisible walls.
+
+Inside:
+- Drifting ash.
+- Black smoke near damaged engines.
+- Low fog between roots.
+- Burning debris.
+- Occasional green electrical effects.
+- Flashlight beams visible where appropriate.
+
+Make visibility challenging without making combat unreadable.
+
+Maintain:
+- Readable close threats.
+- Understandable cover.
+- Recognizable objectives.
+- Navigable routes.
+- Stable performance.
+
+Scale:
+- Particles.
+- Fog.
+- Dynamic shadows.
+- Light counts.
+- Effect density.
+
+Low graphics settings must not grant visibility through otherwise opaque gameplay cover.
+
+AI perception must respect relevant smoke/occlusion rules.
+Do not let AI perfectly track players through effects that prevent players from seeing them.
+
+
+==================================================
+13. WEAPONS, PICKUPS, AND FLASHLIGHTS
+==================================================
+
+Naki starting equipment:
+- Carbine.
+- Naki pistol.
+- Flashlight capability.
+
+Annu starting weapons:
+- AK-47.
+- Magnum.
+
+Use those mission labels as requested.
+If the game already uses approved fictional weapon IDs, preserve stable internal IDs and document the display-name mapping.
+Do not broadly rename shared weapons or break saved references.
+
+Place Naki supplies around the crash site:
+- Carbine ammunition near a torn equipment compartment.
+- Pistol supplies near an escape opening.
+- Additional approved Naki weapons in damaged crates.
+- A reserve ammunition location inside surviving hull cover.
+
+Use the existing approved arsenal.
+Do not invent an unrelated weapon roster.
+
+Provide sufficient ammunition for solo completion.
+Do not require players to discover an obscure optional pickup to finish.
+
+If Annu weapons can be picked up, use established inventory and ammunition rules.
+
+FLASHLIGHT REQUIREMENTS
+- Real functional lighting on starting guns.
+- Configurable toggle.
+- Independent state per player.
+- Replicated state in co-op.
+- Correct beam origin/orientation.
+- No orphaned lights after switching, dropping, dying, reviving, or exiting.
+- No shield or ammunition drain.
+- Sensible four-player shadow budget.
+
+If AI responds to visible flashlights, make that behavior consistent and testable.
+Do not add invisible detection advantages.
+
+
+==================================================
+14. FIVE ANNU WAVES
+==================================================
+
+Main objective:
+SURVIVE THE ANNU ASSAULT
+
+Exact counts:
+
+Wave 1: 3
+Wave 2: 5
+Wave 3: 6
+Wave 4: 8
+Wave 5: 12
+
+Total enemies:
+34
+
+Counts remain unchanged across:
+- Easy.
+- Medium.
+- Hard.
+- Angel.
+- One to four players.
+
+Adjust party-size balance through:
+- Available supplies.
+- Recovery opportunities.
+- Simultaneous pressure.
+- Spawn staggering.
+- Revive opportunities.
+
+Do not silently change selected Difficulty.
+
+
+WAVE 1 - CONTACT
+3 Annu.
+
+Single readable approach.
+Cautious reconnaissance.
+Basic cover use.
+Limited coordination.
+
+Brutus:
+"Three contacts. Left of the broken engine."
+
+Use this exact callout only when the actual spawn geometry makes it true.
+
+
+WAVE 2 - PERIMETER
+5 Annu.
+
+Two approaches.
+One element holds while another attempts a simple flank.
+Appropriate sidearm use at close range.
+
+
+WAVE 3 - PRESSURE
+6 Annu.
+
+Suppression and repositioning.
+Pressure on separated squad members.
+Encourage movement, shield recovery, and mutual support.
+
+
+WAVE 4 - BREACH
+8 Annu.
+
+Push toward the ship entrance.
+Multiple attack routes.
+Use cover the players abandon.
+Prevent a single doorway from trivializing the entire encounter.
+
+
+WAVE 5 - SEIZURE
+12 Annu.
+
+Strongest coordination within selected Difficulty.
+Three readable approaches.
+Covering fire supports advancing elements.
+Reposition when an approach fails.
+
+Enemies may arrive in staggered groups, but the total remains twelve.
+
+
+WAVE SYSTEM RULES
+
+- Complete a wave only after all its hostile combatants are defeated.
+- Do not begin the next wave while enemies from the current wave remain alive.
+- Use short, configurable recovery intervals.
+- Provide readable wave notifications.
+- Avoid excessive radio chatter over important combat audio.
+- Do not spawn in direct view when preventable.
+- Do not spawn directly behind players.
+- Validate spawn locations and navigation.
+- Prevent enemies becoming permanently stranded outside the arena.
+- Use legitimate repositioning/recovery for stuck enemies.
+- Do not silently mark living enemies dead to advance.
+- Avoid duplicate spawns after reconnect or checkpoint retry.
+- Track enemies with stable IDs.
+- Keep counters authoritative.
+- Handle simultaneous final kills safely.
+- Save checkpoints between completed waves.
+
+
+==================================================
+15. RADIO AND MISSION ENDING
+==================================================
+
+The emergency radio is inside the ship from the start.
+
+Early interaction:
+Explain that the antenna/link is damaged.
+
+Brutus works on restoring the link during the encounter.
+Do not make the radio magically appear after the last wave.
+
+Enable the final transmission only when:
+- All five waves are complete.
+- All 34 wave enemies are defeated.
+- The demolition charge is secured.
+
+Objective:
+RETURN TO THE SHIP'S EMERGENCY RADIO
+
+Any squad member may activate the shared interaction.
+Anki delivers the story dialogue.
+Prevent duplicate activation.
+
+Dialogue:
+
+Anki:
+"Expedition relay, this is Anki. We are down on Old Earth. Survivors at the crash site. Requesting extraction."
+
+Relay:
+"Anki, signal received. Transmit your position."
+
+Anki:
+"Sending now."
+
+Relay:
+"Hold your position. We're finding a route through."
+
+Anki:
+"There are people here."
+
+Relay:
+"Say again?"
+
+Anki:
+"Old Earth is inhabited."
+
+Ancient AI, through the damaged ship:
+"Your arrival has been recorded."
+
+Brutus:
+"That was not the relay."
+
+Visual:
+A faint gold circuit illuminates in ancient stone exposed beneath the crash debris.
+
+Display:
+
+MISSION COMPLETE
+THE LAST DEPARTURE
+
+Save completion exactly once.
+Offer replay or return to the campaign menu.
+Do not load an unimplemented Mission 2.
+
+Keep Ancient AI distinct from Brutus.
+Do not explain the entire mystery in this ending.
+
+
+==================================================
+16. CO-OP AUTHORITY AND RECOVERY
+==================================================
+
+Reuse the existing gameplay networking stack.
+
+Host authoritatively controls:
+- Enemy spawning.
+- AI.
+- Wave state.
+- Shared objectives.
+- Bomb state.
+- Radio readiness.
+- Checkpoints.
+- Completion.
+
+Validate client interaction requests.
+Use stable object/event IDs.
+Make shared state transitions idempotent.
+
+Players have independent:
+- Weapons.
+- Ammunition.
+- Shields.
+- Flashlights.
+- Local settings.
+
+Support:
+- Clear downed states.
+- Teammate revival.
+- Interrupted/invalid revive handling.
+- Full-party defeat.
+- Safe checkpoint retry.
+- Disconnect/reconnect.
+- Defined late-join policy.
+
+Do not add an unverified promise of seamless host migration.
+If the host leaves and migration is unavailable, explain and return players safely.
+
+Solo:
+- Fully playable offline.
+- No second-player requirement.
+- Death retries from a valid checkpoint.
+- No dependency on Cloudflare for local progress.
+
+Do not conflate "player-hosted campaign" with trusted competitive matchmaking.
+
+
+==================================================
+17. CHECKPOINTS AND SAVE DATA
+==================================================
+
+Use versioned, validated save data and atomic writes.
+
+Save:
+- Mission ID.
+- Difficulty.
+- Current phase.
+- Completed wave index.
+- Bomb recovery/security state.
+- Relevant player equipment/resources.
+- Objective state.
+- Required world state.
+
+Place checkpoints:
+- After preparation.
+- After crash initialization.
+- At completed-wave boundaries.
+- At other safe milestone boundaries where appropriate.
+
+If the bomb is recovered during a wave:
+Either preserve the complete supported encounter state or merge the durable objective safely into the next consistent checkpoint.
+
+Do not create a checkpoint that resets the enemies but duplicates or loses the bomb.
+
+Never allow stale asynchronous save work to overwrite newer progress.
+
+Checkpoint load must restore:
+- Correct player spawns.
+- Correct wave state.
+- Correct living enemies if mid-wave saves are supported.
+- Correct pickups/resources.
+- Correct interaction permissions.
+- Correct radio readiness.
+
+Do not serialize executable objects or trust arbitrary save-file contents.
+
+
+==================================================
+18. CINEMATIC SYNCHRONIZATION AND INPUT
+==================================================
+
+Use a clear cinematic controller.
+
+For co-op:
+- Wait for connected players to be ready.
+- Use an authoritative shared start time.
+- Keep playback synchronized.
+- Define a visible skip policy, such as all connected players agreeing.
+- Remove disconnected players from readiness/skip requirements.
+- Do not permanently block on an absent player.
+- Do not begin combat before the session is ready.
+
+Skipping:
+- Stops narration and cinematic effects cleanly.
+- Places players at correct spawn points.
+- Assigns expected equipment.
+- Initializes objectives and world state exactly once.
+- Restores HUD, camera, mouse capture, and controls.
+- Produces the same playable state as normal completion.
+
+Include:
+- Speaker-labeled subtitles.
+- Separate dialogue/music/effects volume.
+- Comfortable camera movement.
+- No unnecessary camera shaking.
+- Sensible handling of pause and focus changes.
+
+Do not globally pause the multiplayer simulation merely because one client opens a local menu.
+
+
+==================================================
+19. MISSION STATE MACHINE
+==================================================
+
+Adapt names to repository conventions:
+
+INTRO
+PREPARATION
+BOARDING
+DEPARTURE
+CRASH
+CRASH_ORIENTATION
+WAVE_1
+INTERMISSION_1
+WAVE_2
+INTERMISSION_2
+WAVE_3
+INTERMISSION_3
+WAVE_4
+INTERMISSION_4
+WAVE_5
+RADIO_READY
+ENDING
+COMPLETE
+
+Track bomb recovery as an independent state.
+
+Use explicit transition guards.
+
+Examples:
+- BOARDING requires valid readiness.
+- CRASH_ORIENTATION requires completed crash initialization.
+- INTERMISSION requires current wave cleared.
+- RADIO_READY requires all waves cleared AND bomb secured.
+- COMPLETE requires the ending to finish or be skipped through the valid completion path.
+
+Make transitions safe under repeated RPCs, retries, simultaneous interactions, and reconnects.
+
+Do not make unrelated timer callbacks the source of truth for progression.
+
+
+==================================================
+20. ASSETS AND IMPLEMENTATION QUALITY
+==================================================
+
+Inventory assets before replacing them.
+
+Reuse:
+- Existing characters.
+- Weapons.
+- Animation rigs.
+- Environment materials.
+- Effects.
+- UI.
+- Audio.
+- Networking helpers.
+
+Where assets are missing:
+- Build functional blockout geometry.
+- Use clearly identified placeholders.
+- Keep asset replacement straightforward.
+- Continue implementing gameplay.
+
+Do not:
+- Claim blockouts are final art.
+- Invent completed voice files.
+- Download unclear-license assets.
+- Add unnecessary paid dependencies.
+- Rebuild the entire game architecture without a demonstrated requirement.
+
+Keep mission data, dialogue, wave definitions, difficulty profiles, and cinematic cues editable outside giant hard-coded scripts.
+
+Use repository conventions rather than creating a disconnected framework.
+
+
+==================================================
+21. TESTING AND ACCEPTANCE
+==================================================
+
+NETWORKING
+- Heartbeat scheduling.
+- No client duplication.
+- Immediate status changes.
+- Stale-host allocation exclusion.
+- Lease refresh/cleanup races.
+- Atomic capacity reservations.
+- Queue cancellation/reconnect.
+- Delayed/out-of-order responses.
+- Retry-After behavior.
+- Permanent versus transient failures.
+- Temporary Cloudflare outages.
+- Bounded pending-results behavior.
+- Duplicate result submissions.
+- No main-thread blocking.
+
+Use fake clocks for scheduler behavior where practical.
+
+CAMPAIGN UI
+- Player-facing label is "Difficulty."
+- Easy, Medium, Hard, Angel appear correctly.
+- Difficulty replicates and persists.
+- Continue only appears/enables with valid progress.
+- Missing later missions are not presented as playable.
+
+CINEMATICS
+- Intro duration is 120 seconds.
+- Works with narration present or absent.
+- Subtitles are readable.
+- Skip equals full-playback initialization.
+- Co-op readiness and skip behavior.
+- Input, HUD, and audio restore correctly.
+
+MISSION
+- Preparation works solo and co-op.
+- Boarding completes correctly.
+- Crash reliably creates the correct scene.
+- Bomb can be recovered before or during combat.
+- Wave counts are exactly 3, 5, 6, 8, 12.
+- Total is 34.
+- No duplicate spawns or counter corruption.
+- Radio cannot finish early.
+- Completion occurs exactly once.
+- Replay starts cleanly.
+
+CO-OP
+- One, two, and four-player paths where execution allows.
+- Weapon/pickup authority.
+- Flashlights.
+- Downed/revive behavior.
+- Full-party wipe.
+- Checkpoint retry.
+- Disconnect/reconnect.
+- Late join according to the chosen policy.
+
+PERFORMANCE
+- Maximum wave combat.
+- Four flashlights.
+- Smoke, fog, fire, and particles.
+- Enemy navigation/perception.
+- Coordination requests during gameplay.
+- Frame/tick spikes and memory growth.
+
+REGRESSION
+- Existing multiplayer launch and menus.
+- Accounts.
+- Discord integration where testable.
+- Existing weapons/settings.
+- Existing Film functionality where relevant.
+
+Do not invent test results.
+
+A headless parse/import check does not establish:
+- Visual quality.
+- Playability.
+- Internet connectivity.
+- Four-player performance.
+
+If rendering is available, inspect actual screenshots or captures.
+Report unavailable tests and provide exact Windows instructions.
+
+
+==================================================
+22. EXECUTION MILESTONES
+==================================================
+
+Keep the project runnable after each milestone:
+
+1. Latest local baseline preserved and pushed.
+2. Network settings and request lifecycle improvements.
+3. Campaign menu and state-machine skeleton.
+4. Preparation and crash-site blockout.
+5. Bomb, waves, radio, and completion.
+6. Checkpoints and co-op correctness.
+7. Intro and cinematic transitions.
+8. Audio integration and visual polish.
+9. Regression checks and final delivery.
+
+Do not stop at the skeleton or after writing documentation.
+Continue through all work possible in the environment.
+
+If blocked on final art or voiceover, complete the functional implementation and clearly identify the missing assets.
+
+If a production deployment is required later, prepare reviewable deployment/rollback instructions without deploying now.
+
+
+==================================================
+23. DOCUMENTATION, COMMITS, AND FINAL REPORT
+==================================================
+
+Keep separate commits for:
+- Local baseline reconciliation.
+- Networking changes.
+- Campaign implementation.
+- Subsequent fixes where useful.
+
+Push the working branch.
+Verify reported commits are present remotely.
+
+Document:
+- Current campaign canon.
+- Mission flow.
+- Difficulty configuration.
+- Wave definitions.
+- Cinematic timing.
+- Narration script.
+- Asset requirements.
+- Save/checkpoint behavior.
+- Co-op limitations.
+- Network settings.
+- Test results.
+
+Mark earlier Sanctuary-first mission proposals as superseded in current guidance while preserving historical release documents.
+
+For request-volume examples:
+- One heartbeat per 20 seconds = 180/hour per continuously active match.
+- Thirty continuous days = 129,600 heartbeats per match.
+- Ten continuously active matches = 1,296,000 heartbeats/month.
+
+These exclude other requests, retries, storage operations, and service billing categories.
+Separate estimates from actual measurements.
+
+FINAL RESPONSE MUST INCLUDE:
+- Repository URL.
+- Working branch.
+- Baseline and implementation commit IDs.
+- Local project path used.
+- How latest local and remote work were reconciled.
+- What is playable.
+- Exact steps to launch the intro and Mission 1.
+- Solo/co-op controls and setup.
+- Old versus new networking settings.
+- Actual checks run and their results.
+- Screenshots/captures if produced.
+- Missing art/audio.
+- Remaining limitations.
+- Windows test handoff.
+- Cloudflare deployment/rollback instructions, without deployment.
+
+INTENDED RESULT
+
+The latest PC version is safely preserved in Git.
+
+Cloudflare coordination is efficient and resilient without degrading gameplay.
+
+Campaign UI uses "Difficulty."
+
+The player sees the Connectuct introduction, learns Naki movement and shielding, boards the ship, returns to Old Earth, survives the forest crash, secures the bomb, defeats all five Annu waves, and uses the ship's radio to call for help.
+
+The complete mission works solo and supports up to four players through the existing networking architecture.
+
+END OF INSTRUCTIONS

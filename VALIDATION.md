@@ -166,3 +166,77 @@ Implementation: `film_archive.gd`, `film_recorder.gd`, `film_transfer.gd`, `film
 Playback tests passed 25 assertions with ten actors, nine synthetic local tracks and one missing track, including both factions, switching, zoom/death/respawn, late availability, aim lock, free camera, radar, reopening and stepping. Actual two-process ENet collection passed 28 checks, including slowed transfers after return-to-menu and gameplay rejection. Report: `%TEMP%/nest-authority-hAKlz0`. The 2.2-second fixture measured 58/61 samples, 29,579/31,421 microseconds total capture work (~0.51 ms/sample), ~52–55 KB combined archive writes, and 11,284/15,563 perspective payload bytes transferred per direction; no dropped recording blocks or rejected chunks. These short runs do not establish one-hour sizes, ten simultaneous uploads or WAN throughput. Preview images were visually inspected with the native renderer. Custom Forge geometry fidelity and ten independent real player tracks still require local validation; authoritative snapshots alone cannot reproduce each original display.
 
 Final regression repeat: all 28 native lifecycle checkpoints passed in `%TEMP%/nest-lifecycle-qN3Nog`, with no script/parse/closed-channel errors in its logs. Fixed an explicit fresh connection inheriting a prior playlist reservation after socket-close races; unexpected reconnect still preserves its party/queue. The dedicated two-case queue recovery regression passes alongside the 48-test full suite (one new test added afterward). Checkpoint state passed 31 checks after updating its obsolete immediate-failure timeout expectation to bounded reconnect; signing-key replacement passed six. Diff whitespace checks passed. Native headless runs emitted `Failed to read the root certificate store`; loopback tests do not validate external TLS. Diagnose the Windows trust-store warning before using these runs as any evidence about production connectivity; do not disable TLS verification.
+
+## Campaign Mission 1 — Windows integration, 2026-10-25
+
+Read all 23 sections through END OF INSTRUCTIONS from the fetched
+`codex/campaign-master-instructions-2026-10-25` branch (`f2c4902`), with its
+instruction blob and commit reconstructed and hash-verified locally. The
+current PC baseline/network branch remained intact at `e8fd54a` / `4d71526`;
+the instruction branch adds only the specification and does not replace the
+newer game. A verified pre-implementation Git bundle preserves all branches.
+
+Implemented Campaign entry with **Difficulty** (Easy/Medium/Hard/Angel), offline
+entry after the existing age policy, the 120-second Connectuct timeline, personal
+preparation, boarding, staged departure/crash, charge recovery/security, exact
+3/5/6/8/12 waves, guarded radio/ending and versioned safe checkpoints. Direct
+ENet co-op uses the existing actor/input/snapshot stack for up to four players;
+campaign results do not enter competitive ranking. See `docs/CAMPAIGN_MISSION1.md`.
+
+Actual checks:
+
+- Coordinator typecheck/build and all 49 tests passed again.
+- Isolated campaign state/save suite: 128 checks passed; mission integration:
+  29 checks passed; UI: nine checks at 1920×1080, 1280×800 and 640×480 passed.
+- All five prescribed waves have concealed, connected spawn candidates for
+  every enemy. A maximum-wave fixture spawned twelve actual AI actors, observed
+  37.38 m of navigation motion, four flashlight nodes and smoke perception
+  rejection. Its last 180 simulation-span samples had p95 0.214 ms on this PC.
+  This is a short headless fixture, with accelerated spawn staggering and
+  protected test actors, not a human balance test, sustained GPU result or
+  measured four-PC performance claim.
+- Two-client and four-client native ENet mission runs passed 36 checkpoints
+  each, including independent readiness, shared Difficulty, unanimous skip,
+  actual remote movement after crash session reset, flashlights, down/revive,
+  single charge recovery, disconnect/reconnect, wipe/retry, independent weapon
+  consumption, all waves and one-time completion. Final four-client report:
+  `%TEMP%/nest-campaign-62tGxn`; two-client report: `nest-campaign-gZEGjI`.
+- Isolated regression runner passed accounts UI, falling/weapon controls,
+  browser, heartbeat control, network policy, Film playback, age policy and
+  mocked Discord dashboard. A stale dashboard mock was given its missing game
+  reference, explicit playlist and no-op rich-presence method; no Discord
+  provider behavior is claimed from those mocks.
+- Regular multiplayer native lifecycle rerun passed all 28 checkpoints in
+  `%TEMP%/nest-lifecycle-P4kNVI`. An earlier run rejected host migration for lack
+  of a fresh checkpoint/majority; it is recorded as a failed run, not hidden or
+  counted as acceptance. The later run passed without relaxing authority rules.
+- Godot import/parser checks passed. Five real OpenGL 1280×800 captures were
+  inspected: campaign menu, Connectuct intro, preparation, crash and playable
+  forest. Captures are in the private local implementation checkpoint folder.
+- Private Windows release export and executable startup exited 0. The packed
+  game also passed an intro-to-preparation campaign smoke fixture using the
+  pinned console engine. Debug extension DLLs were included locally for that
+  packed-resource check. No executable, archive or release was published.
+
+Early implementation checks caught and fixed blocked navigation/spawn candidates,
+stale retry revisions, input sequencing after world changes and visibility/
+readiness distinctions. One native test start overlapped an editor cache rebuild
+and failed to resolve new global script classes; the import and quiet rerun then
+passed. Do not run imports/exports concurrently with source-based native tests.
+
+Test isolation incident: a legacy controls-migration test was initially run
+against live APPDATA and replaced the local preferences file with its fixture.
+An older profile and the overwritten fixture are preserved privately for
+recovery; exact latest settings could not be reconstructed. Restoration is
+pending the owner's choice. Further tests use isolated profiles, and the two
+preference-writing legacy fixtures now refuse to run without the isolated-QA
+flag supplied by the runner. No credentials were printed or rotated.
+
+Missing/unverified: recorded narration and final environment art; manual
+end-to-end tutorial/combat balance and 30–40 minute pacing; long-session
+performance/memory; two/four physical PCs and WAN direct/TURN acceptance; live
+Discord/audio and native credential/TLS acceptance. Campaign co-op currently
+uses reachable-host ENet, not automatic TURN. Campaign Film recording and host
+migration are unsupported. Existing root-certificate warnings remain; TLS
+verification was not disabled. No production deployments, schemas, credentials,
+default-branch merges or releases were changed.

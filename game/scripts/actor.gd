@@ -557,6 +557,7 @@ func _input(event: InputEvent) -> void:
 		update_local_fire(); get_viewport().set_input_as_handled()
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(game) or not game.running or game.matchmaking.blocks_simulation(): return
+	if game.campaign!=null and game.campaign.frozen_actors():return
 	if game.is_client() and not local_player:
 		net_interpolate(game.remote_view_time)
 		update_visual(delta)
@@ -572,7 +573,7 @@ func _physics_process(delta: float) -> void:
 		if client_local: record_client_command(Vector2.ZERO,false,-1,false,rotation.y)
 		elif host_remote: process_remote_commands(delta)
 		update_visual(delta)
-		if not game.is_client() and game.now>=respawn_at and not game.finished and game.break_until<=game.now and game.mode!=game.MODE_CS: respawn()
+		if not game.is_client() and game.now>=respawn_at and not game.finished and game.break_until<=game.now and game.mode!=game.MODE_CS and not (game.campaign!=null and game.campaign.active): respawn()
 		return
 	if not game.is_client() and damage_model()=="naki":update_regeneration()
 	if not game.is_client() and damage_model()=="annu" and (traits.health_regeneration or (damage_model()=="annu" and game.damage_rules.health_regen_enabled)) and game.now-last_damage>=traits.health_regen_delay: health=minf(tuning.health_capacity,health+(tuning.health_capacity*.2 if traits.health_regeneration else float(game.damage_rules.health_regen_per_second))*delta)
@@ -623,6 +624,7 @@ func movement_step(move: Vector2, jump: bool, crouch_want: int, yaw: float, delt
 	var mult = tuning.carry_multiplier if carrying else 1.0
 	var rules = traits
 	var move_scale=rules.movement_speed_percent/100.0
+	if game.campaign!=null and game.campaign.active and game.campaign.sprinting(self):move_scale*=1.25
 	var wish = Basis(Vector3.UP,yaw)*Vector3(move.x,0,move.y)
 	var horizontal = Vector3(controlled.x,0,controlled.z)
 	var jumped=false
@@ -1178,6 +1180,7 @@ func shield_hit_durability(region: String, category: String) -> float:
 	if damage_model()!="naki" or category!="bullet": return 1.0
 	return float(traits.settings.naki_head_shield_strength if region=="head" else traits.settings.naki_body_shield_strength)
 func take_damage(amount: float, region: String, category: String, precision: bool, attacker: NestActor, event_id: int, damage_origin: Vector3=Vector3.INF, weapon_kind: String="", hit_distance: float=0, contact_point: Vector3=Vector3.INF) -> bool:
+	if game.campaign!=null and game.campaign.active and not game.campaign.can_damage(self):return false
 	if not alive or game.finished or game.break_until>game.now or (attacker==self and not traits.self_damage): return false
 	if is_instance_valid(attacker) and attacker!=self and attacker.faction==faction and game.mode!=1 and not tuning.friendly_fire: return false
 	if game.is_client():
@@ -1304,6 +1307,7 @@ func record_damage_visual(old_shield: float, old_over: float, old_health: float)
 		health_flash_at=game.now; health_flash_strength=clampf((old_health-health)/35.0,.25,1)
 func die(attacker: NestActor, reason: String) -> void:
 	if not alive: return
+	if game.campaign!=null and game.campaign.active and game.campaign.down(self):return
 	if game.nu!=null:game.nu.finish(self)
 	game.spawn_death_body(self,reason)
 	reset_aim()
@@ -1436,6 +1440,7 @@ func release_thrown_grenade() -> void:
 	if game.is_client():game.authorize_grenade.rpc_id(1,grenade_id,life_id,game.round_number,selected,grenade_release_origin(),aim_direction(),velocity,game.match_session,game.command_sequence)
 	game.launch_grenade(self,selected,false,grenade_id,grenade_release_origin())
 func bot_intent(delta: float) -> Dictionary:
+	if game.campaign!=null and game.campaign.active:return game.campaign.bot_intent(self,delta)
 	if game.game_type.bots_stand_still:
 		if not game.game_type.bots_dont_shoot:bot_stationary_fire(delta)
 		return {"move":Vector2.ZERO,"jump":false,"crouch":0}

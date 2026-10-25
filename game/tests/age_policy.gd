@@ -12,6 +12,8 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
+	if OS.get_environment("NEST_ISOLATED_QA")!="1":
+		push_error("This fixture writes age preferences. Run node scripts/campaign-validation.mjs age_policy for an isolated profile.");quit(1);return
 	var policy = root.get_node("AncientNestAgePolicy")
 	var auth = root.get_node("AncientNestAuth")
 	var original_store = auth.credential_store

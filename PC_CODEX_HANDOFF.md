@@ -108,3 +108,38 @@ Film matrix: record a completed match, wait for collection, open Films, select e
 Future production rollout instructions (do not execute under the current task): obtain separate deployment authorization after staging/WAN acceptance; preserve a reviewed source revision and the previous Worker version ID/client package; privately export any database only if a schema change is later proposed (none is needed here). Drain queues/matches rather than mixing protocols. Build/test the matching client/coordinator, deploy only the existing matchmaking Worker using its existing namespace/bindings, then distribute the matching client. Do not deploy accounts or rotate secrets for this change. Verify ready/authenticated connection, browser, assignment, host receipt/revision and result idempotency; observe the metrics without verbose per-heartbeat logs.
 
 Rollback instructions: stop new admissions and drain active matches, then restore the previously recorded Worker deployment through Cloudflare's version rollback and restore its matching prior client package. Never mix `10.5-discord1` and `10.5-discord2`, delete Durable Object storage, recreate bindings or reset credentials as rollback. Preserve pending-result journals and films; do not replay an unknown old result as a new match. Rollback is a future authorized operational action, not something performed by this handoff.
+
+## 9. Campaign Mission 1 — current Windows handoff
+
+Specification fetched and verified from `codex/campaign-master-instructions-2026-10-25`
+at `f2c4902`; the full 23-section file is preserved in docs. Current work stays on
+`feature/campaign-mission1-2026-10-25`, above baseline `e8fd54a` and networking
+`4d71526`. The instruction branch does not replace the current PC game.
+
+Read `docs/CAMPAIGN_MISSION1.md` for canon, flow, **Difficulty**, controls,
+direct co-op setup, saves, missing narration/art, test commands, manual Windows
+acceptance and deployment/rollback boundaries. Run `Play Ancient Nest Campaign.cmd`
+from the canonical checkout. Offline campaign is available after the existing age
+notice, without a Cloudflare/Discord login. Online matchmaking retains its
+authentication. The campaign is unranked and uses host-owned saves.
+
+Private local build:
+`C:\Users\Corey\Games\AncientNest-Campaign-Private-20261025-Final\Ancient Nest.exe`.
+Desktop shortcut: **Ancient Nest - Campaign Private Test**. Keep all DLLs/licenses
+beside the executable. No release, ZIP or executable was published. Older builds
+and project folders remain intact. Source/packed-campaign checks passed; human
+playthrough, physical-PC/WAN/voice and sustained performance remain to verify.
+
+Use `node scripts/campaign-validation.mjs` for regression scripts. It isolates
+APPDATA and fails on script errors/timeouts. Never run a preference-writing
+fixture against live user data. The controls/age fixtures now require the
+runner's isolated-QA flag. A first legacy controls test overwrote the live
+preferences with fixture bindings; the exact previous settings could not be
+recovered. The overwritten file and an older profile are preserved outside Git
+in `AncientNest-Campaign-Checkpoint-20261025`; restoring the older profile awaits
+the owner's choice. Credentials and authentication secrets were not changed.
+
+Normal multiplayer still requires a matching `10.5-discord2` coordinator; no
+production deployment is authorized or performed here. Campaign direct co-op
+needs a reachable UDP host, not a new Worker. Follow section 8 for any future
+separately authorized coordinator rollout and version rollback.

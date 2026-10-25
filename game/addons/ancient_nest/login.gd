@@ -42,6 +42,14 @@ func _ready() -> void:
 	_submit.text = "Continue with Discord"
 	_submit.pressed.connect(_sign_in)
 	_form.add_child(_submit)
+	var offline_campaign=Button.new()
+	offline_campaign.name="OfflineCampaign"
+	offline_campaign.text="Campaign • Play offline"
+	offline_campaign.pressed.connect(func():
+		if not AncientNestAgePolicy.is_eligible():return
+		get_tree().set_meta("open_offline_campaign",true)
+		get_tree().change_scene_to_file("res://scenes/main.tscn"))
+	card.add_child(offline_campaign)
 	_signed_in = VBoxContainer.new()
 	_signed_in.hide()
 	card.add_child(_signed_in)

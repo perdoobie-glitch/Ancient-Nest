@@ -133,6 +133,9 @@ func _ready() -> void:
 	make_hud_passthrough(join_notices)
 	get_tree().root.size_changed.connect(on_display_resized)
 	show_main()
+	if get_tree().get_meta("open_offline_campaign",false) or "--campaign-menu" in OS.get_cmdline_user_args():
+		if get_tree().has_meta("open_offline_campaign"):get_tree().remove_meta("open_offline_campaign")
+		campaign.call_deferred("menu")
 func show_join_notification(username: String) -> void:
 	if not is_instance_valid(join_notices):return
 	# This layer survives menu/HUD rebuilds and never captures gameplay input.
@@ -231,7 +234,7 @@ func show_main() -> void:
 	var column=VBoxContainer.new();column.add_theme_constant_override("separation",8);panel.add_child(column)
 	var studio=label("PERDOOBIE & MISHWAD STUDIO",13,GOLD);NestMenuSurface.plasma_lettering(studio);studio.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;column.add_child(studio)
 	var grid=GridContainer.new();grid.columns=6 if size.x>=1000 else 2;grid.add_theme_constant_override("h_separation",10);grid.add_theme_constant_override("v_separation",8);column.add_child(grid)
-	var choices=[["Play",show_play_menu],["Server Browser",open_server_browser],["Films",open_films],["Nest Forge",open_forge],["Armory",show_armory],["Settings",func():open_settings("main")],["Quit Game",quit_dialog]]
+	var choices=[["Play",show_play_menu],["Campaign",func():campaign.menu()],["Server Browser",open_server_browser],["Films",open_films],["Nest Forge",open_forge],["Armory",show_armory],["Settings",func():open_settings("main")],["Quit Game",quit_dialog]]
 	var primary: Array[Button]=[]
 	for choice in choices:
 		var entry=button(choice[0],choice[1]);NestMenuSurface.main_button(entry,true);entry.clip_text=true;entry.size_flags_horizontal=Control.SIZE_EXPAND_FILL;entry.custom_minimum_size=Vector2(0,42);grid.add_child(entry);primary.append(entry)
@@ -413,7 +416,7 @@ func create_hud() -> void:
 	var gradient=Gradient.new(); gradient.colors=PackedColorArray([Color(.015,.028,.035,.62),Color(.015,.028,.035,.38),Color(.015,.028,.035,0)]); gradient.offsets=PackedFloat32Array([0,.65,1])
 	var texture=GradientTexture2D.new(); texture.gradient=gradient; texture.fill_from=Vector2(.5,0); texture.fill_to=Vector2(.5,1)
 	var backing=TextureRect.new(); backing.texture=texture; backing.mouse_filter=Control.MOUSE_FILTER_IGNORE; hud.add_child(backing); backing.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP); backing.offset_left=-400; backing.offset_right=400; backing.offset_top=0; backing.offset_bottom=188
-	var rank_backing=ColorRect.new();rank_backing.color=Color(.015,.025,.03,.78);rank_backing.mouse_filter=Control.MOUSE_FILTER_IGNORE;rank_backing.position=Vector2(20,18);rank_backing.size=Vector2(310,84);hud.add_child(rank_backing)
+	var rank_backing=ColorRect.new();rank_backing.name="LiveRankBacking";rank_backing.color=Color(.015,.025,.03,.78);rank_backing.mouse_filter=Control.MOUSE_FILTER_IGNORE;rank_backing.position=Vector2(20,18);rank_backing.size=Vector2(310,84);hud.add_child(rank_backing)
 	rank_badge=NestRankBadge.new();rank_badge.name="LiveRankBadge";hud.add_child(rank_badge);rank_badge.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT);rank_badge.position=Vector2(28,24)
 	hud_top=RichTextLabel.new();hud_top.bbcode_enabled=true;hud_top.fit_content=true;hud_top.scroll_active=false;hud_top.mouse_filter=Control.MOUSE_FILTER_IGNORE;hud_top.add_theme_font_size_override("normal_font_size",26)
 	hud.add_child(hud_top); hud_top.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP); hud_top.offset_left=-330; hud_top.offset_right=330; hud_top.offset_top=25;hud_top.offset_bottom=60
@@ -641,6 +644,7 @@ func scoreboard_summary() -> String:
 		text+="\n"
 	return text
 func _input(event: InputEvent) -> void:
+	if campaign!=null and campaign.active and campaign.handle_input(event):get_viewport().set_input_as_handled();return
 	if is_instance_valid(film_viewer):
 		if film_viewer.input(event):get_viewport().set_input_as_handled()
 		return
@@ -723,6 +727,7 @@ func close_chat_ui() -> void:
 func open_match_setup() -> void:
 	open_game_type_settings()
 func show_pause() -> void:
+	if campaign!=null and campaign.active:NestCampaignUI.pause(campaign);return
 	if context=="chat": close_chat_ui()
 	current_screen="pause"; context="pause"; clear_screen(); shade(0.65); Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	interaction_progress=0; cancel_uncommitted_input()
@@ -740,8 +745,10 @@ func show_pause() -> void:
 	v.add_child(label("Nu: %s · Grenade type: %s · Melee weapon: %s\nMove: %s / %s / %s / %s · Jump: %s · Crouch: %s\nReload: %s · Interact: %s · Melee: %s · Grenade: %s\nCycle weapons: %s / Wheel · Primary: %s · Secondary: %s · Scoreboard: %s · Chat: %s"%[prefs.key_label("nu"),prefs.key_label("grenade_type"),prefs.key_label("sword"),prefs.key_label("forward"),prefs.key_label("left"),prefs.key_label("backward"),prefs.key_label("right"),prefs.key_label("jump"),prefs.key_label("crouch"),prefs.key_label("reload"),prefs.key_label("interact"),prefs.key_label("melee"),prefs.key_label("grenade"),prefs.key_label("switch_weapon"),prefs.key_label("primary_weapon"),prefs.key_label("secondary_weapon"),prefs.key_label("scoreboard"),prefs.key_label("chat")],13,MUTED))
 	focus_later(resume_button)
 func resume_game() -> void:
+	if campaign!=null and campaign.active:campaign.resume();return
 	clear_screen(); current_screen="playing"; context="playing"; clear_held_input(); capture_mouse()
 func leave_dialog() -> void:
+	if campaign!=null and campaign.active:campaign.exit_campaign();return
 	if matchmaking.active:
 		confirm("Leave matchmaking?","A bot will hold your slot until you reconnect or the match ends.",leave_matchmaking,"Leave Match");return
 	if forge_session.testing:
@@ -1071,6 +1078,7 @@ func broadcast_lobby() -> void:
 			counts[member.faction]+=1
 		update_lobby.rpc(lobby_members,active_config())
 func network_ui_changed() -> void:
+	if campaign!=null and campaign.active:return
 	if matchmaking!=null and matchmaking.active:matchmaking_ui_changed();return
 	if forge_session.active or forge_session.testing:return
 	if not running: hud.visible=false; menu_camera.current=true; show_lobby()

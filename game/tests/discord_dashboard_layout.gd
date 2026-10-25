@@ -31,6 +31,7 @@ class FakeClient extends RefCounted:
 	var relationships: Array = []
 	func get_relationships() -> Array: return relationships
 	func clear_rich_presence() -> void: pass
+	func update_rich_presence(_activity, _callback) -> void: pass
 
 func _initialize() -> void: call_deferred("run")
 func frames(count := 5) -> void:
@@ -54,6 +55,7 @@ func run() -> void:
 	mm.set_process(false)
 	var original_hub = mm.hybrid
 	var hub := FakeHub.new()
+	hub.game=game;hub.mm=mm;mm.playlist="tactical_3v3"
 	mm.add_child(hub)
 	mm.hybrid = hub
 	mm.active = true
