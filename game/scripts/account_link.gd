@@ -100,10 +100,8 @@ func show_panel() -> void:
     username.max_length = 24
     panel.add_child(username)
     panel.add_child(game.button("Save game username", func() -> void:
-        var response: Dictionary = await AncientNestAuth.authenticated_request("/profile/username", HTTPClient.METHOD_POST,
-            {"username": username.text.strip_edges()})
+        var response: Dictionary = await AncientNestAuth.update_game_username(username.text)
         if response.ok:
-            AncientNestAuth.current_user = response.data.user
             state["username"] = response.data.user.username
             account_assertion = ""
             assertion_until = 0

@@ -59,6 +59,7 @@ func show_matchup() -> void:
    for clip in animator.get_animation_list():
     if String(clip).ends_with("idle"):animator.get_animation(clip).loop_mode=Animation.LOOP_LINEAR;animator.play(clip);break
 func can_rotate() -> bool:
+ if AncientNestDiscordShortcut.is_open():return false
  if not is_instance_valid(game) or game.current_screen!="lobby" or not is_visible_in_tree() or not game.input_window_focused:return false
  if is_instance_valid(game.game_type_editor) and game.game_type_editor.visible:return false
  if is_instance_valid(game.modal) and game.modal.visible:return false

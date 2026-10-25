@@ -39,5 +39,5 @@ func accept(_packet: Dictionary) -> bool:
  # Ignore legacy local/host awards, including packets claiming eligibility.
  return false
 func result_text() -> String:
- if game.matchmaking.active:return "MATCHMAKING · Playlist stats are confirmed by the account server. Return to matchmaking to refresh your gamer card."
+ if game.matchmaking.active and not game.matchmaking.custom_match():return "MATCHMAKING · Playlist stats are confirmed by the account server. Return to matchmaking to refresh your gamer card."
  return "CUSTOM GAME · UNRANKED · No Elo, rank, Player Rating or ranked statistics changes."

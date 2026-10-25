@@ -35,9 +35,9 @@ static func seed_state() -> int:
  return randi()
 static func valid(cp, version: String) -> bool:
  if not cp is Dictionary or cp.get("schema")!=SCHEMA or cp.get("build")!=version:return false
- if not cp.get("config") is Dictionary or not cp.get("game") is Dictionary or not cp.get("actors") is Array or cp.actors.size()<2 or cp.actors.size()>10 or cp.actors.size()%2!=0:return false
+ if not cp.get("config") is Dictionary or not cp.get("game") is Dictionary or not cp.get("actors") is Array or cp.actors.size()<2 or cp.actors.size()>10:return false
  var expected=int(cp.config.get("game_type",{}).get("max_players",cp.actors.size()))
- if expected!=cp.actors.size():return false
+ if expected!=cp.actors.size()+cp.actors.size()%2:return false # Odd custom rosters have one vacant team slot.
  var ids={}
  for a in cp.actors:
   if not a is Dictionary or not a.get("state") is Dictionary or not a.get("pos") is Vector3 or not a.pos.is_finite() or ids.has(a.get("id")):return false

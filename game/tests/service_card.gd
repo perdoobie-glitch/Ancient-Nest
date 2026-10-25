@@ -9,7 +9,7 @@ func run():
  assert(card.content.get_node("Totalkills").get_child(1).text=="42")
  assert(card.content.get_node("TotalKD").get_child(1).text=="2.00")
  assert((card.get_theme_stylebox("panel") as StyleBoxFlat).border_color==NestServiceCard.DIAMOND)
- var playlist=NestGamerCard.new();root.add_child(playlist);playlist.show_profile(data,"Player","1v1 Duel")
+ var playlist=NestGamerCard.new();root.add_child(playlist);playlist.show_profile(data,"Player","1 v 1 Loners")
  var clicked=[false];playlist.username_pressed.connect(func():clicked[0]=true);playlist.content.get_node("UsernameTag").pressed.emit();assert(clicked[0])
  card.queue_free();playlist.queue_free();await process_frame
  print("PASS diamond service card, aggregate presentation and username tag action")

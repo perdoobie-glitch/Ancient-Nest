@@ -14,7 +14,7 @@ var probe_payloads: Array[PackedByteArray]=[]
 var game_peers={}
 var candidate_counts={}
 var transport: WebRTCMultiplayerPeer
-const CHANNELS=[MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED,MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED,MultiplayerPeer.TRANSFER_MODE_UNRELIABLE]
+const CHANNELS=[MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED,MultiplayerPeer.TRANSFER_MODE_UNRELIABLE_ORDERED,MultiplayerPeer.TRANSFER_MODE_UNRELIABLE,MultiplayerPeer.TRANSFER_MODE_RELIABLE]
 func clock() -> float:return Time.get_ticks_usec()/1000000.0
 func configure(event: Dictionary) -> void:
  ice_policy=str(event.get("ice_policy",ice_policy));ice_servers=event.get("ice_servers",ice_servers);round_id=str(event.get("round",round_id));epoch=int(event.epoch)
@@ -61,7 +61,9 @@ func receive(event: Dictionary) -> void:
  else:
   if transport==null:return
   if bridge.authority and event.kind=="sdp" and event.data.get("type","")=="offer" and game_peers.has(who):
-   game_peers[who].close();game_peers.erase(who);transport.remove_peer(int(bridge.roster[who].slot))
+   game_peers[who].close();game_peers.erase(who)
+   var old_peer=int(bridge.roster[who].slot)
+   if transport.has_peer(old_peer):transport.remove_peer(old_peer)
   if not game_peers.has(who):
    if not bridge.authority:return
    add_game_peer(who,int(bridge.roster[who].slot),false)
@@ -71,6 +73,7 @@ func receive(event: Dictionary) -> void:
  if event.kind=="sdp":pc.set_remote_description(str(data.type),str(data.sdp))
  elif event.kind=="ice":pc.add_ice_candidate(str(data.media),int(data.index),str(data.candidate))
 func start_host(event: Dictionary) -> Error:
+ if not bool(bridge.game.prefs.values.get("allow_host",true)):return ERR_UNAUTHORIZED
  close_game();stop_probes();configure(event);transport=WebRTCMultiplayerPeer.new()
  var error=transport.create_server(CHANNELS)
  if error==OK:

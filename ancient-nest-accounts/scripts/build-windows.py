@@ -4,6 +4,7 @@ Requires Godot 4.6.3, its matching export templates, and installed native addons
 The generated archive contains no server configuration or production credentials.
 """
 import hashlib
+import argparse
 import os
 from pathlib import Path
 import shutil
@@ -16,7 +17,13 @@ OUTPUT = ROOT / 'dist' / 'windows'
 GODOT = os.environ.get('GODOT_BIN', 'godot')
 
 
-def build():
+def build(output=OUTPUT, archive=None, executable_name='Ancient Nest.exe'):
+    output = Path(output).resolve()
+    archive = Path(archive).resolve() if archive else ROOT / 'dist' / 'Ancient-Nest-Windows.zip'
+    if output.exists() or archive.exists():
+        raise FileExistsError('Choose NEW output/archive paths. Existing builds and backups are preserved.')
+    if Path(executable_name).name != executable_name or not executable_name.lower().endswith('.exe'):
+        raise ValueError('Executable name must be a simple .exe filename.')
     version = subprocess.check_output([GODOT, '--version'], text=True).strip()
     if not version.startswith('4.6.3.stable.'):
         raise RuntimeError('Use Godot 4.6.3 and matching export templates for the pinned native addons.')
@@ -24,20 +31,18 @@ def build():
     keyring = PROJECT / 'addons/keyring/bin/libkeyring.windows.template_release.x86_64.dll'
     if not keyring.is_file() or not (extension / 'discord_partner_sdk.dll').is_file():
         raise RuntimeError('Native dependencies missing. Run npm run discord:install first.')
-    # Remove only generated output so stale files cannot leak into the player download.
-    if OUTPUT.exists():
-        shutil.rmtree(OUTPUT)
-    OUTPUT.mkdir(parents=True)
+    output.mkdir(parents=True)
+    archive.parent.mkdir(parents=True, exist_ok=True)
     # Finish native addon imports before exporting from a fresh project cache.
     subprocess.run([GODOT, '--headless', '--path', str(PROJECT), '--editor', '--quit-after', '90'], check=True)
-    executable = OUTPUT / 'Ancient Nest.exe'
+    executable = output / executable_name
     subprocess.run([GODOT, '--headless', '--path', str(PROJECT), '--export-release', 'Windows', str(executable)], check=True)
     if not executable.is_file() or executable.read_bytes()[:2] != b'MZ':
         raise RuntimeError('Windows executable was not produced.')
     # Include all SDK runtime DLLs, including the optional noise-suppression runtime.
     for name in ['discord_partner_sdk.dll', 'discord_krisp.dll']:
-        shutil.copy2(extension / name, OUTPUT / name)
-    licenses = OUTPUT / 'licenses'
+        shutil.copy2(extension / name, output / name)
+    licenses = output / 'licenses'
     licenses.mkdir()
     for addon in ['discord_social_sdk', 'keyring', 'webrtc_native']:
         files = [p for p in (PROJECT / 'addons' / addon).rglob('*')
@@ -48,9 +53,9 @@ def build():
             shutil.copy2(source, licenses / f'{addon}-{index}-{source.name}')
     for source in (ROOT / 'licenses').glob('Godot-*'):
         shutil.copy2(source, licenses / source.name)
-    (OUTPUT / 'Read me.txt').write_text(
-        'ANCIENT NEST - DEVELOPMENT GAME\n\n'
-        'Extract this entire folder, then open Ancient Nest.exe.\n'
+    (output / 'Read me.txt').write_text(
+        'ANCIENT NEST - PRIVATE DEVELOPMENT TEST\n\n'
+        f'Extract this entire folder, then open {executable_name}.\n'
         'Keep the DLLs and licenses beside the executable. No Godot installation is required.\n'
         'Continue with Discord on first launch. Saved sign-in is tried\n'
         'automatically on later launches; a failed restore requires manual login.\n\n'
@@ -58,17 +63,16 @@ def build():
         'The accounts Worker must be deployed and configured before online sign-in works.\n'
         'Discord voice requires approved app access and live audio testing.\n'
         'This build is unsigned. Windows startup/keyring checks run in GitHub Actions; live gameplay and audio still need testing.\n', encoding='utf8')
-    archive = ROOT / 'dist' / 'Ancient-Nest-Windows.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as out:
-        for source in sorted(OUTPUT.rglob('*')):
+        for source in sorted(output.rglob('*')):
             if source.is_file():
-                out.write(source, Path('Ancient Nest') / source.relative_to(OUTPUT))
+                out.write(source, Path('Ancient Nest Private Test') / source.relative_to(output))
     # Basic distribution validation: every native release library is shipped.
     with zipfile.ZipFile(archive) as out:
         if out.testzip() is not None:
             raise RuntimeError('Windows archive integrity check failed.')
         names = out.namelist()
-        required = ['Ancient Nest.exe', 'discord_partner_sdk.dll', 'discord_krisp.dll',
+        required = [executable_name, 'discord_partner_sdk.dll', 'discord_krisp.dll',
                     'discord_social_sdk.windows.template_release.x86_64.dll',
                     'libkeyring.windows.template_release.x86_64.dll', 'libwebrtc_native.windows.template_release.x86_64.dll']
         for name in required:
@@ -80,4 +84,9 @@ def build():
 
 
 if __name__ == '__main__':
-    build()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, default=OUTPUT)
+    parser.add_argument('--archive', type=Path)
+    parser.add_argument('--executable-name', default='Ancient Nest.exe')
+    args = parser.parse_args()
+    build(args.output, args.archive, args.executable_name)

@@ -39,10 +39,10 @@ func run():
   gate.mark.rpc_id(peer,"invalid_checked")
   check(await phase("bounded"),"Host processes the bounded sanitized name")
   var client_name=String(game.lobby_members[peer].name)
-  check(client_name.length()==20 and client_name.begins_with("Ace") and not client_name.contains("["),"Host strips controls/markup and bounds remote names")
+  check(client_name.length()==24 and client_name.begins_with("Ace") and not client_name.contains("["),"Host strips controls/markup and bounds remote names")
   check(game.save_username(client_name)==OK,"Host can rename without disconnecting")
   var host_name=String(game.lobby_members[1].name)
-  check(host_name!=client_name and host_name.length()<=20 and host_name.ends_with("_2"),"Host rename collisions use the same bounded unique-name rules")
+  check(host_name!=client_name and host_name.length()<=24 and host_name.ends_with("_2"),"Host rename collisions use the same bounded unique-name rules")
   gate.mark.rpc_id(peer,"host_renamed")
   check(await phase("final_name"),"Client restores its preferred lobby name")
   game.start_game();game.create_hud()
@@ -59,7 +59,7 @@ func run():
   check(game.current_username()=="Raven","Lobby suffix does not overwrite the locally preferred username")
   gate.mark.rpc_id(1,"collision")
   game.set_personal_lobby(-1,true);check(await wait_for(func():return game.lobby_ready),"Ready fixture is acknowledged")
-  game.screen.find_child("EditUsername",true,false).pressed.emit();await process_frame
+  game.show_username_dialog();await process_frame
   var dialog=game.modal;dialog.find_child("UsernameInput",true,false).text="Pilot";dialog.confirmed.emit()
   check(await wait_for(func():return game.lobby_members[id].name=="Pilot"),"Client username editor updates its server-owned slot")
   check(game.current_username()=="Pilot" and game.lobby_members[1].name=="Raven","Profile saves locally while host identity remains intact")

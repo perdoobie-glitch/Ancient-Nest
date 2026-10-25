@@ -67,7 +67,7 @@ var count = (v) => {
   return v;
 };
 var avg = (a) => a.reduce((s, n) => s + n, 0) / a.length;
-var PLAYLISTS = { duel_1v1: { name: "1v1 Duel", size: 2 }, doubles_2v2: { name: "2v2 Doubles", size: 4 }, tactical_3v3: { name: "3v3 Tactical", size: 6 }, arena_4v4: { name: "4v4 Arena", size: 8 }, bomb_defuse_5v5: { name: "5v5 Bomb Defuse", size: 10 } };
+var PLAYLISTS = { duel_1v1: { name: "1 v 1 Loners", size: 2 }, doubles_2v2: { name: "2 v 2 Couples", size: 4 }, tactical_3v3: { name: "3 v 3 Trios", size: 6 }, arena_4v4: { name: "4 v 4 Quads", size: 8 }, bomb_defuse_5v5: { name: "5 v 5 Squads", size: 10 } };
 function playlist(value) {
   if (typeof value !== "string" || !Object.hasOwn(PLAYLISTS, value)) return bad("unsupported_playlist");
   return value;

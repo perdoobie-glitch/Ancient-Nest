@@ -5,6 +5,7 @@ extends Node
 signal state_changed(message: String)
 
 var _pending_tokens: Dictionary = {}
+var _pending_account_id := ""
 var _client: Object
 var _call: Object
 var _verifier: Object
@@ -27,6 +28,7 @@ var _timer: Timer
 var _panel: PanelContainer
 var _label: Label
 var _connect_button: Button
+var _status_message := "Discord voice is not connected. Sign in with Discord to connect."
 
 
 func _ready() -> void:
@@ -65,17 +67,23 @@ func _notification(what: int) -> void:
 
 
 func _state(message: String) -> void:
+	_status_message = message
 	if is_instance_valid(_label):
 		_label.text = message
 	state_changed.emit(message)
 
 
 func _on_game_session(user: Dictionary) -> void:
+	if not AncientNestAgePolicy.is_eligible():
+		return
 	if _game_user == str(user.id):
 		return
+	var pending := _take_pending_tokens_for_user(str(user.id))
 	_on_game_logout()
+	_pending_tokens = pending
+	_pending_account_id = str(user.id) if not pending.is_empty() else ""
 	_game_user = str(user.id)
-	_panel.show()
+	_panel.hide() # Voice controls are available only inside Settings → Discord.
 	_store.service = "discord-oauth-refresh"
 	_store.device = _game_user
 	var generation := _generation
@@ -92,12 +100,14 @@ func _on_game_session(user: Dictionary) -> void:
 	_application_id = int(config.data.application_id)
 	_client = ClassDB.instantiate(&"DiscordClient")
 	_client.set_application_id(_application_id)
+	AncientNestDiscordSocial.attach_client(_client, _application_id)
 	_client.set_status_changed_callback(_on_sdk_status.bind(generation))
 	_connect_button.disabled = false
 	if not _pending_tokens.is_empty():
-		var pending := _pending_tokens
+		var tokens := _pending_tokens
 		_pending_tokens = {}
-		_accept_discord_tokens({"ok": true, "data": pending})
+		_pending_account_id = ""
+		_accept_discord_tokens({"ok": true, "data": tokens})
 		return
 	_discord_refresh = _store.read_token()
 	if _discord_refresh.is_empty():
@@ -107,7 +117,7 @@ func _on_game_session(user: Dictionary) -> void:
 
 
 func connect_discord() -> void:
-	if _client == null or _oauth_busy:
+	if _client == null or _oauth_busy or _ready_for_calls:
 		return
 	_oauth_busy = true
 	_connect_button.disabled = true
@@ -151,11 +161,16 @@ func _accept_discord_tokens(response: Dictionary) -> void:
 	_oauth_busy = false
 	_connect_button.disabled = false
 	if not response.ok:
+		_connect_button.text = "Retry Discord voice"
 		if response.get("error", "") == "discord_authorization_expired" or response.get("error", "") == "discord_link_required":
 			_store.clear_token()
 			_discord_refresh = ""
 		_state("Couldn't connect Discord. Retry Connect Discord; your game account is still signed in.")
 		return
+	_oauth_busy = true
+	_connect_button.disabled = true
+	_connect_button.text = "Connecting Discord voice…"
+	_state("Connecting Discord voice…")
 	_discord_refresh = str(response.data.refresh_token)
 	_discord_expiry = int(Time.get_unix_time_from_system()) + int(response.data.expires_in)
 	if AncientNestAuth.get("_remember_device") and _store.write_token(_discord_refresh) != OK:
@@ -168,8 +183,12 @@ func _on_sdk_token_updated(result: Variant, generation: int) -> void:
 	if generation != _generation:
 		return
 	if not result.successful():
+		_oauth_busy = false
+		_connect_button.disabled = false
+		_connect_button.text = "Retry Discord voice"
 		_state("Discord couldn't accept this connection. Try Connect Discord again.")
 		return
+	_oauth_busy = false
 	if not _ready_for_calls:
 		_client.connect_discord()
 
@@ -178,12 +197,19 @@ func _on_sdk_status(status: int, _error: int, _detail: int, generation: int) -> 
 	if generation != _generation:
 		return
 	_ready_for_calls = status == _constant("DiscordClientStatus", "READY")
+	if is_inside_tree(): AncientNestDiscordSocial.set_connected(_ready_for_calls)
 	if _ready_for_calls:
+		_connect_button.disabled = true
+		_connect_button.text = "Discord connected"
 		_state("Discord connected · waiting for your team")
 		_poll()
 	elif status == _constant("DiscordClientStatus", "RECONNECTING"):
+		_connect_button.disabled = true
+		_connect_button.text = "Reconnecting Discord voice…"
 		_state("Reconnecting Discord voice…")
 	elif status == _constant("DiscordClientStatus", "DISCONNECTED"):
+		_connect_button.disabled = _oauth_busy
+		_connect_button.text = "Retry Discord voice"
 		_leave_team_call()
 		_state("Discord voice disconnected · your game account is still signed in")
 
@@ -268,6 +294,7 @@ func _leave_team_call() -> void:
 
 
 func _on_game_logout() -> void:
+	if is_inside_tree(): AncientNestDiscordSocial.detach_client()
 	_generation += 1
 	_leave_team_call()
 	if _client != null:
@@ -275,6 +302,7 @@ func _on_game_logout() -> void:
 	_client = null
 	_game_user = ""
 	_pending_tokens = {}
+	_pending_account_id = ""
 	_discord_refresh = ""
 	_discord_expiry = 0
 	_ready_for_calls = false
@@ -341,6 +369,62 @@ func _build_panel() -> void:
 	_panel.hide()
 
 
+func build_settings(parent: VBoxContainer) -> void:
+	var heading := Label.new()
+	heading.text = "GAME VOICE CONTROLS"
+	parent.add_child(heading)
+	var status := Label.new()
+	status.name = "DiscordVoiceStatus"
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(status)
+	var connect_button := Button.new()
+	connect_button.name = "DiscordVoiceConnect"
+	connect_button.pressed.connect(connect_discord)
+	parent.add_child(connect_button)
+	var refresh := func(_message: String):
+		if is_instance_valid(status): status.text = _status_message
+		if is_instance_valid(connect_button):
+			connect_button.text = _connect_button.text
+			connect_button.disabled = _connect_button.disabled
+	state_changed.connect(refresh)
+	parent.tree_exiting.connect(func():
+		if state_changed.is_connected(refresh): state_changed.disconnect(refresh))
+	refresh.call("")
+	_settings_check(parent, "Automatically join team voice", _auto_join, func(value: bool):
+		_auto_join = value
+		_save_preferences()
+		if not value: _leave_team_call()
+		else: _poll())
+	_settings_check(parent, "Mute game microphone", _muted, func(value: bool):
+		_muted = value
+		_apply_controls())
+	_settings_check(parent, "Deafen game voice", _deafened, func(value: bool):
+		_deafened = value
+		_apply_controls())
+	_settings_check(parent, "Push-to-talk — hold V", _push_to_talk, func(value: bool):
+		_push_to_talk = value
+		_save_preferences()
+		_apply_controls())
+	var note := Label.new()
+	note.text = "Voice changes apply immediately to the game's call. They do not change your desktop Discord calls."
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(note)
+
+func _settings_check(parent: VBoxContainer, text: String, checked: bool, changed: Callable) -> void:
+	var control := CheckBox.new()
+	control.text = text
+	control.button_pressed = checked
+	for style in ["normal","hover","pressed","hover_pressed","focus","disabled"]:
+		control.add_theme_stylebox_override(style,StyleBoxEmpty.new())
+	control.toggled.connect(changed)
+	parent.add_child(control)
+
+func reset_voice_preferences() -> void:
+	_auto_join = true
+	_push_to_talk = true
+	_save_preferences()
+	_apply_controls()
+
 func _load_preferences() -> void:
 	var config := ConfigFile.new()
 	if config.load("user://voice-preferences.cfg") == OK:
@@ -355,8 +439,20 @@ func _save_preferences() -> void:
 	config.save("user://voice-preferences.cfg")
 
 
-func set_pending_tokens(tokens: Dictionary) -> void:
-	if _client != null:
+func _take_pending_tokens_for_user(account_id: String) -> Dictionary:
+	var tokens := _pending_tokens if _pending_account_id == account_id else {}
+	_pending_tokens = {}
+	_pending_account_id = ""
+	return tokens
+
+
+func set_pending_tokens(tokens: Dictionary, account_id: String = "") -> void:
+	if account_id.is_empty():
+		account_id = str(AncientNestAuth.current_user.get("id", ""))
+	if account_id.is_empty():
+		return
+	if _client != null and _game_user == account_id:
 		_accept_discord_tokens({"ok": true, "data": tokens})
 	else:
-		_pending_tokens = tokens
+		_pending_tokens = tokens.duplicate()
+		_pending_account_id = account_id

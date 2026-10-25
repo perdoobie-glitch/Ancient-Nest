@@ -1,10 +1,12 @@
 import {snapshot,monitorAuthorized} from "./monitor";
+import {CONTROL,hostAvailable,validHostUpdate,nextAlarm,retryDelay,retryAfter} from "./control_policy";
 import {
   PLAYLISTS,
   VERSION,
   majority,
   modesForPlaylist,
   rankHosts,
+  snapshotTicksForHost,
   partyMatch,
   b64,
   unb64,
@@ -55,6 +57,10 @@ type Room = {
   deadline: number;
   seen: Record<string, number>;
   host_seen: number;
+  hostRevision?: number;
+  leaseExpires?: number;
+  statusToken?: {hash:string;expires:number;epoch:number};
+  migrationRequested?: number;
   reports: Reports;
   tried: string[];
   votes: Record<string, Json>;
@@ -66,20 +72,23 @@ type Room = {
   born: number;
   iceServers: Json[];
   rtcRound: string;
-  voice?: { expires: number; active: boolean; ended: boolean; next: number; attempts: number };
+  voice?: { expires: number; active: boolean; ended: boolean; next: number; attempts: number;blocked?:boolean };
   registered?: boolean;
   apiEpoch?: number;
   results?: Record<string, Json>;
   live?: Json;
   monitorStarted?: boolean;
   monitorRecorded?: boolean;
-  jobs?: { path: string; body: Json; attempts: number; next?: number }[];
+  jobs?: { path: string; body: Json; attempts: number; next?: number;blocked?:boolean }[];
 };
-type Party = { id: string; leader: string; members: string[]; playlist: Playlist; searching: boolean };
+type CustomLobby = { name: string; mode: number; map: number; matchup: number; capacity: number };
+type Party = { id: string; leader: string; members: string[]; playlist: Playlist; searching: boolean; privacy?: "open" | "private"; inviteToken?: string; custom?: CustomLobby; advertisedAt?:number; revision?:number;searchEpoch?:number };
 type Attachment = {
   build?: string;
   party?: string;
   lobbyOnly?: boolean;
+  resume?: boolean;
+  controlResume?: {match:string;epoch:number};
   nonce: string;
   user?: string;
   public_key?: string;
@@ -92,8 +101,10 @@ type Attachment = {
   seen: number;
   messages?: number;
   window?: number;
+  queuedAt?:number;
 };
 const now = () => Date.now() / 1000;
+const COMPACT_EVENTS=new Set(["authority_lease","host_status_grant","checkpoint_offer","checkpoint_committed","resume","freeze","failed","return_queue","result_status"]);
 const origin = (s: string) => {
   const u = new URL(s);
   if (
@@ -108,6 +119,7 @@ const origin = (s: string) => {
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
+    if(url.pathname==="/v1/queue/status")return env.MATCHMAKER.get(env.MATCHMAKER.idFromName("global-v1")).fetch(req);
     if(url.pathname==="/api/monitor") {
       if(req.method!=="GET")return new Response("Method not allowed",{status:405,headers:{Allow:"GET"}});
       if(!env.MONITOR_TOKEN||env.MONITOR_TOKEN.length<32)return Response.json({error:"Monitor access not configured"},{status:503,headers:{"Cache-Control":"no-store"}});
@@ -141,6 +153,7 @@ export class Matchmaker {
   private queue: string[] = [];
   private parties: Record<string, Party> = {};
   private key!: CryptoKey;
+  private verifyKey!:CryptoKey;
   private pem = "";
   private serial: Promise<unknown> = Promise.resolve();
   private dirty = new Set<string>();
@@ -152,10 +165,16 @@ export class Matchmaker {
   private reviewLoading:Promise<void>|null=null;
   private queueSaved = "";
   private partySaved = "";
+  private roomSaved=new Map<string,string>();
+  private disconnected:Record<string,number>={};
+  private disconnectedSaved="";
+  private pollSeen=new Map<string,number>();
+  private controlMetrics:Record<string,number>={requests:0,failures:0,retries:0,stale:0,allocations:0,heartbeats:0};
   constructor(
     private ctx: DurableObjectState,
     private env: Env,
   ) {
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("nest-ping","nest-pong"));
     ctx.blockConcurrencyWhile(async () => {
       let stored = await ctx.storage.get<Json>("identity");
       if (!stored) {
@@ -196,12 +215,14 @@ export class Matchmaker {
         "-----BEGIN PUBLIC KEY-----\n" +
         stored.public.match(/.{1,64}/g).join("\n") +
         "\n-----END PUBLIC KEY-----\n";
+      this.verifyKey=await publicKey(this.pem);
       this.rooms = Object.fromEntries(
         [...(await ctx.storage.list<Room>({ prefix: "room:" }))].map(
           ([k, v]) => [k.slice(5), v],
         ),
       );
       this.queue = (await ctx.storage.get<string[]>("queue")) || [];
+      this.disconnected=(await ctx.storage.get<Record<string,number>>("disconnected"))||{};
       this.queueSaved = JSON.stringify(this.queue);
       this.parties = (await ctx.storage.get<Record<string, Party>>("parties")) || {};
       this.partySaved=JSON.stringify(this.parties);
@@ -209,15 +230,16 @@ export class Matchmaker {
       this.telemetrySaved=JSON.stringify(this.telemetry);
     });
   }
-  private run(job: () => Promise<void>): Promise<void> {
+  private run<T>(job: () => Promise<T>): Promise<T> {
     const task = this.serial.then(job);
     this.serial = task.catch(() => {});
     return task;
   }
   async fetch(_req: Request): Promise<Response> {
+    if(new URL(_req.url).pathname==="/v1/queue/status")return this.queuePoll(_req);
     if(new URL(_req.url).pathname==="/ready") {
       const initialized=!!(await this.ctx.storage.get("identity"))&&!!this.key;
-      return Response.json({service:"ancient-nest-matchmaking",release:"10.5-dev",version:VERSION,ready:initialized,checks:{coordinator:initialized,auth_mode:this.env.ALLOW_GUESTS==="true"?"guest":"accounts",account_bridge_configured:!!this.env.ACCOUNT_API&&!!this.env.COORDINATOR_API_KEY,turn_configured:!!this.env.TURN_KEY_ID&&!!this.env.TURN_KEY_API_TOKEN,monitor_configured:!!this.env.MONITOR_TOKEN&&this.env.MONITOR_TOKEN.length>=32}},{status:initialized?200:503,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
+      return Response.json({service:"ancient-nest-matchmaking",release:"10.5-dev",version:VERSION,ready:initialized,lobby_privacy_supported:true,server_browser_supported:true,adaptive_snapshot_rates:true,formation_recovery:true,checks:{coordinator:initialized,auth_mode:this.env.ALLOW_GUESTS==="true"?"guest":"accounts",account_bridge_configured:!!this.env.ACCOUNT_API&&!!this.env.COORDINATOR_API_KEY,turn_configured:!!this.env.TURN_KEY_ID&&!!this.env.TURN_KEY_API_TOKEN,monitor_configured:!!this.env.MONITOR_TOKEN&&this.env.MONITOR_TOKEN.length>=32}},{status:initialized?200:503,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
     }
     if(new URL(_req.url).pathname==="/api/monitor") {
       if(!await monitorAuthorized(_req,this.env.MONITOR_TOKEN))return new Response("Unauthorized",{status:401});
@@ -226,6 +248,7 @@ export class Matchmaker {
         result=snapshot(Object.values(this.rooms),users,Object.values(this.parties),this.telemetry.history,{started:this.telemetry.started,finished:this.telemetry.finished,failed:this.telemetry.failed},now(),{turn_configured:!!this.env.TURN_KEY_ID&&!!this.env.TURN_KEY_API_TOKEN,accounts_configured:!!this.env.ACCOUNT_API&&!!this.env.COORDINATOR_API_KEY,guest_mode:this.env.ALLOW_GUESTS==="true",max_control_sockets:512,max_active_rooms:64});
       });
       await this.refreshReviewSummary();result.ranking_review=this.reviewCache.data;
+      result.control_metrics={...this.controlMetrics,stale_matches:Object.values(this.rooms).filter(r=>r.phase==="running"&&!hostAvailable(r.host_seen,now())).length,scope:"this Durable Object activation; excludes hibernation auto-responses"};
       return Response.json(result,{headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
     }
     if (this.ctx.getWebSockets().length >= 512)
@@ -246,12 +269,16 @@ export class Matchmaker {
     ws: WebSocket,
     message: string | ArrayBuffer,
   ): Promise<void> {
+    this.controlMetrics.requests++;
+    if(message==="nest-ping"){
+      const a:Attachment=ws.deserializeAttachment();if(!a.user||a.build!==VERSION){ws.close(1008,"Authenticate first");return Promise.resolve();}a.seen=now();ws.serializeAttachment(a);ws.send("nest-pong");return Promise.resolve();
+    }
     // Authenticated keep-alives are deliberately independent of slow login,
     // rating-read and TURN requests. They never change queue/party membership.
     if(typeof message==="string" && message.length<=1500000){
       try{
         const packet=JSON.parse(message),attachment:Attachment=ws.deserializeAttachment();
-        if((packet?.type==="ping"||packet?.type==="heartbeat") && attachment?.user && attachment.build===VERSION)
+        if(packet?.type==="ping" && attachment?.user && attachment.build===VERSION)
           return this.keepAlive(ws,attachment,packet,message.length);
       }catch{/* The serialized validator below returns the normal rejection. */}
     }
@@ -281,6 +308,7 @@ export class Matchmaker {
           this.dirty.add(updated.room);
         await this.persist();
       } catch (error) {
+        this.controlMetrics.failures++;
         if(this.env.LOCAL_TEST==="true")console.log("QA_REQUEST_REJECT",error instanceof Error?error.message:"Invalid request");
         this.send(ws, {
           type: "failed",
@@ -305,10 +333,10 @@ export class Matchmaker {
   webSocketClose(ws: WebSocket): Promise<void> {
     return this.run(async () => {
       const a: Attachment = ws.deserializeAttachment();
+      if(a?.user&&this.sockets().get(a.user)!==ws)return; // Superseded reconnect.
       if (a?.nonce) await this.ctx.storage.delete("login:" + a.nonce);
       if (a?.user) {
-        if(!a.room)await this.removePartyMember(a.user);
-        this.queue = this.queue.filter((p) => p !== a.user);
+        if(!a.room)this.disconnected[a.user]=now()+CONTROL.socket_stale_seconds;
         await this.queueState();
       }
       await this.persist();
@@ -326,11 +354,15 @@ export class Matchmaker {
     return values;
   }
   private info(user: string): Attachment | undefined {
-    return this.sockets().get(user)?.deserializeAttachment();
+    const ws=this.sockets().get(user);if(!ws)return;
+    const value:Attachment=ws.deserializeAttachment();
+    value.seen=Math.max(value.seen,(this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime()||0)/1000);
+    return value;
   }
   private send(ws: WebSocket | undefined, value: Json): void {
     try {
-      ws?.send(JSON.stringify({ ...value, server_time: now() }));
+      const text=JSON.stringify({ ...value, server_time: now() });
+      if(ws){ws.send(text);this.controlMetrics.outbound_bytes=(this.controlMetrics.outbound_bytes||0)+new TextEncoder().encode(text).length;}
     } catch {}
   }
   private async emit(r: Room, value: Json, user?: string): Promise<void> {
@@ -338,20 +370,19 @@ export class Matchmaker {
       event = {
         match: r.id,
         epoch: r.epoch,
-        roster: r.roster,
-        config: r.config,
-        targets: r.targets,
-        transport: "webrtc",
-        ice_policy: this.env.RELAY_ONLY === "true" ? "relay" : "all",
+        ...(COMPACT_EVENTS.has(value.type)?{}:{roster:r.roster,config:r.config,targets:r.targets,transport:"webrtc",ice_policy:this.env.RELAY_ONLY === "true" ? "relay" : "all"}),
         ...value,
       };
-    for (const who of user ? [user] : Object.keys(r.roster))
-      this.send(sockets.get(who), event);
+    for (const who of user ? [user] : Object.keys(r.roster)){
+      if(value.type==="checkpoint_offer"&&who===r.authority)continue; // Already acknowledged by its authenticated sender.
+      const ws=sockets.get(who);const attachment:Attachment|undefined=ws?.deserializeAttachment();
+      if(attachment?.room===r.id)this.send(ws,event);
+    }
   }
   private async persist(): Promise<void> {
     const reservedUsers=new Set(Object.values(this.rooms).filter(r=>!["complete","failed"].includes(r.phase)).flatMap(r=>Object.keys(r.roster)));
     for(const party of Object.values(this.parties)){
-      party.members=party.members.filter(u=>this.info(u)?.party===party.id || reservedUsers.has(u));
+      party.members=party.members.filter(u=>this.info(u)?.party===party.id || reservedUsers.has(u) || (this.disconnected[u]||0)>now());
       if(!party.members.length){delete this.parties[party.id];continue;}
       if(!party.members.includes(party.leader))party.leader=party.members[0];
     }
@@ -374,9 +405,13 @@ export class Matchmaker {
       await this.ctx.storage.put("queue", this.queue);
       this.queueSaved = queue;
     }
+    const disconnected=JSON.stringify(this.disconnected);
+    if(this.partySaved!==""&&disconnected!==this.disconnectedSaved){await this.ctx.storage.put("disconnected",this.disconnected);this.disconnectedSaved=disconnected;}
     for (const id of this.dirty) {
-      if (this.rooms[id])
-        await this.ctx.storage.put("room:" + id, this.rooms[id]);
+      if (this.rooms[id]){
+        const serialized=JSON.stringify(this.rooms[id]);
+        if(this.roomSaved.get(id)!==serialized){await this.ctx.storage.put("room:" + id, this.rooms[id]);this.roomSaved.set(id,serialized);}
+      }
     }
     this.dirty.clear();
     if (
@@ -384,7 +419,9 @@ export class Matchmaker {
       Object.keys(this.rooms).length ||
       this.ctx.getWebSockets().length
     ) {
-      const due = Date.now() + 1000,
+      const deadlines=Object.values(this.rooms).flatMap(r=>[r.deadline,r.born+10800,...r.pending.map(p=>p.at+20),...(r.jobs||[]).filter(j=>!j.blocked).map(j=>j.next||now()+1),r.voice?.next||Infinity]);
+      for(const ws of this.ctx.getWebSockets()){const a:Attachment=ws.deserializeAttachment();deadlines.push((a.user?Math.max(a.seen,(this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime()||0)/1000):a.seen)+(a.user?CONTROL.socket_stale_seconds:15));}
+      const due = nextAlarm(now(),deadlines)*1000,
         alarm = await this.ctx.storage.getAlarm();
       if (alarm === null || alarm > due) await this.ctx.storage.setAlarm(due);
     }
@@ -453,6 +490,8 @@ export class Matchmaker {
     a.build=VERSION;
     a.public_key = p.public_key;
     a.lobbyOnly = p.lobby_only === true;
+    a.resume = p.resume !== false;
+    if(p.control_resume&&typeof p.control_resume.match==="string"&&p.control_resume.match.length<=64&&Number.isSafeInteger(p.control_resume.epoch))a.controlResume=p.control_resume;
     a.name =
       String(p.name || "Player")
         .replace(/[^A-Za-z0-9_ -]/g, "")
@@ -524,11 +563,19 @@ export class Matchmaker {
       }
     } else if (this.env.ALLOW_GUESTS !== "true")
       throw Error("Link your Ancient Nest account before matchmaking");
-    if (this.sockets().has(a.user)) throw Error("Identity already connected");
+    if (this.sockets().has(a.user)) {
+      const old=this.sockets().get(a.user)!;const previous:Attachment=old.deserializeAttachment();
+      const room=this.rooms[a.controlResume?.match||""];
+      if(previous.public_key!==a.public_key)throw Error("Identity already connected");
+      old.close(1000,"Control session replaced");
+    }
     await this.ctx.storage.delete("login:" + a.nonce);
-    const reserved = Object.values(this.rooms).find(
-      (r) => r.config.build===VERSION && r.roster[a.user!] && !["complete", "failed"].includes(r.phase),
+    delete this.disconnected[a.user];
+    let reserved = Object.values(this.rooms).find(
+      (r) => r.config.build===VERSION && r.roster[a.user!] && !(r.config.departed||[]).includes(a.user) && !["complete", "failed"].includes(r.phase),
     );
+    if(reserved&&a.resume===false){await this.abandonRoom(ws,a,reserved);reserved=undefined;}
+    if(a.controlResume&&!reserved)throw Error("Existing match registration is unavailable; finish gameplay before requeueing");
     if (reserved) {
       a.party=Object.values(this.parties).find(p=>p.members.includes(a.user!))?.id;
       a.room = reserved.id;
@@ -546,17 +593,32 @@ export class Matchmaker {
       transport: "webrtc",
     });
     if (reserved) {
-      if (reserved.phase === "running")
+      const party=this.parties[a.party||""];if(party)await this.publishParty(party);
+      if(a.controlResume?.match===reserved.id&&a.controlResume.epoch===reserved.epoch&&["running","results"].includes(reserved.phase)){
+        await this.emit(reserved,{type:"control_restored"},a.user);
+        if(a.user===reserved.authority)await this.renewAuthority(reserved);
+        else if((reserved.leaseExpires||0)>now())await this.emit(reserved,{type:"authority_lease",grant:await this.ticket(reserved,"authority",reserved.authority,reserved.leaseExpires!-now())},a.user);
+      }
+      else if(reserved.phase==="running"&&reserved.authority===a.user)await this.migrate(reserved);
+      else if (reserved.phase === "running")
         await this.connect(reserved, a.user, true);
       else if (reserved.phase === "voting") await this.publishVote(reserved);
       else throw Error("Reserved match is recovering; reconnect shortly");
     } else if (a.lobbyOnly) {
       await this.createParty(ws, a);
     } else {
-      this.queue.push(a.user);
+      if(!this.queue.includes(a.user)){a.queuedAt=now();ws.serializeAttachment(a);this.queue.push(a.user);}
       await this.form();
       await this.queueState();
     }
+  }
+  private async abandonRoom(ws:WebSocket,a:Attachment,r:Room):Promise<void>{
+    r.config.departed??=[];
+    if(!r.config.departed.includes(a.user))r.config.departed.push(a.user);
+    r.targets=r.targets.filter(user=>user!==a.user);r.seen[a.user!]=0;
+    if(r.authority===a.user)r.host_seen=0;
+    this.dirty.add(r.id);delete a.room;ws.serializeAttachment(a);
+    await this.removePartyMember(a.user!);delete a.party;ws.serializeAttachment(a);
   }
   private async queueState(): Promise<void> {
     for (const [id, list] of Object.entries(PLAYLISTS)) {
@@ -576,6 +638,7 @@ export class Matchmaker {
       for (const who of people)
         this.send(this.sockets().get(who), {
           type: "queue",
+          queue_token:await this.queueTicket(who),
           playlist: id,
           capacity: list.size,
           members,
@@ -584,15 +647,66 @@ export class Matchmaker {
         });
     }
   }
+  private async queueTicket(user:string):Promise<string>{
+    const party=Object.values(this.parties).find(p=>p.members.includes(user));
+    const raw=new TextEncoder().encode(JSON.stringify({kind:"queue",subject:user,party:party?.id||"",search_epoch:party?.searchEpoch||0,issued:now(),expires:now()+CONTROL.socket_stale_seconds,version:VERSION}));
+    return b64(raw)+"."+b64(await crypto.subtle.sign("RSASSA-PKCS1-v1_5",this.key,raw));
+  }
+  private async queuePoll(req:Request):Promise<Response>{
+    this.controlMetrics.requests++;
+    if(req.method!=="POST")return new Response("POST required",{status:405});
+    const reader=req.body?.getReader();if(!reader)return new Response("Body required",{status:400});
+    let text="";const decoder=new TextDecoder();
+    for(;;){const part=await reader.read();if(part.done)break;if(text.length+part.value.length>8192){await reader.cancel();return new Response("Body too large",{status:413});}text+=decoder.decode(part.value,{stream:true});}
+    let payload:Json,claim:Json;
+    try{
+      payload=JSON.parse(text);const token=String(payload.ticket||"");if(token.length>8192)throw Error();
+      const [body,signature]=token.split(".");const raw=unb64(body);
+      if(!await crypto.subtle.verify("RSASSA-PKCS1-v1_5",this.verifyKey,unb64(signature),raw))throw Error();
+      claim=JSON.parse(new TextDecoder().decode(raw));
+      if(claim.kind!=="queue"||claim.version!==VERSION||claim.expires<=now()||claim.issued>now()+2||claim.expires-claim.issued>CONTROL.socket_stale_seconds||typeof claim.subject!=="string")throw Error();
+    }catch{return Response.json({error:"Invalid or expired queue ticket"},{status:401,headers:{"Cache-Control":"no-store"}});}
+    return this.run(async()=>{
+      const user=claim.subject as string,party=this.parties[claim.party||""];
+      if(claim.party&&!party)return Response.json({error:"Queue session obsolete"},{status:409});
+      const rateKey=user+":"+(payload.operation==="cancel"?"cancel":"poll"),last=this.pollSeen.get(rateKey)||0;
+      if(now()-last<2)return Response.json({error:"Poll rate limited"},{status:429,headers:{"Retry-After":"2"}});
+      if(this.pollSeen.size>1024)this.pollSeen.clear();this.pollSeen.set(rateKey,now());
+      if(party&&!party.members.includes(user))return Response.json({error:"Queue ticket obsolete"},{status:409});
+      if(party&&claim.search_epoch!==(party.searchEpoch||0))return Response.json({error:"Queue generation obsolete"},{status:409});
+      const reserved=Object.values(this.rooms).find(r=>r.roster[user]&&!["complete","failed"].includes(r.phase)&&!(r.config.departed||[]).includes(user));
+      if(payload.operation==="cancel"){
+        if(reserved&&reserved.phase!=="running")await this.fail(reserved,"A player canceled before the match started");
+        if(!reserved||reserved.phase!=="running"){
+          if(party&&party.leader===user)await this.cancelParty(party);
+          else this.queue=this.queue.filter(p=>p!==user);
+          await this.persist();return Response.json({state:"cancelled"},{headers:{"Cache-Control":"no-store"}});
+        }
+      }
+      if(!this.info(user)&&this.queue.includes(user)&&(this.disconnected[user]||0)-now()<CONTROL.socket_stale_seconds/2)this.disconnected[user]=now()+CONTROL.socket_stale_seconds;
+      await this.persist();
+      return Response.json({state:reserved?"assigned":this.queue.includes(user)?"queued":"idle",match:reserved?.id,epoch:reserved?.epoch,queue_token:await this.queueTicket(user)},{headers:{"Cache-Control":"no-store"}});
+    });
+  }
   private async createParty(ws:WebSocket,a:Attachment):Promise<void> {
+    let existing=Object.values(this.parties).find(p=>p.members.includes(a.user!));
+    // Explicit departure can race socket close. A fresh connection selecting
+    // another playlist must not inherit that old party reservation.
+    if(existing&&a.resume===false&&existing.playlist!==a.playlist){
+      await this.removePartyMember(a.user!);existing=undefined;
+    }
+    if(existing){a.party=existing.id;ws.serializeAttachment(a);delete this.disconnected[a.user!];await this.publishParty(existing);if(existing.searching)await this.queueState();return;}
     let id:string;do{id=crypto.randomUUID().replaceAll("-","").slice(0,10).toUpperCase();}while(this.parties[id]);
     const party:Party={id,leader:a.user!,members:[a.user!],playlist:a.playlist!,searching:false};
     this.parties[id]=party;a.party=id;ws.serializeAttachment(a);await this.publishParty(party);
   }
   private async publishParty(party:Party):Promise<void>{
+    if(party.custom){party.advertisedAt=now();party.revision=(party.revision||0)+1;}
+    party.privacy ??= "open"; // Preserve existing persisted parties.
+    party.inviteToken ??= crypto.randomUUID().replaceAll("-","");
     const sockets=this.sockets();
     const members=party.members.map(user=>({user,name:this.info(user)?.name||"Player",leader:user===party.leader,rating:this.info(user)?.rating||0}));
-    for(const user of party.members)this.send(sockets.get(user),{type:"party",code:party.id,leader:party.leader,members,playlist:party.playlist,searching:party.searching,team_size:PLAYLISTS[party.playlist].size/2});
+    for(const user of party.members)this.send(sockets.get(user),{type:"party",code:party.id,leader:party.leader,members,playlist:party.playlist,searching:party.searching,revision:party.revision||0,team_size:PLAYLISTS[party.playlist].size/2,privacy:party.privacy,invite_token:party.inviteToken,lobby_privacy_supported:true,server_browser_supported:true,...(party.custom?{custom:party.custom}:{})});
   }
   private async cancelParty(party:Party):Promise<void>{
     party.searching=false;this.queue=this.queue.filter(p=>!party.members.includes(p));
@@ -602,27 +716,52 @@ export class Matchmaker {
     const party=Object.values(this.parties).find(p=>p.members.includes(user));if(!party)return;
     party.searching=false;this.queue=this.queue.filter(p=>!party.members.includes(p));party.members=party.members.filter(p=>p!==user);
     if(!party.members.length){delete this.parties[party.id];await this.queueState();return;}
+    party.inviteToken=crypto.randomUUID().replaceAll("-","");
     if(party.leader===user)party.leader=party.members[0];await this.publishParty(party);await this.queueState();
   }
   private async partyMessage(ws:WebSocket,a:Attachment,p:Json):Promise<void>{
+    if(p.type==="party_browse"){
+      const lobbies=Object.values(this.parties).filter(party=>party.custom&&hostAvailable(party.advertisedAt||0,now())&&this.info(party.leader)&&now()-this.info(party.leader)!.seen<CONTROL.host_stale_seconds&&party.privacy!=="private"&&!party.searching&&party.members.every(user=>!!this.info(user)&&!this.info(user)?.room)).slice(0,64).map(party=>({code:party.id,...party.custom,host:this.info(party.leader)?.name||"Player",players:party.members.length}));
+      this.send(ws,{type:"server_list",request_id:String(p.request_id||"").slice(0,64),lobbies});return;
+    }
     if(a.room)throw Error("Party changes are unavailable during a match");
     let party=this.parties[a.party||""];
     if(!party){await this.createParty(ws,a);party=this.parties[a.party!];}
     if(p.type==="party_sync"){await this.publishParty(party);return;}
+    if(p.type==="party_custom_create"){
+      if(party.leader!==a.user||party.searching||party.members.some(user=>!!this.info(user)?.room))throw Error("Leave your active search or match before creating a lobby");
+      if(![0,1,2,3,4].includes(p.mode)||![0,1,2,3,4,5].includes(p.map)||![0,1,2,3].includes(p.matchup)||![2,4,6,8,10].includes(p.capacity)||party.members.length>p.capacity)throw Error("Choose a valid mode, map, matchup and lobby size");
+      const name=String(p.name||"").replace(/[^A-Za-z0-9_ '-]/g,"").trim().slice(0,40);
+      if(!name)throw Error("Enter a lobby name");
+      party.custom={name,mode:p.mode,map:p.map,matchup:p.matchup,capacity:p.capacity};party.privacy="open";await this.publishParty(party);return;
+    }
+    if(p.type==="party_custom_start"){
+      if(party.leader!==a.user)throw Error("Only the lobby owner can start the game");
+      await this.formCustom(party);return;
+    }
     if(p.type==="party_join"){
       const code=String(p.code||"").trim().toUpperCase();const target=this.parties[code];
       if(!target)throw Error("Invite code not found. Ask your friend for a new code.");
+        if(target.custom&&(!hostAvailable(target.advertisedAt||0,now())||!this.info(target.leader)||now()-this.info(target.leader)!.seen>=CONTROL.host_stale_seconds))throw Error("Lobby host is stale/offline");
       if(target===party)return;
+      if(target.privacy==="private" && (!target.inviteToken || p.invite_token!==target.inviteToken))throw Error("This lobby is private. Ask a member for a Discord invitation.");
       if(party.searching||target.searching)throw Error("Cancel search before changing parties");
       if(target.members.some(u=>!!this.info(u)?.room))throw Error("This party is already in a match");
-      if(target.members.length>=PLAYLISTS[target.playlist].size/2)throw Error("Party is full for this playlist");
+      if(target.members.length>=(target.custom?.capacity||PLAYLISTS[target.playlist].size/2))throw Error("Party is full for this playlist");
       await this.removePartyMember(a.user!);target.members.push(a.user!);a.party=code;a.playlist=target.playlist;ws.serializeAttachment(a);await this.publishParty(target);return;
     }
     if(p.type==="party_leave"){
       await this.removePartyMember(a.user!);delete a.party;ws.serializeAttachment(a);await this.createParty(ws,a);return;
     }
     if(party.leader!==a.user)throw Error("Only the party leader can choose a playlist or search");
+    if(p.type==="party_privacy"){
+      if(party.searching)throw Error("Cancel search before changing lobby privacy");
+      if(p.privacy!=="open"&&p.privacy!=="private")throw Error("Invalid lobby privacy");
+      if(party.privacy!==p.privacy){party.privacy=p.privacy;party.inviteToken=crypto.randomUUID().replaceAll("-","");}
+      await this.publishParty(party);return;
+    }
     if(p.type==="party_playlist"){
+      if(party.custom)throw Error("Leave the custom lobby before selecting a ranked playlist");
       if(party.searching)throw Error("Cancel search before changing playlist");
       if(typeof p.playlist!=="string"||!Object.hasOwn(PLAYLISTS,p.playlist))throw Error("Invalid playlist");
       const playlist=p.playlist as Playlist;
@@ -633,17 +772,37 @@ export class Matchmaker {
     }
     if(p.type==="party_cancel"){await this.cancelParty(party);return;}
     if(p.type==="party_search"){
+      if(party.custom)throw Error("Use Start Game in your custom lobby");
       if(party.searching)return;
       if(party.members.length>PLAYLISTS[party.playlist].size/2)throw Error("Party exceeds this playlist's team size");
       if(!party.members.every(u=>!!this.info(u)&&!this.info(u)?.room))throw Error("Wait for every party member to connect");
       const membersBefore=JSON.stringify(party.members),playlistBefore=party.playlist;
       await this.refreshRatings([...party.members]);
       if(this.parties[party.id]!==party||JSON.stringify(party.members)!==membersBefore||party.playlist!==playlistBefore||party.searching||!party.members.every(u=>!!this.info(u)&&!this.info(u)?.room))throw Error("Party changed while refreshing ratings. Search again.");
-      party.searching=true;
-      for(const u of party.members)if(!this.queue.includes(u))this.queue.push(u);
+      party.searching=true;party.searchEpoch=(party.searchEpoch||0)+1;
+      for(const u of party.members)if(!this.queue.includes(u)){
+        const socket=this.sockets().get(u)!;const info:Attachment=socket.deserializeAttachment();info.queuedAt=now();socket.serializeAttachment(info);this.queue.push(u);
+      }
       await this.publishParty(party);await this.form();await this.queueState();return;
     }
     throw Error("Unknown party action");
+  }
+  private async formCustom(party:Party):Promise<void>{
+    const custom=party.custom;
+    if(!hostAvailable(party.advertisedAt||0,now())||!this.info(party.leader)||now()-this.info(party.leader)!.seen>=CONTROL.host_stale_seconds)throw Error("Lobby host is stale/offline; wait for registration to recover");
+    if(!custom||party.searching||party.members.length<2||party.members.length>custom.capacity)throw Error("A custom game needs at least two players and space for every member");
+    if(Object.values(this.rooms).filter(r=>!["complete","failed"].includes(r.phase)).length>=64||Object.keys(this.rooms).length>=256)throw Error("All match slots are busy. Try again shortly.");
+    const people=[...party.members];
+    if(people.some(user=>!this.info(user)||this.info(user)?.room))throw Error("A lobby member is disconnected or already playing");
+    const iceServers=await this.ice();
+    if(this.parties[party.id]!==party||party.custom!==custom||JSON.stringify(people)!==JSON.stringify(party.members)||people.some(user=>!this.info(user)||this.info(user)?.room))throw Error("Lobby changed while preparing the match. Start again.");
+    const roster:Record<string,Member>={};
+    people.forEach((user,i)=>{const a=this.info(user)!;roster[user]={slot:i+2,name:a.name!,faction:i%2,rating:{human:1,practice:0},public_key:a.public_key!,account:a.account};});
+    const id=crypto.randomUUID();
+    const r:Room={id,playlist:party.playlist,roster,targets:people,phase:"probing",epoch:0,authority:"",deadline:now()+25,seen:Object.fromEntries(people.map(user=>[user,now()])),host_seen:now(),reports:{},tried:[],votes:{},config:{build:VERSION,custom:true,voted:true,mode:custom.mode,map:custom.map,matchup:custom.matchup,capacity:custom.capacity,playlist:party.playlist},ready:[],migration:false,pending:[],born:now(),iceServers,rtcRound:crypto.randomUUID()};
+    this.recordAllocation(r);this.rooms[id]=r;this.dirty.add(id);party.searching=true;this.queue=this.queue.filter(user=>!people.includes(user));
+    for(const user of people){const ws=this.sockets().get(user)!;const a:Attachment=ws.deserializeAttachment();a.room=id;ws.serializeAttachment(a);}
+    await this.publishParty(party);await this.probe(r,false);
   }
   private ratingFor(user:string,playlist:Playlist):number {
     return this.info(user)?.ratings?.[playlist] ?? 1;
@@ -684,7 +843,8 @@ export class Matchmaker {
       return JSON.parse(this.env.LOCAL_ICE_JSON || "[]");
     if (!this.env.TURN_KEY_ID || !this.env.TURN_KEY_API_TOKEN)
       return [{ urls: ["stun:stun.cloudflare.com:3478"] }];
-    const res = await fetch(
+    let res:Response;
+    try { res = await fetch(
       `https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(this.env.TURN_KEY_ID)}/credentials/generate-ice-servers`,
       {
         method: "POST",
@@ -696,11 +856,14 @@ export class Matchmaker {
         redirect: "manual",
         signal: AbortSignal.timeout(5000),
       },
-    );
-    if (!res.ok) throw Error("TURN credential service unavailable");
-    const value = (await res.json()) as Json;
-    if (!Array.isArray(value.iceServers)) throw Error("Invalid TURN response");
-    return supportedIceServers(value.iceServers);
+    ); }catch{throw Error("TURN credential request failed (network or timeout)");}
+    if (!res.ok) throw Error(`TURN credential service rejected the request (HTTP ${res.status}). Check TURN_KEY_ID and TURN_KEY_API_TOKEN on the matchmaking Worker.`);
+    let value:Json;
+    try{value=await res.json() as Json;}catch{throw Error("TURN credential service returned invalid JSON");}
+    if (!Array.isArray(value.iceServers)) throw Error("TURN credential response has no ICE server list");
+    const servers=supportedIceServers(value.iceServers);
+    if(!servers.some(s=>s.urls.some((u:string)=>u.startsWith("turn:"))&&typeof s.username==="string"&&s.username.length>0&&typeof s.credential==="string"&&s.credential.length>0))throw Error("TURN credential response has no supported UDP relay credentials");
+    return servers;
   }
   private async form(): Promise<void> {
     this.queue = this.queue.filter((p) => this.info(p)?.build===VERSION);
@@ -728,6 +891,20 @@ export class Matchmaker {
         ).length >= 64
       )
         break;
+      // Fetch provider credentials before consuming queue membership or assigning
+      // rooms. A provider failure must not strand either side in stale search UI.
+      let iceServers:Json[];
+      try{iceServers=await this.ice();}
+      catch(error){
+        const reason=error instanceof Error&&error.message.startsWith("TURN")?error.message:"TURN credential request failed";
+        console.warn(JSON.stringify({event:"match_formation_failed",stage:"turn_credentials",reason}));
+        this.queue=this.queue.filter(who=>!people.includes(who));
+        const affectedParties=new Set(people.map(who=>this.info(who)?.party).filter(Boolean));
+        for(const partyId of affectedParties){const party=this.parties[partyId!];if(party){party.searching=false;await this.publishParty(party);}}
+        await this.queueState();
+        for(const who of people)this.send(this.sockets().get(who),{type:"party_error",reason:reason+" Search stopped for both players; retry after the relay configuration is repaired."});
+        continue;
+      }
       this.queue = this.queue.filter((p) => !people.includes(p));
       people.sort();
       const roster: Record<string, Member> = {};
@@ -769,10 +946,10 @@ export class Matchmaker {
           migration: false,
           pending: [],
           born: now(),
-          iceServers: await this.ice(),
+          iceServers,
           rtcRound: crypto.randomUUID(),
         };
-      this.rooms[id] = r;
+      this.recordAllocation(r);this.rooms[id] = r;
       this.dirty.add(id);
       for (const who of people) {
         const ws = this.sockets().get(who)!,
@@ -780,14 +957,17 @@ export class Matchmaker {
         a.room = id;
         ws.serializeAttachment(a);
       }
-      await this.probe(r);
+      await this.probe(r,false);
     }
   }
-  private async probe(r: Room): Promise<void> {
+  private async probe(r: Room,refreshIce=true): Promise<void> {
+    if(refreshIce){
+      try{r.iceServers=await this.ice();}
+      catch(error){await this.fail(r,error instanceof Error&&error.message.startsWith("TURN")?error.message:"TURN credential refresh failed");return;}
+    }
     r.reports = {};
     r.rtcRound = crypto.randomUUID();
     r.deadline = now() + 25;
-    r.iceServers = await this.ice();
     await this.emit(r, {
       type: "collect_telemetry",
       members: r.targets,
@@ -823,7 +1003,9 @@ export class Matchmaker {
       return;
     }
     r.config.host_order=ranked;
+    r.config.host_snapshot_ticks=Object.fromEntries(ranked.map(who=>[who,snapshotTicksForHost(who,r.targets,r.reports,r.config.host_capacity?.[who])]));
     r.authority = ranked[0];
+    r.config.snapshot_ticks=r.config.host_snapshot_ticks[r.authority];
     r.reports = {};
     if (!r.migration && !r.config.voted) {
       r.phase = "voting";
@@ -927,13 +1109,27 @@ export class Matchmaker {
       user,
     );
   }
+  private async issueHostGrant(r:Room):Promise<void>{
+    const token=crypto.randomUUID()+crypto.randomUUID();
+    r.statusToken={hash:await hash(token),expires:now()+CONTROL.host_stale_seconds,epoch:r.epoch};
+    await this.emit(r,{type:"host_status_grant",grant:token,expires:r.statusToken.expires},r.authority);
+    this.dirty.add(r.id);
+  }
+  private recordAllocation(r:Room):void{
+    this.controlMetrics.allocations++;
+    const entered=Object.keys(r.roster).map(user=>this.info(user)?.queuedAt).filter((time):time is number=>typeof time==="number"&&Number.isFinite(time));
+    this.controlMetrics.queue_latency_total_seconds=(this.controlMetrics.queue_latency_total_seconds||0)+entered.reduce((sum,time)=>sum+Math.max(0,now()-time),0);
+    this.controlMetrics.queue_latency_samples=(this.controlMetrics.queue_latency_samples||0)+entered.length;
+  }
+  private async renewAuthority(r:Room):Promise<void>{
+    r.leaseExpires=now()+CONTROL.authority_lease_seconds;
+    await this.emit(r,{type:"authority_lease",grant:await this.ticket(r,"authority",r.authority,CONTROL.authority_lease_seconds)});
+    await this.issueHostGrant(r);
+  }
   private async resume(r: Room): Promise<void> {
     r.phase = "running";
     r.host_seen = now();
-    await this.emit(r, {
-      type: "authority_lease",
-      grant: await this.ticket(r, "authority", r.authority, 4),
-    });
+    await this.renewAuthority(r);
     await this.emit(r, {
       type: "resume",
       members: r.targets,
@@ -941,14 +1137,21 @@ export class Matchmaker {
     });
   }
   private async migrate(r: Room): Promise<void> {
+    if(r.phase!=="fencing"){
+      r.migrationRequested=now();r.epoch++;r.phase="fencing";r.hostRevision=0;
+      r.deadline=Math.max(r.leaseExpires||now(),now()+CONTROL.continuity_seconds+CONTROL.clock_skew_seconds)+CONTROL.clock_skew_seconds;
+      r.statusToken=undefined;
+      await this.emit(r,{type:"freeze",reason:"host_migration",checkpoint:r.checkpoint?.digest});
+      return;
+    }
+    if(now()<r.deadline)return;
     const old = r.authority;
-    r.epoch++;
     r.phase = "probing";
     r.migration = true;
     r.ready = [];
     r.tried = [old];
     r.targets = Object.keys(r.roster).filter(
-      (p) => p !== old && now() - r.seen[p] < 6,
+      (p) => p !== old && this.info(p)?.room===r.id && now() - this.info(p)!.seen < CONTROL.socket_stale_seconds,
     );
     await this.emit(r, {
       type: "freeze",
@@ -957,7 +1160,7 @@ export class Matchmaker {
     });
     if (
       !r.checkpoint ||
-      now() - r.checkpoint.at > 20 ||
+      (r.migrationRequested||now()) - r.checkpoint.at > 20 ||
       r.targets.length <= Object.keys(r.roster).length / 2
     ) {
       await this.fail(
@@ -966,8 +1169,8 @@ export class Matchmaker {
       );
       return;
     }
-    const backup=(r.config.host_order||[]).find((who:string)=>r.targets.includes(who)&&!r.tried.includes(who)&&(!r.config.host_capacity?.[who]||r.config.host_capacity[who].cpu_p95_ms<=12));
-    if(backup){r.authority=backup;await this.offer(r);}
+    const backup=(r.config.host_order||[]).find((who:string)=>r.targets.includes(who)&&!r.tried.includes(who)&&r.config.host_capacity?.[who]?.allow_host!==false&&(!r.config.host_capacity?.[who]||r.config.host_capacity[who].cpu_p95_ms<=12));
+    if(backup){r.authority=backup;r.config.snapshot_ticks=r.config.host_snapshot_ticks?.[backup]||2;await this.offer(r);}
     else await this.probe(r);
   }
   private async fail(r: Room, reason: string): Promise<void> {
@@ -978,11 +1181,12 @@ export class Matchmaker {
     await this.apiJob(r, "void", { match_id: r.id });
     for(const who of Object.keys(r.roster)) {
       const ws=this.sockets().get(who);if(!ws)continue;
-      const a:Attachment=ws.deserializeAttachment();delete a.room;ws.serializeAttachment(a);
+      const a:Attachment=ws.deserializeAttachment();if(a.room!==r.id)continue;delete a.room;ws.serializeAttachment(a);
       const party=this.parties[a.party||""];if(party)party.searching=false;
     }
   }
   private async apiJob(r: Room, action: string, body: Json): Promise<void> {
+    if(r.config.custom)return;
     if (
       !this.env.COORDINATOR_API_KEY ||
       !this.env.ACCOUNT_API ||
@@ -990,24 +1194,26 @@ export class Matchmaker {
     )
       return;
     r.jobs ??= [];
+    if(r.jobs.length>=16||r.jobs.some(job=>job.path.endsWith("/"+action)&&JSON.stringify(job.body)===JSON.stringify(body)))return;
     r.jobs.push({ path: "/api/internal/matches/" + action, body, attempts: 0 });
   }
   private async flushJobs(r: Room): Promise<void> {
     const job=r.jobs?.[0];
-    if(!job || (job.next||0)>now() || this.jobsInFlight.has(r.id) || !this.env.COORDINATOR_API_KEY || !this.env.ACCOUNT_API)return;
+    if(!job || job.blocked || (job.next||0)>now() || this.jobsInFlight.has(r.id) || !this.env.COORDINATOR_API_KEY || !this.env.ACCOUNT_API)return;
     // Upstream account latency must never hold the serialized heartbeat/lease loop.
     // One outstanding request per room preserves register -> migrate -> result ordering.
     this.jobsInFlight.add(r.id);
     this.ctx.waitUntil(this.deliverJob(r.id,job));
   }
   private async deliverJob(roomId:string,job:NonNullable<Room["jobs"]>[number]):Promise<void>{
-    let delivered=false;
+    let delivered=false,permanent=false,after=0;
     try{
       const res=await fetch(origin(this.env.ACCOUNT_API!)+job.path,{
         method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+this.env.COORDINATOR_API_KEY},
-        body:JSON.stringify(job.body),redirect:"manual",signal:AbortSignal.timeout(4000)
+        body:JSON.stringify(job.body),redirect:"manual",signal:AbortSignal.timeout(CONTROL.request_timeout_seconds*1000)
       });
       delivered=res.ok;
+      permanent=res.status>=400&&res.status<500&&![408,425,429].includes(res.status);after=retryAfter(res.headers.get("Retry-After"));
     }catch{/* Persist a bounded retry below; no rank award is inferred from a timeout. */}
     await this.run(async()=>{
       try{
@@ -1016,7 +1222,7 @@ export class Matchmaker {
         if(delivered){
           current.jobs.shift();
           if(job.path.endsWith('/result'))await this.emit(current,{type:'result_status',status:'recorded',message:'Match result recorded by the account server.'});
-        }else{job.attempts++;job.next=now()+Math.min(300,2**Math.min(9,job.attempts));}
+        }else{job.attempts++;this.controlMetrics.failures++;job.blocked=permanent||job.attempts>=20;if(!job.blocked){job.next=now()+retryDelay(job.attempts,Math.random(),after);this.controlMetrics.retries++;}}
         this.dirty.add(roomId);await this.persist();
       }finally{this.jobsInFlight.delete(roomId);}
     });
@@ -1026,7 +1232,7 @@ export class Matchmaker {
     if(!r.voice && r.phase==="running" && r.config.mode!==1 && Object.values(r.roster).every(m=>!!m.account))
       r.voice={expires:Math.floor(r.born+10800),active:false,ended:false,next:0,attempts:0};
     const voice=r.voice;
-    if(!voice || voice.ended || voice.next>now())return;
+    if(!voice || voice.blocked || voice.ended || voice.next>now())return;
     const ending=["results","complete","failed"].includes(r.phase) || voice.expires<=now();
     if(voice.active && !ending)return;
     this.voiceInFlight.add(r.id);
@@ -1035,7 +1241,7 @@ export class Matchmaker {
   private async deliverVoice(roomId:string,ending:boolean):Promise<void>{
     const room=this.rooms[roomId];
     if(!room?.voice){this.voiceInFlight.delete(roomId);return;}
-    let delivered=false;
+    let delivered=false,permanent=false,after=0;
     try{
       const response=await fetch(origin(this.env.ACCOUNT_API!)+"/internal/voice/matches"+(ending?"/"+roomId:""),{
         method:ending?"DELETE":"POST",redirect:"manual",signal:AbortSignal.timeout(4000),
@@ -1044,17 +1250,19 @@ export class Matchmaker {
           teams:[0,1].map(team=>({team_id:String(team),player_ids:Object.values(room.roster).filter(m=>m.faction===team).map(m=>m.account)}))})})
       });
       delivered=response.ok;
+        permanent=response.status>=400&&response.status<500&&![408,425,429].includes(response.status);after=retryAfter(response.headers.get("Retry-After"));
     }catch{/* Retried independently of simulation, heartbeat and ranking jobs. */}
     await this.run(async()=>{
       try{
         const current=this.rooms[roomId];if(!current?.voice)return;
         if(delivered){current.voice.active=!ending;current.voice.ended=ending;current.voice.attempts=0;current.voice.next=0;}
-        else{current.voice.attempts++;current.voice.next=now()+Math.min(300,2**Math.min(8,current.voice.attempts));}
+        else{current.voice.attempts++;current.voice.blocked=permanent||current.voice.attempts>=20;current.voice.next=now()+retryDelay(current.voice.attempts,Math.random(),after);this.controlMetrics.failures++;if(!current.voice.blocked)this.controlMetrics.retries++;}
         this.dirty.add(roomId);await this.persist();
       }finally{this.voiceInFlight.delete(roomId);}
     });
   }
   private async registerResultMatch(r: Room): Promise<void> {
+    if(r.config.custom)return;
     if (
       r.registered ||
       !this.env.COORDINATOR_API_KEY ||
@@ -1098,9 +1306,23 @@ export class Matchmaker {
       return;
     }
     if (!a.user) throw Error("Authenticate first");
+    if(this.sockets().get(a.user)!==ws)return;
     if(a.build!==VERSION)throw Error("Update and restart Ancient Nest to use this matchmaking version");
     if (p.type === "ping") {
       this.send(ws, { type: "pong" });
+      return;
+    }
+    if(p.type==="lobby_heartbeat"){
+      const party=this.parties[a.party||""];
+      if(party?.custom&&party.leader===a.user&&Number.isSafeInteger(p.revision)&&p.revision>(party.revision||0)){
+        party.revision=p.revision;party.advertisedAt=now();this.controlMetrics.heartbeats++;
+      }
+      this.send(ws,{type:"heartbeat_ack",revision:p.revision});return;
+    }
+    if(p.type==="leave_match"){
+      const room=this.rooms[a.room||""];
+      if(room)await this.abandonRoom(ws,a,room);
+      else if(a.party)await this.removePartyMember(a.user);
       return;
     }
     if(p.type.startsWith("party_")) {
@@ -1108,25 +1330,19 @@ export class Matchmaker {
       catch(error) { this.send(ws,{type:"party_error",reason:error instanceof Error?error.message:"Party action failed"}); }
       return;
     }
-    const r = this.rooms[a.room || ""];
+    const r = this.rooms[(p.type==="result_report"&&typeof p.match_id==="string"?p.match_id:a.room) || ""];
+    if(p.type==="result_report"&&(!r||["failed","complete"].includes(r.phase))){this.send(ws,{type:"result_receipt",match_id:p.match_id||a.room,receipt:p.receipt,status:"closed"});return;}
     if (!r || !r.roster[a.user]) return;
+    if(p.type!=="result_report"&&p.match!==undefined&&p.match!==r.id)return;
     r.seen[a.user] = now();
     if (p.type === "heartbeat") {
-      const capacity=p.host_capacity;
-      if(capacity&&Number.isFinite(capacity.cpu_p95_ms)&&capacity.cpu_p95_ms>=0&&capacity.cpu_p95_ms<=1000&&Number.isInteger(capacity.logical_cpus)&&capacity.logical_cpus>=1&&capacity.logical_cpus<=1024&&Number.isInteger(capacity.samples)&&capacity.samples>=15&&capacity.samples<=180){r.config.host_capacity??={};r.config.host_capacity[a.user]=capacity;}
-
-      if (
-        p.epoch === r.epoch &&
-        a.user === r.authority &&
-        ["running", "results"].includes(r.phase)
-      ) {
-        r.host_seen = now();
-        if(p.live && Array.isArray(p.live.scores) && p.live.scores.length===2 && p.live.scores.every((n:any)=>Number.isFinite(n)&&n>=0&&n<=1000000) && Number.isFinite(p.live.elapsed)&&p.live.elapsed>=0&&p.live.elapsed<=10800)r.live={scores:p.live.scores,elapsed:p.live.elapsed,updated_at:now()};
-        await this.emit(r, {
-          type: "authority_lease",
-          grant: await this.ticket(r, "authority", r.authority, 4),
-        });
+      if(a.user!==r.authority||p.match!==r.id||!["running","results"].includes(r.phase)||!validHostUpdate(p,r.epoch,r.hostRevision||0))return;
+      if(!r.statusToken||r.statusToken.epoch!==r.epoch||now()>=r.statusToken.expires||typeof p.grant!=="string"||await hash(p.grant)!==r.statusToken.hash){
+        this.controlMetrics.failures++;await this.issueHostGrant(r);return;
       }
+      r.host_seen=now();r.hostRevision=p.revision;this.controlMetrics.heartbeats++;
+      if(p.live && Array.isArray(p.live.scores) && p.live.scores.length===2 && p.live.scores.every((n:any)=>Number.isFinite(n)&&n>=0&&n<=1000000) && Number.isFinite(p.live.elapsed)&&p.live.elapsed>=0&&p.live.elapsed<=10800)r.live={scores:p.live.scores,elapsed:p.live.elapsed,updated_at:now()};
+      await this.renewAuthority(r);this.send(ws,{type:"heartbeat_ack",revision:p.revision});
       return;
     }
     if (p.type === "rtc_signal") {
@@ -1210,7 +1426,7 @@ export class Matchmaker {
       }
       const hw=p.host_capacity;
       if(hw&&Number.isFinite(hw.cpu_p95_ms)&&Number.isInteger(hw.logical_cpus)&&Number.isInteger(hw.samples)){
-        r.config.host_capacity??={};r.config.host_capacity[a.user]={cpu_p95_ms:hw.cpu_p95_ms,logical_cpus:hw.logical_cpus,samples:hw.samples};
+        r.config.host_capacity??={};r.config.host_capacity[a.user]={cpu_p95_ms:hw.cpu_p95_ms,logical_cpus:hw.logical_cpus,samples:hw.samples,allow_host:hw.allow_host!==false};
       }else if(this.env.LOCAL_TEST!=="true"){await this.fail(r,"Client hosting-capacity measurement missing. Update the game.");return;}
       r.reports[a.user] = clean;
       await this.elect(r);
@@ -1254,7 +1470,7 @@ export class Matchmaker {
           r,
           {
             type: "authority_lease",
-            grant: await this.ticket(r, "authority", r.authority, 4),
+            grant: await this.ticket(r, "authority", r.authority,Math.max(1,(r.leaseExpires||now())-now())),
           },
           a.user,
         );
@@ -1287,6 +1503,7 @@ export class Matchmaker {
       return;
     }
     if (p.type === "unhealthy" && r.phase === "running") {
+      if(Object.keys(r.roster).length===2&&a.user!==r.authority){await this.fail(r,"Player host disconnected; a duel has no safe migration majority");return;}
       const key = "unhealthy:" + a.user;
       r.seen[key] = now();
       if (
@@ -1357,10 +1574,12 @@ export class Matchmaker {
       r.phase === "running"
     ) {
       r.phase = "results";
-      r.deadline = now() + 45;
+      r.deadline = now() + (r.config.custom ? 8 : 45);
       return;
     }
     if (p.type === "result_report" && r.phase === "results") {
+      if(p.epoch!==r.epoch)return;
+      if(r.config.custom)return;
       if (
         !Array.isArray(p.players) ||
         p.players.length !== Object.keys(r.roster).length
@@ -1402,6 +1621,7 @@ export class Matchmaker {
         digest = await hash(JSON.stringify(report));
       r.results ??= {};
       r.results[a.user] = { digest, report };
+      this.send(ws,{type:"result_receipt",match_id:r.id,receipt:p.receipt,status:"received"});
       const agreed = Object.keys(r.results).filter(
           (who) => r.results![who].digest === digest,
         ),
@@ -1428,8 +1648,12 @@ export class Matchmaker {
     return this.run(async () => {
       for (const ws of this.ctx.getWebSockets()) {
         const a: Attachment = ws.deserializeAttachment();
-        if (now() - a.seen > (a.user ? 30 : 15))
+        const seen=a.user?Math.max(a.seen,(this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime()||0)/1000):a.seen;
+        if (now() - seen > (a.user ? CONTROL.socket_stale_seconds : 15))
           ws.close(1001, "Heartbeat timeout");
+      }
+      for(const user of Object.keys(this.disconnected))if(this.disconnected[user]<=now()){
+        delete this.disconnected[user];this.queue=this.queue.filter(p=>p!==user);await this.removePartyMember(user);
       }
       for (const r of Object.values(this.rooms)) {
         this.dirty.add(r.id);
@@ -1458,28 +1682,31 @@ export class Matchmaker {
           await this.emit(r, { type: "freeze", reason: "connection_timeout" });
           r.phase = "probing";
           await this.probe(r);
-        } else if (r.phase === "running" && now() - r.host_seen > 3.5)
-          await this.migrate(r);
+        } else if(r.phase==="fencing"&&now()>=r.deadline)await this.migrate(r);
+        else if(r.phase==="running"&&!hostAvailable(r.host_seen,now()))this.controlMetrics.stale++;
         else if (r.phase === "results" && now() > r.deadline) {
           r.phase = "complete";
           r.deadline = now() + 60;
-          if (!r.config.resultQueued){
+          if (!r.config.custom && !r.config.resultQueued){
             await this.apiJob(r,"review",{match_id:r.id,reason:"missing_or_conflicting_reports",reports:Object.entries(r.results||{}).map(([who,v])=>({account:r.roster[who]?.account,digest:v.digest,winner_team:v.report.winner_team})),sample_report:Object.values(r.results||{})[0]?.report,absent:Object.keys(r.roster).filter(who=>!this.info(who)).map(who=>r.roster[who].account)});
             await this.emit(r,{type:"result_status",status:"pending_review",message:"Result needs review. No unverified rank points were awarded."});
             await this.apiJob(r, "void", { match_id: r.id });
           }
           await this.emit(r, { type: "return_queue" });
+          const returnedUsers=new Set<string>();
           for (const who of Object.keys(r.roster)) {
             const ws = this.sockets().get(who);
             if (ws) {
               const a: Attachment = ws.deserializeAttachment();
+              if(a.room!==r.id)continue;
+              returnedUsers.add(who);
               delete a.room;
               ws.serializeAttachment(a);
               if (!a.lobbyOnly && !this.queue.includes(who)) this.queue.push(who);
             }
           }
           for(const party of Object.values(this.parties)) {
-            if(party.members.some(who=>!!r.roster[who])) {
+            if(party.members.some(who=>returnedUsers.has(who))) {
               party.searching=false;party.members=party.members.filter(who=>!!this.info(who));
               if(!party.members.length){delete this.parties[party.id];continue;}
               if(!party.members.includes(party.leader))party.leader=party.members[0];
@@ -1504,6 +1731,7 @@ export class Matchmaker {
           ])
             await this.deleteBlob(pending.blob);
           delete this.rooms[r.id];
+          this.roomSaved.delete(r.id);
           await this.ctx.storage.delete("room:" + r.id);
         }
       }

@@ -2,7 +2,7 @@ import {generateKeyPairSync,sign} from 'node:crypto';
 import {createInterface} from 'node:readline/promises';
 import {writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
-export const EXPECTED='10.5-discord1';
+export const EXPECTED='10.5-discord2';
 export function masterOrigin(value){
  const normalized=value.trim().replace(/^wss:/,'https:').replace(/^ws:/,'http:');const u=new URL(normalized);
  if(u.username||u.password||u.search||u.hash)throw Error('Use the master origin only, without credentials or query parameters.');

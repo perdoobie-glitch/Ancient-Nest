@@ -74,3 +74,37 @@ Cloudflare coordinates; player PC simulates. Inspect actual transport before fir
 
 ## 7. Finish
 Commit source fixes to a new branch, push without force, verify the remote commit/files. Preserve this recovery branch. Report local, live-service, Windows and two-PC tests separately. Publish no executable and trigger no auto-publishing workflow until required live/Windows tests pass. Provide build/install instructions only for the verified integrated source, list remaining blockers and their exact resolution, and record final URLs/protocol and canonical checkout.
+
+## 8. Current source handoff: networking, master traffic and films (2026-10-25)
+
+The current task expressly forbids production deployment, credential changes and production data deletion. This section takes precedence over older deployment/push instructions for this task. No production deployment or executable publication was performed. Preserve all existing dirty work; do not use reset/clean to construct a rollback. Protocol is now `10.5-discord2`, and requires matching coordinator and clients. The existing Cloudflare Worker remains the sole master. See the final sections of VALIDATION.md for settings, measured versus estimated traffic, trust limits and test coverage.
+
+From CMD in the canonical root, with GODOT_BIN set to the installed Godot 4.6.3 console executable:
+
+```bat
+npm.cmd --prefix matchmaking run typecheck
+npm.cmd --prefix matchmaking run build
+npm.cmd --prefix matchmaking test
+"%GODOT_BIN%" --headless --path game --script res://tests/master_control.gd
+"%GODOT_BIN%" --headless --path game --script res://tests/network_policy.gd
+"%GODOT_BIN%" --headless --path game --script res://tests/network_rewind_cover.gd
+"%GODOT_BIN%" --headless --path game --script res://tests/film_playback.gd
+"%GODOT_BIN%" --headless --path game --script res://tests/server_browser.gd
+node scripts/network-authority-playtest.mjs film_network
+node scripts/network-authority-playtest.mjs network_netcode --impaired
+node scripts/lobby-lifecycle-playtest.mjs
+set NEST_RATE_TICKS=2
+node scripts/network-rate-playtest.mjs
+```
+
+The lifecycle harness runs a loopback Miniflare master and isolated native clients; it never deploys. Its CPU-admission fixture permits shared-PC testing and is not CPU certification. Its outage test expires a shortened lease and blocks control for six seconds while leaving gameplay intact. Repeat a real 60+ second control outage on isolated staging, keeping UDP/TURN available, then restore the same master. Verify one accepted epoch, no second host, reconnect recovery, continued shots and concise noninterrupting status. Test true host loss separately. For two-player host loss, lack of a majority should fail clearly rather than create another authority.
+
+Windows/WAN matrix: two distinct accounts/PCs on different internet connections, Discord consent/session renewal, browser open/close/manual refresh, rapid cancel/requeue with delayed replies, direct ICE and forced compatible TURN, occupied/stale/full lobbies, all playlists, willing/unwilling host selection, both-direction damage/reload/respawn/objectives, 2–10 actual participants, loss/jitter/upload saturation, weak CPU and host loss/rejoin. Capture gameplay RTT, master latency, simulation p95/overruns, actual wire traffic via packet capture and control handler spans independently. Check the pinned WebRTC API limitation before calling snapshot payload bytes wire measurements. Do not lower simulation Hz to reduce Cloudflare traffic.
+
+Local headless Godot logged a root-certificate-store read warning. Resolve it and test real HTTPS/WSS certificate validation on the target Windows PC; loopback success does not prove production TLS connectivity. Do not bypass certificate verification.
+
+Film matrix: record a completed match, wait for collection, open Films, select every player's name/team, pause/cycle/seek/step at forward and reverse 1x/2x, zoom/recoil/reload/weapon changes, faction radar rules, confirmed feedback, death/spectator/respawn, late join and disconnect. Missing tracks must say Reconstructed View or unavailable. Export/reopen on another PC; test long recordings/retention, interrupted upload, early new search, ten independent perspective uploads, Custom Forge layouts and viewport/HUD preferences. Inspect upload/download and disk usage plus capture/worker CPU. Film connections may persist after return-to-menu solely for bounded transfer, and must reject gameplay RPCs; new search must not wait for them. Archives and local tracks are player-submitted interactive reconstructions, not proof of honest play.
+
+Future production rollout instructions (do not execute under the current task): obtain separate deployment authorization after staging/WAN acceptance; preserve a reviewed source revision and the previous Worker version ID/client package; privately export any database only if a schema change is later proposed (none is needed here). Drain queues/matches rather than mixing protocols. Build/test the matching client/coordinator, deploy only the existing matchmaking Worker using its existing namespace/bindings, then distribute the matching client. Do not deploy accounts or rotate secrets for this change. Verify ready/authenticated connection, browser, assignment, host receipt/revision and result idempotency; observe the metrics without verbose per-heartbeat logs.
+
+Rollback instructions: stop new admissions and drain active matches, then restore the previously recorded Worker deployment through Cloudflare's version rollback and restore its matching prior client package. Never mix `10.5-discord1` and `10.5-discord2`, delete Durable Object storage, recreate bindings or reset credentials as rollback. Preserve pending-result journals and films; do not replay an unknown old result as a new match. Rollback is a future authorized operational action, not something performed by this handoff.

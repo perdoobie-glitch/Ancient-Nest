@@ -19,6 +19,13 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _refresh_contacts() -> void:
+	if game!=null and game.replay_active:
+		contacts.clear()
+		for i in range(game.replay_state.get("contacts",[]).size()):
+			var contact: Dictionary=game.replay_state.contacts[i].duplicate()
+			contact.actor=game.player;contacts[i]=contact
+			if not contact.has("live"):contact.live=false
+		return
 	if preview or not is_instance_valid(game) or not game.running or not is_instance_valid(game.player): return
 	var player=game.player
 	if contact_character!=player.character:contacts.clear();contact_character=player.character

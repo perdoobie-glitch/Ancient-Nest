@@ -19,10 +19,32 @@ var until=0.0
 var local_slot=0
 var ticket=""
 const PLAYLIST_IDS=["duel_1v1","doubles_2v2","tactical_3v3","arena_4v4","bomb_defuse_5v5"]
-const PLAYLIST_NAMES=["1v1 Duel","2v2 Doubles","3v3 Tactical","4v4 Arena","5v5 Bomb Defuse"]
+const PLAYLIST_NAMES=["1 v 1 Loners","2 v 2 Couples","3 v 3 Trios","4 v 4 Quads","5 v 5 Squads"]
 var playlist="tactical_3v3"
 var party: Dictionary={}
 var party_mode=false
+var resume_reserved_match=true
+var browser_mode=false
+var browser_lobbies: Array=[]
+var browser_loaded=false
+var browser_refresh_at=0.0
+var browser_pending=""
+var browser_deadline=0.0
+var browser_generation=0
+var browser_manual_at=-100.0
+var browser_failures=0
+var queue_cancelled=false
+func custom_match() -> bool:return party.has("custom") or hybrid.current_event.get("config",{}).get("custom",false)
+func refresh_browser(manual: bool=true) -> void:
+ if not browser_mode or game.running or game.current_screen!="server_browser":return
+ if not browser_pending.is_empty():return
+ if manual and clock()-browser_manual_at<2:return
+ if not hybrid.master_connected() or not party.get("server_browser_supported",false):return
+ if manual:browser_manual_at=clock()
+ browser_generation+=1;browser_pending=str(epoch)+":"+str(browser_generation)
+ browser_deadline=clock()+float(NestControlPolicy.settings().request_timeout_seconds)
+ browser_refresh_at=clock()+float(NestControlPolicy.settings().browser_refresh_seconds)
+ party_action("browse",{"request_id":browser_pending})
 var lobby_effects: bool=true
 var queue_started_at: float=0
 var queue_previous_phase: String=""
@@ -48,6 +70,11 @@ func team_size() -> int:return maxi(1,PLAYLIST_IDS.find(playlist)+1)
 func party_leader() -> bool:return party.is_empty() or str(party.get("leader",""))==hybrid.player_id
 func party_action(action: String,extra: Dictionary={}) -> void:
  if not hybrid.enabled or not hybrid.cloud:return
+ if action in ["search","custom_start"]:queue_cancelled=false
+ if action in ["search","custom_start"] and hybrid.master_connected():hybrid.release_film_transport("A new search started before every perspective was available")
+ if action=="cancel":
+  queue_cancelled=true;phase="party";party["searching"]=false
+  if not hybrid.master_connected():hybrid.queue_fallback.cancel_queue();changed();return
  if not hybrid.master_connected():status="Master server connection unavailable. Reconnect before searching.";changed();return
  var message=extra.duplicate();message["type"]="party_"+action;hybrid.send(message)
 func open_party() -> void:
@@ -133,10 +160,11 @@ func connection_lost(reason: String) -> void:
  if game.running:game.stop_game()
  game.close_connection();active=true;game.lobby_kind="matchmaking";phase="reconnecting";status=reason+" · Reconnecting…";retry_at=clock()+2;connect_until=0
  changed()
-func leave() -> void:
+func leave(abandon: bool=true) -> void:
+ resume_reserved_match=not abandon
  cancel_search_countdown()
- if hybrid.enabled:hybrid.leave()
- party.clear();party_mode=false
+ if hybrid.enabled:hybrid.leave(abandon)
+ party.clear();party_mode=false;browser_mode=false;browser_lobbies.clear();browser_loaded=false
  active=false;retry_at=0;connect_until=0
  if game.running:game.stop_game()
  game.close_connection();phase="idle";game.lobby_kind="custom"
@@ -146,6 +174,12 @@ func blocks_simulation() -> bool:
 func is_authority() -> bool:return dedicated or (hybrid!=null and hybrid.enabled and hybrid.authority)
 func _process(_delta: float) -> void:
  advance_search_countdown()
+ var browser_visible=browser_mode and not game.running and game.current_screen=="server_browser" and phase=="party"
+ if not browser_visible:browser_pending=""
+ elif not browser_pending.is_empty() and clock()>=browser_deadline:
+  browser_pending="";browser_failures+=1;status="Directory offline / showing the previous server list"
+  browser_refresh_at=clock()+maxf(float(NestControlPolicy.settings().browser_refresh_seconds),NestControlPolicy.retry_delay(browser_failures,randf()));changed()
+ if browser_visible and not game.get_meta("server_create_form",false) and clock()>=browser_refresh_at:refresh_browser(false)
  if phase=="queue" and queue_previous_phase!="queue":queue_started_at=clock()
  queue_previous_phase=phase
  if not active:return
@@ -224,7 +258,15 @@ func refresh_members() -> void:
 func can_send(peer: int) -> bool:
  if not game.network_active or not game.multiplayer.get_peers().has(peer):return false
  var transport=game.multiplayer.multiplayer_peer
- if transport is WebRTCMultiplayerPeer:return transport.has_peer(peer) and bool(transport.get_peer(peer).get("connected",false))
+ if transport is WebRTCMultiplayerPeer:
+  if not transport.has_peer(peer):return false
+  var remote: Dictionary=transport.get_peer(peer)
+  if not remote.get("connected",false):return false
+  var connection=remote.get("connection")
+  if connection==null or connection.get_connection_state()!=WebRTCPeerConnection.STATE_CONNECTED:return false
+  for channel in remote.get("channels",[]):
+   if channel.get_ready_state()!=WebRTCDataChannel.STATE_OPEN:return false
+  return true
  if not transport is ENetMultiplayerPeer:return false
  var connection=transport.get_peer(peer)
  return connection!=null and connection.get_state()==ENetPacketPeer.STATE_CONNECTED

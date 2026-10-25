@@ -4,13 +4,15 @@ import subprocess, tempfile, os, time, json
 ROOT=Path(__file__).resolve().parents[1]
 def main():
     with tempfile.TemporaryDirectory(prefix='ancient-native-') as directory:
-        out=Path(directory); processes=[]; logs=[]
+        out=Path(directory); processes=[]; logs=[]; server=None; result=None
+        assert out.resolve().parent == Path(tempfile.gettempdir()).resolve()
+        assert out.name.startswith('ancient-native-')
         env=os.environ.copy();env['NEST_CF_STATE']=str(out/'master');env['NEST_QA_SHARED_CPU']='1'
-        def start(args,name,environment):
+        def start(args,name,environment,pipe_input=False):
             log=(out/(name+'.log')).open('w');logs.append(log)
-            p=subprocess.Popen(args,cwd=ROOT,env=environment,stdout=log,stderr=subprocess.STDOUT);processes.append(p);return p
+            p=subprocess.Popen(args,cwd=ROOT,env=environment,stdin=subprocess.PIPE if pipe_input else subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT);processes.append(p);return p
         try:
-            start(['node','matchmaking/tests/local-server.mjs'],'server',env)
+            server=start(['node','matchmaking/tests/local-server.mjs'],'server',env,True)
             deadline=time.monotonic()+30
             while 'READY' not in (out/'server.log').read_text():
                 if processes[0].poll() is not None or time.monotonic()>deadline:raise RuntimeError('Local coordinator did not start: '+(out/'server.log').read_text()[-2000:])
@@ -26,16 +28,25 @@ def main():
                 except (OSError,ValueError):time.sleep(.3);continue
                 if all(s['running'] and not s['frozen'] and s['actors']==2 for s in states):
                     assert sum(bool(s['authority']) for s in states)==1
-                    print(json.dumps({'passed':True,'clients':2,'one_host':True,'scope':'local native WebRTC, guest QA only','states':states}));return
+                    result={'passed':True,'clients':2,'one_host':True,'scope':'local native WebRTC, guest QA only','states':states};break
                 if any(p.poll() is not None for p in processes):break
                 time.sleep(.3)
-            for i in range(2):print((out/(str(i)+'.log')).read_text()[-3000:])
-            raise RuntimeError('Native connection failed: '+json.dumps(states))
+            if result is None:
+                for i in range(2):print((out/(str(i)+'.log')).read_text()[-3000:])
+                raise RuntimeError('Native connection failed: '+json.dumps(states))
         finally:
-            for p in processes:
+            for p in processes[1:]:
                 if p.poll() is None:p.terminate()
-            for p in processes:
+            for p in processes[1:]:
                 try:p.wait(timeout=10)
                 except subprocess.TimeoutExpired:p.kill();p.wait()
+            if server is not None and server.poll() is None:
+                try:
+                    server.stdin.write(b'shutdown\n');server.stdin.flush();server.stdin.close()
+                    server.wait(timeout=30)
+                except (OSError,subprocess.TimeoutExpired):
+                    server.kill();server.wait()
+                    raise RuntimeError('Local coordinator failed graceful shutdown')
             for log in logs:log.close()
+    print(json.dumps(result))
 if __name__=='__main__':main()

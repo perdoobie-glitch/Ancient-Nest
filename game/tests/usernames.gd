@@ -31,7 +31,7 @@ func run():
   check(preferences.values.username=="Pilot Nova","Saved username survives a full process restart")
   print("USERNAMES: %d checks, %d failures"%[checks,failures]);quit(1 if failures else 0);return
  check(NestPreferences.normalize_username("  [Pilot]\n\tNova  ")=="PilotNova","Username normalization strips markup/control characters and outer whitespace")
- check(NestPreferences.normalize_username("X".repeat(100)).length()==20,"Usernames stay within the 20-character limit")
+ check(NestPreferences.normalize_username("X".repeat(100)).length()==24,"Usernames stay within the 24-character limit")
  check(NestPreferences.normalize_username("\u200b\u202e\n[]").is_empty(),"Invisible/control-only usernames are rejected")
  check(NestPreferences.normalize_username("Kira 猫-7")=="Kira 猫-7","Visible Unicode, spaces and punctuation are retained")
  var fake=FakeSession.new();root.add_child(fake);var service=SafeLobby.new();service.game=fake;fake.add_child(service)

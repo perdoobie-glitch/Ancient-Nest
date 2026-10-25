@@ -7,10 +7,16 @@ var _submit: Button
 var _status: Label
 var _username: LineEdit
 var _remember: CheckBox
+var _save_name: Button
+var _continue_game: Button
+var _profile_busy := false
 var _register := false # Compatibility for the startup smoke fixture.
 
 
 func _ready() -> void:
+	if not AncientNestAgePolicy.is_eligible():
+		get_tree().call_deferred("change_scene_to_file", "res://addons/ancient_nest/age_gate.tscn")
+		return
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
@@ -39,14 +45,23 @@ func _ready() -> void:
 	_signed_in = VBoxContainer.new()
 	_signed_in.hide()
 	card.add_child(_signed_in)
+	var name_note := Label.new()
+	name_note.text = "Choose the name other players see in Ancient Nest. Your game name is separate from your Discord identity."
+	name_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_signed_in.add_child(name_note)
 	_username = LineEdit.new()
 	_username.placeholder_text = "Game username (3–24 letters, numbers, _ or -)"
 	_username.max_length = 24
 	_signed_in.add_child(_username)
-	var save := Button.new()
-	save.text = "Save game username"
-	save.pressed.connect(_save_username)
-	_signed_in.add_child(save)
+	_save_name = Button.new()
+	_save_name.text = "Save game username"
+	_save_name.pressed.connect(_save_username)
+	_signed_in.add_child(_save_name)
+	_continue_game = Button.new()
+	_continue_game.text = "Continue to Ancient Nest"
+	_continue_game.disabled = true
+	_continue_game.pressed.connect(_open_game)
+	_signed_in.add_child(_continue_game)
 	var logout := Button.new()
 	logout.text = "Sign out"
 	logout.pressed.connect(_sign_out)
@@ -82,34 +97,66 @@ func _sign_in() -> void:
 	if result.ok:
 		_enter_game(result)
 	else:
-		_status.text = "Discord sign-in failed or was cancelled. Try Continue with Discord again."
+		# Report only known error codes/status, never OAuth codes, tokens or response bodies.
+		var reason := str(result.get("error", "unknown"))
+		var safe_reasons := ["busy", "discord_sdk_unavailable", "discord_not_approved", "network_error", "invalid_response", "invalid_api_url", "invalid_discord_authorization", "discord_authorization_expired", "discord_unavailable", "account_banned", "invalid_token", "username_conflict", "service_unavailable", "rate_limited"]
+		if reason not in safe_reasons:
+			reason = "service_error"
+		var status := int(result.get("status", 0))
+		_status.text = "Discord sign-in failed: %s (HTTP %d). Try Continue with Discord again." % [reason, status]
+		print("Discord sign-in diagnostic: %s HTTP %d" % [reason, status])
 
 
 func _save_username() -> void:
-	var response: Dictionary = await AncientNestAuth.authenticated_request("/profile/username", HTTPClient.METHOD_POST,
-		{"username": _username.text.strip_edges()})
+	if _profile_busy:
+		return
+	_profile_busy = true
+	_save_name.disabled = true
+	_continue_game.disabled = true
+	var response: Dictionary = await AncientNestAuth.update_game_username(_username.text)
+	_profile_busy = false
+	_save_name.disabled = false
 	if response.ok:
-		AncientNestAuth.current_user = response.data.user
-		AncientNestAuth.session_changed.emit(response.data.user)
-		_status.text = "Game username saved."
+		_username.text = str(AncientNestAuth.current_user.username)
+		_status.text = "Game username saved: %s" % AncientNestAuth.current_user.username
+		_continue_game.disabled = false
 	else:
-		_status.text = "Choose an available username using 3–24 letters, numbers, _ or -."
+		_status.text = "That game username is taken. Choose another." if response.get("status", 0) == 409 else "Choose an available username using 3–24 letters, numbers, _ or -."
 
 
 func _enter_game(result: Dictionary) -> void:
-	ProjectSettings.set_setting("ancient_nest/require_login", false)
 	_form.hide()
-	_signed_in.show()
-	_username.text = str(AncientNestAuth.current_user.username)
+	if _needs_username(AncientNestAuth.current_user):
+		_signed_in.show()
+		_username.text = ""
+		_continue_game.disabled = true
+		_status.text = "Discord connected. Choose your game username."
+		_username.grab_focus()
+		return
 	_status.text = "Signed in as %s" % AncientNestAuth.current_user.username
 	if not str(result.get("warning", "")).is_empty():
 		_status.text += " · Sign-in could not be saved on this device."
+	_open_game()
+
+
+func _needs_username(user: Dictionary) -> bool:
+	if user.has("needs_username"):
+		return bool(user.needs_username)
+	var generated := RegEx.new()
+	generated.compile("^(?:.{1,3}_[0-9]{17,20}|Player_[a-f0-9]{16})$")
+	return generated.search(str(user.get("username", ""))) != null
+
+
+func _open_game() -> void:
+	if _profile_busy or AncientNestAuth.current_user.is_empty() or _needs_username(AncientNestAuth.current_user):
+		return
+	ProjectSettings.set_setting("ancient_nest/require_login", false)
 	if game_scene != null:
 		get_tree().change_scene_to_packed(game_scene)
 	else:
 		var original := str(ProjectSettings.get_setting("ancient_nest/original_main_scene", ""))
 		if not original.is_empty():
-			get_tree().change_scene_to_file(original)
+			get_tree().call_deferred("change_scene_to_file", original)
 
 
 func _sign_out() -> void:

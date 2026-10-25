@@ -4,6 +4,11 @@ var tuning: NestTuning = preload("res://resources/default_tuning.tres")
 var prefs = NestPreferences.new()
 var arena: NestArena
 var actors: Array[NestActor] = []
+var replay_active: bool = false
+var film_retaining_transport: bool = false
+var replay_state: Dictionary = {}
+var film_recorder
+var film_viewer
 var nu_sightings: Array[Dictionary]=[{},{}]
 var nu: NestNuFlight
 var player: NestActor
@@ -72,7 +77,7 @@ var match_session: int = 0
 var last_cache_cleanup_count: int=0
 var network_active: bool = false
 var network_status: String = "Offline"
-const NETWORK_VERSION: String = "10.5-discord1"
+const NETWORK_VERSION: String = "10.5-discord2"
 var god_mode: bool=false
 var lobby_network: NestLobbyNetwork
 var connection_port: int = 7777
@@ -102,13 +107,15 @@ var matchup: int = 0
 var team_characters: Array[int] = [0,1]
 # ---- Network timing, prediction and lag compensation ----
 const NET_TICK: float = 1.0/60
-const SNAPSHOT_TICKS: int = 3 # 20 Hz snapshots at 60 Hz physics
+const SNAPSHOT_TICKS: int = 2 # 30 Hz initial target; coordinator selects 20/30 before play.
+var snapshot_interval_ticks: int = SNAPSHOT_TICKS
 const COMMAND_REDUNDANCY: int = 8 # each packet repeats the last 8 commands
-const LAG_COMP_MAX_REWIND: float = .35 # bounded rewind window (seconds)
+const LAG_COMP_MAX_REWIND: float = .150 # bounded rewind window (seconds)
 const LAG_COMP_HISTORY: float = .5
 const DEFER_TIMEOUT: float = .35
 const COMMAND_STALL: float = .25 # host has not simulated this client for this long
 var lag_compensation_enabled: bool = true
+@export_range(0,150,1) var maximum_hitscan_rewind_ms: float = 150
 var command_send_paused: bool = false
 var command_drop_packets: int = 0 # test hook: drop the next N outgoing command packets
 var last_command_packet: PackedByteArray = PackedByteArray()
@@ -116,6 +123,7 @@ var snapshot_tick: int = 0
 var clock_ready: bool = false
 var clock_offset: float = 0
 var clock_spread: float = 0
+var host_oneway: float = 0
 var interp_delay: float = .1
 var remote_view_time: float = 0
 var prediction_offset: float = 0
@@ -123,14 +131,22 @@ var prediction_ready: bool = false
 var lift_offset: float = 0
 var lift_sync_ready: bool = false
 var hitbox_history: Dictionary = {}
+var blocker_history: Array = []
+var rewind_blockers: Array = []
 var rewind_active: bool = false
 var rewind_boxes: Array = []
 var rewind_poses: Dictionary = {}
 var net_stats: Dictionary = {}
+var network_policy = preload("res://scripts/network_policy.gd").new()
+var probe_at: float = 0
+var physics_started: int = 0
+var physics_samples: Array = []
+var transport_sample_at: float = 0
 class LatePhysics extends Node:
 	var game
 	func _physics_process(_delta: float) -> void:
 		game.late_physics()
+		game.finish_physics_measurement()
 func _ready() -> void:
 	var waterfall=load("res://scripts/waterfall_ambience.gd").new()
 	waterfall.game=self;add_child(waterfall)
@@ -168,6 +184,7 @@ func _ready() -> void:
 	multiplayer.peer_connected.connect(network_peer_connected)
 	multiplayer.peer_disconnected.connect(network_peer_left)
 	matchmaking=NestMatchmaking.new();matchmaking.name="Matchmaking";matchmaking.game=self;add_child(matchmaking)
+	film_recorder=load("res://scripts/film_recorder.gd").new();film_recorder.name="FilmRecorder";film_recorder.game=self;add_child(film_recorder)
 func next_event() -> int:
 	event_sequence+=1
 	return event_sequence
@@ -180,6 +197,7 @@ func trace(start: Vector3, finish: Vector3, mask: int=1, excludes: Array[RID]=[]
 	var result=get_world_3d().direct_space_state.intersect_ray(query)
 	return result
 func start_game() -> void:
+	network_policy=NestNetworkPolicy.new();probe_at=0
 	if matchmaking.active and (not matchmaking.dedicated or matchmaking.phase!="loading" or matchmaking.loaded.size()!=6 or matchmaking.connected_count()!=6):return
 	if running: return
 	ensure_selected_map();
@@ -202,6 +220,7 @@ func start_game() -> void:
 	capture_mouse()
 	announce("match_start")
 func stop_game() -> void:
+	if film_recorder!=null and not replay_active:film_recorder.finish()
 	var ballot=get_node_or_null("LobbyVote")
 	if ballot!=null and not is_client():ballot.reset()
 	var waterfall=get_node_or_null("WaterfallAmbience")
@@ -255,6 +274,8 @@ func choose_spawn(actor: NestActor) -> Vector3:
 	if mode not in [0,MODE_CS]: side=actor.faction
 	return NestPlacementSafety.spawn(self,actor,arena.spawns[side])
 func _physics_process(delta: float) -> void:
+	if replay_active:return
+	physics_started=Time.get_ticks_usec()
 	if not running or matchmaking.blocks_simulation(): return
 	if bool(arena.get_meta("placement_blocked",false)):return
 	now+=delta
@@ -500,6 +521,7 @@ func register_kill(attacker: NestActor, victim: NestActor, reason: String) -> vo
 	if mode!=0 and (scores[0]>=tuning.score_limit or scores[1]>=tuning.score_limit): finish_match()
 @rpc("authority","call_remote","reliable")
 func receive_kill_notice(victim_name: String, victim_id: int, life: int, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number:return
 	var key="%d:%d:%d:%d"%[session,round_id,victim_id,life]
 	if seen_kill_notices.has(key):return
@@ -509,6 +531,7 @@ func receive_kill_notice(victim_name: String, victim_id: int, life: int, session
 	local_kill_notice_until=now+3.5
 @rpc("authority","call_remote","reliable")
 func objective_blast(index: int, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number or index not in [0,1]: return
 	bomb_impact(arena.sites[index]+Vector3(0,1,0)); sound("blast",arena.sites[index],false)
 func launch_bullet(actor: NestActor, weapon: NestWeapon, pos: Vector3, direction: Vector3, _pellet: int, cosmetic: bool=false, supplied_id: int=0, first_in_burst: bool=true) -> void:
@@ -516,7 +539,10 @@ func launch_bullet(actor: NestActor, weapon: NestWeapon, pos: Vector3, direction
 	var draw_tracer=actor.tracer_sequence%maxi(1,weapon.tracer_every_n_shots)==0
 	var bullet=Node3D.new()
 	bullet.set_script(load("res://scripts/bullet.gd"))
-	bullet.game=self; bullet.owner_actor=actor; bullet.profile=weapon; bullet.direction=direction; bullet.event_id=supplied_id if supplied_id>0 else next_event()*16; bullet.cosmetic=cosmetic; bullet.round_id=round_number; bullet.excludes=actor.ray_exclusions()
+	bullet.game=self; bullet.owner_actor=actor; bullet.profile=weapon; bullet.direction=direction; bullet.event_id=supplied_id if supplied_id>0 else next_event()*16; bullet.cosmetic=cosmetic; bullet.round_id=round_number
+	# Penetrating bullets add victims to this list. Keep that per bullet so a
+	# sniper hit cannot make later shots ignore that opponent permanently.
+	bullet.excludes=actor.ray_exclusions().duplicate()
 	if network_active and multiplayer.is_server() and not cosmetic: cosmetic_bullet.rpc(actor.net_id,weapon.kind,pos,direction,match_session,round_number,_pellet==0,first_in_burst)
 	bullet.draw_tracer=draw_tracer
 	bullet.position=pos
@@ -690,6 +716,7 @@ func refresh_live_traits() -> void:
 	if has_method("set_hud_preferences"):call("set_hud_preferences")
 @rpc("authority","call_remote","reliable")
 func receive_live_rules(data: Dictionary, session: int, _round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session:return
 	game_type.apply_network_dict(data);sync_game_type_to_legacy();refresh_live_traits()
 	if has_method("live_rules_changed"):call("live_rules_changed")
@@ -754,6 +781,7 @@ func global_objective_sound(id: String) -> void:
 	if network_active:receive_objective_sound.rpc(id,objective_audio_sequence,match_session,round_number)
 @rpc("authority","call_remote","reliable")
 func receive_objective_sound(id: String, sequence: int, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number or sequence<=received_objective_audio or id not in ["bomb_planted_alert","bomb_defuse_start"]:return
 	received_objective_audio=sequence;audio.play_sound(id,Vector3.ZERO,{"spatial":false})
 func announce(id: String, target: NestActor=null) -> void:
@@ -763,9 +791,11 @@ func announce(id: String, target: NestActor=null) -> void:
 		elif target.remote_peer>1: receive_announcement.rpc_id(target.remote_peer,id,match_session,round_number)
 @rpc("authority","call_remote","reliable")
 func receive_announcement(id: String, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if running and session==match_session and round_id==round_number: announcer.say(id)
 @rpc("authority","call_remote","reliable")
 func damage_audio_event(id: int, before: Dictionary, region: String, category: String, sequence: int, life: int, session: int, round_id: int, new_health: float, new_shield: float, new_armor: float, new_over: float, new_helmet: float) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number: return
 	var actor=actor_by_id(id)
 	if actor==null or actor.life_id!=life: return
@@ -781,6 +811,7 @@ func display_death_recap(actor: NestActor) -> void:
 	if messages.size()>4: messages.pop_front()
 @rpc("authority","call_remote","reliable")
 func receive_death_recap(id: int, life: int, session: int, round_id: int, recap: Dictionary) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number: return
 	var actor=actor_by_id(id)
 	if actor==null or not actor.local_player or actor.life_id!=life: return
@@ -832,6 +863,7 @@ func join_direct(address: String, port: int, name: String, faction: int) -> Erro
 	network_status="Connecting to %s:%d…"%[address,port]
 	return OK
 func close_connection() -> void:
+	film_retaining_transport=false
 	god_mode=false
 	var ballot=get_node_or_null("LobbyVote")
 	if ballot!=null:ballot.reset()
@@ -844,6 +876,8 @@ func close_connection() -> void:
 	network_active=false; network_status="Offline"; lobby_members.clear(); command_received.clear(); shot_authorizations.clear(); remote_shot_clocks.clear(); snapshot_fragments.clear(); snapshot_received=-1; remote_throws.clear(); match_session=0
 	reset_network_timing()
 func current_username() -> String:
+	if not AncientNestAuth.current_user.is_empty():
+		return str(AncientNestAuth.current_user.get("username", "Player"))
 	return clean_alias(String(prefs.values.username))
 func clean_alias(alias: String) -> String:
 	var cleaned=NestPreferences.normalize_username(alias)
@@ -855,7 +889,7 @@ func unique_alias(proposed: String, except_peer: int=0) -> String:
 		for id in lobby_members:
 			if id!=except_peer and String(lobby_members[id].name).nocasecmp_to(candidate)==0:taken=true;break
 		if not taken:return candidate
-		var tail="_"+str(suffix);candidate=base.substr(0,20-tail.length())+tail;suffix+=1
+		var tail="_"+str(suffix);candidate=base.substr(0,24-tail.length())+tail;suffix+=1
 	return base
 func save_username(proposed: String) -> Error:
 	var name=NestPreferences.normalize_username(proposed)
@@ -877,6 +911,7 @@ func apply_username(peer: int, proposed: String) -> bool:
 	return true
 @rpc("any_peer","call_remote","reliable")
 func request_username(proposed: String) -> void:
+	if film_retaining_transport:return
 	if not network_active or not multiplayer.is_server() or running:return
 	# A rename contains no target slot: only the authenticated sender can change.
 	var sender=multiplayer.get_remote_sender_id()
@@ -941,6 +976,7 @@ func refresh_remaining_lobby() -> void:
 		if peer!=null and peer.get_state()==ENetPacketPeer.STATE_CONNECTED:update_lobby.rpc_id(id,lobby_members,config)
 @rpc("any_peer","call_remote","reliable")
 func register_member(alias: String, faction: int, version: String="",rating: Dictionary={}) -> void:
+	if film_retaining_transport:return
 	if matchmaking.is_authority():return # Queue registration is the only matchmaking admission path.
 	if not network_active or not multiplayer.is_server(): return
 	var sender=multiplayer.get_remote_sender_id()
@@ -961,22 +997,26 @@ func register_member(alias: String, faction: int, version: String="",rating: Dic
 	if has_method("network_ui_changed"): call("network_ui_changed")
 @rpc("authority","call_local","reliable")
 func player_joined_notice(peer: int, alias: String) -> void:
+	if film_retaining_transport:return
 	# Only accepted, named players are announced. Initial rosters and bots are not.
 	if not network_active or peer==multiplayer.get_unique_id():return
 	if has_method("show_join_notification"):call("show_join_notification",clean_alias(alias))
 @rpc("authority","call_remote","reliable")
 func reject_join(reason: String) -> void:
+	if film_retaining_transport:return
 	close_connection(); network_status=reason
 	if lobby_network!=null: lobby_network.call_deferred("on_join_failed",reason)
 	elif has_method("network_ui_changed"): call("network_ui_changed")
 @rpc("authority","call_remote","reliable")
 func host_departing() -> void:
+	if film_retaining_transport:return
 	network_status="Host left — returning to menu"
 	if has_method("network_ui_changed"): call("network_ui_changed")
 func active_config() -> Dictionary:
 	sync_legacy_to_game_type()
-	return {"lobby_kind":lobby_kind,"lobby_vote":get_node("LobbyVote").snapshot() if has_node("LobbyVote") else {},"forge_layout":forge_session.layout(),"forge_playtest":forge_session.testing,"rating_token":ranked.token,"mode":mode,"team_size":team_size,"bot_fill":bot_fill,"round_seconds":tuning.round_seconds,"score_limit":tuning.score_limit,"bag_stock":tuning.bag_stock,"bot_objectives":bot_play_objectives,"bot_difficulty":bot_difficulty,"session":match_session,"starting_primary":starting_primary,"starting_secondary":starting_secondary,"fair_playing_field":fair_playing_field,"fair_health_type":fair_health_type,"matchup":matchup,"game_type":game_type.to_network_dict()}
+	return {"snapshot_ticks":snapshot_interval_ticks,"lobby_kind":lobby_kind,"lobby_vote":get_node("LobbyVote").snapshot() if has_node("LobbyVote") else {},"forge_layout":forge_session.layout(),"forge_playtest":forge_session.testing,"rating_token":ranked.token,"mode":mode,"team_size":team_size,"bot_fill":bot_fill,"round_seconds":tuning.round_seconds,"score_limit":tuning.score_limit,"bag_stock":tuning.bag_stock,"bot_objectives":bot_play_objectives,"bot_difficulty":bot_difficulty,"session":match_session,"starting_primary":starting_primary,"starting_secondary":starting_secondary,"fair_playing_field":fair_playing_field,"fair_health_type":fair_health_type,"matchup":matchup,"game_type":game_type.to_network_dict()}
 func accept_config(config: Dictionary) -> void:
+	snapshot_interval_ticks=clampi(int(config.get("snapshot_ticks",3)),1,3) # Older hosts send 20 Hz.
 	if has_node("LobbyVote") and config.get("lobby_vote") is Dictionary:get_node("LobbyVote").accept(config.lobby_vote)
 	lobby_kind=String(config.get("lobby_kind","custom"))
 	if lobby_kind not in ["forge","matchmaking"]:lobby_kind="custom"
@@ -997,6 +1037,7 @@ func accept_config(config: Dictionary) -> void:
 	sync_legacy_to_game_type()
 @rpc("authority","call_remote","reliable")
 func update_lobby(members: Dictionary, config: Dictionary) -> void:
+	if film_retaining_transport:return
 	lobby_members=members; accept_config(config)
 	var own_id=matchmaking.local_slot if matchmaking.active else multiplayer.get_unique_id()
 	if members.has(own_id):
@@ -1018,6 +1059,7 @@ func create_network_actors() -> void:
 				add_child(bot); actors.append(bot)
 @rpc("authority","call_remote","reliable")
 func begin_network_match(config: Dictionary, members: Dictionary) -> void:
+	if film_retaining_transport:return
 	if running: return
 	announcer.reset()
 	accept_config(config); lobby_members=members; now=0; round_number=1; scores=[0,0]; attacking_faction=0; finished=false; running=true; context="playing";get_viewport().disable_3d=false
@@ -1028,6 +1070,7 @@ func begin_network_match(config: Dictionary, members: Dictionary) -> void:
 	capture_mouse()
 @rpc("authority","call_remote","reliable")
 func end_network_match() -> void:
+	if film_retaining_transport:return
 	stop_game()
 	if has_method("network_ui_changed"): call("network_ui_changed")
 func actor_for_peer(peer: int) -> NestActor:
@@ -1061,22 +1104,29 @@ func decode_command_packet(packet: PackedByteArray) -> Dictionary:
 	return {"session":session,"commands":commands}
 func send_commands() -> void:
 	if not is_client() or command_send_paused or not is_instance_valid(player): return
+	var stride=maxi(1,ceili(60.0/clampf(float(NestControlPolicy.settings().input_hz),1,60)))
+	if command_sequence%stride!=0:return
+	if matchmaking.hybrid.enabled and not matchmaking.can_send(1):return
 	var history: Array=player.cmd_history
 	if history.is_empty(): return
 	var count=mini(history.size(),COMMAND_REDUNDANCY)
 	last_command_packet=encode_command_packet(history.slice(history.size()-count))
 	if command_drop_packets>0:
 		command_drop_packets-=1; net_stat("command_packets_dropped_by_test"); return
+	net_stat("input_payload_bytes_sent",last_command_packet.size());net_stat("input_packets_sent")
 	receive_commands.rpc_id(1,last_command_packet)
 @rpc("any_peer","call_remote","unreliable_ordered",1)
 func receive_commands(packet: PackedByteArray) -> void:
+	if film_retaining_transport:return
 	if matchmaking.blocks_simulation():return
 	if not network_active or not multiplayer.is_server() or not running: return
 	var decoded=decode_command_packet(packet)
 	if decoded.is_empty() or decoded.session!=match_session: return
 	var actor=actor_for_peer(multiplayer.get_remote_sender_id())
 	if actor==null or actor.remote_peer<=1: return
-	if int(decoded.commands[-1].seq)>actor.cmd_last_seq+600: return
+	if not network_policy.admit(actor.remote_peer,"input",local_clock(),75,20):net_stat("input_rate_rejected");return
+	net_stat("input_payload_bytes_received",packet.size())
+	if int(decoded.commands[-1].seq)>actor.cmd_last_seq+NestNetworkPolicy.MAX_COMMAND_LEAD: return
 	actor.queue_commands(decoded.commands)
 	net_stat("command_packets_received")
 func snapshot_state() -> Array:
@@ -1095,9 +1145,12 @@ func snapshot_state() -> Array:
 	var match_state={"nu_sightings":nu_sightings,"nu":nu.snapshot(),"rating_result":ranked.last_packet if finished else {},"cs_carrier":cs_carrier,"cs_drop":cs_drop_position,"session":match_session,"chars":team_characters,"flags":flags,"now":now,"lift":current_lift_clock(),"deadline":deadline,"round":round_number,"attacker":attacking_faction,"scores":scores,"sites":site_states,"bomb_site":bomb_site,"delivered":delivered_bags,"loaded":loaded_bags,"break":break_until,"reason":round_reason,"finished":finished,"pads":pad_stock,"drops":drops,"feed":kill_feed}
 	return [match_state,states]
 func send_snapshot() -> void:
+	var encode_started=Time.get_ticks_usec()
 	var bytes=var_to_bytes(snapshot_state()).compress(FileAccess.COMPRESSION_DEFLATE)
+	net_stat("snapshot_encode_us",Time.get_ticks_usec()-encode_started);net_stat("snapshot_payload_bytes",bytes.size());net_stat("snapshots_sent")
 	snapshot_sequence+=1
 	var total=ceili(float(bytes.size())/850)
+	if total>24:net_stat("oversized_snapshots_rejected");return
 	for index in range(total):
 		var chunk=bytes.slice(index*850,mini(bytes.size(),(index+1)*850))
 		if matchmaking.is_authority():
@@ -1108,7 +1161,9 @@ func send_snapshot() -> void:
 		else:snapshot_packet.rpc(snapshot_sequence,index,total,chunk,match_session)
 @rpc("authority","call_remote","unreliable_ordered",2)
 func receive_snapshot(match_state: Dictionary, states: Array) -> void:
+	if film_retaining_transport:return
 	if not running or match_state.get("session",-1)!=match_session: return
+	if film_recorder!=null:film_recorder.authoritative_snapshot(match_state,states)
 	observe_server_clock(match_state)
 	cs_carrier=int(match_state.get("cs_carrier",0));cs_drop_position=match_state.get("cs_drop",Vector3.INF)
 	deadline=match_state.deadline; round_number=match_state.round; attacking_faction=match_state.attacker; scores.assign(match_state.scores); site_states.assign(match_state.sites); bomb_site=match_state.bomb_site; delivered_bags=match_state.delivered; loaded_bags=match_state.loaded; break_until=match_state["break"]; round_reason=match_state.reason; finished=match_state.finished; pad_stock.assign(match_state.pads); kill_feed.assign(match_state.feed)
@@ -1235,10 +1290,16 @@ func request_remote_action(action: String, parameter: int=0) -> void:
 	request_action.rpc_id(1,action,parameter,player.life_id,round_number,match_session,command_sequence)
 @rpc("any_peer","call_remote","reliable")
 func request_action(action: String, parameter: int, life: int, round_id: int, session: int, cmd_seq: int=-1) -> void:
+	if film_retaining_transport:return
 	if matchmaking.blocks_simulation():return
 	if not multiplayer.is_server() or not running or finished or round_id!=round_number or session!=match_session: return
+	if action not in ["nu","sword","pickup","reload","switch","select_weapon","bomb","cancel_uncommitted","throw_begin"]:return
 	var actor=actor_for_peer(multiplayer.get_remote_sender_id())
 	if actor==null: return
+	if actor.life_id!=life or cmd_seq>actor.cmd_last_seq+NestNetworkPolicy.MAX_COMMAND_LEAD or (cmd_seq>0 and cmd_seq<actor.cmd_last_seq-30):return
+	if not network_policy.admit(actor.remote_peer,"action",local_clock(),30,12):net_stat("action_rate_rejected");return
+	if not network_policy.accept_action(actor.remote_peer,action,cmd_seq,str(match_session)+":"+str(round_id)+":"+str(life)):return
+	if action=="cancel_uncommitted" and (parameter<0 or parameter>actor.cmd_last_seq+NestNetworkPolicy.MAX_COMMAND_LEAD):return
 	# Cancellation is a barrier for in-flight input, so it applies on receipt.
 	if action=="cancel_uncommitted" or cmd_seq<=0: apply_action(actor,action,parameter,life,round_id,session)
 	else: defer_for_command(actor,cmd_seq,apply_action.bind(actor,action,parameter,life,round_id,session))
@@ -1254,6 +1315,7 @@ func apply_action(actor: NestActor, action: String, parameter: int, life: int, r
 			if not pickup.is_empty() and int(pickup.pad)==parameter:complete_interaction(actor,pickup)
 		"reload": actor.reload_weapon()
 		"switch": actor.switch_weapon()
+		"select_weapon": actor.select_weapon_slot(parameter)
 		"bomb": bomb_control(actor,parameter)
 		"cancel_uncommitted":
 			# In-flight commands up to the barrier are still consumed in order (to
@@ -1269,18 +1331,21 @@ func apply_action(actor: NestActor, action: String, parameter: int, life: int, r
 				remote_throws[actor.remote_peer]={"kind":parameter,"earliest":now+0.18,"used":false}
 @rpc("any_peer","call_remote","reliable")
 func authorize_shot(client_event: int, life: int, round_id: int, kind: String, pos: Vector3, direction: Vector3, session: int, zoom_level: int=0, cmd_seq: int=-1, view_time: float=-1.0) -> void:
+	if film_retaining_transport:return
 	if matchmaking.blocks_simulation():return
 	if session!=match_session or not network_active or not multiplayer.is_server() or not running:return
 	if client_event<=0 or client_event%16!=0 or not pos.is_finite() or not direction.is_finite() or absf(direction.length()-1)>.01 or not is_finite(view_time):return
 	var sender=multiplayer.get_remote_sender_id();var actor=actor_for_peer(sender)
 	if actor==null:return
-	var shot=apply_shot.bind(sender,actor,client_event,life,round_id,kind,pos,direction,session,zoom_level,cmd_seq,view_time)
+	if not network_policy.admit(sender,"shot",local_clock(),40,12):net_stat("shot_rate_rejected");return
+	if cmd_seq<=0:return # This protocol requires a shot's numbered input.
+	var shot=apply_shot.bind(sender,actor,client_event,life,round_id,kind,pos,direction,session,zoom_level,cmd_seq,view_time,local_clock())
 	# A sequenced shot executes right after the host simulates the movement
 	# command it was fired on, so origin, cadence and rewind use that moment
 	# rather than whenever the packet happened to arrive.
 	if cmd_seq<=0: shot.call()
 	else: defer_for_command(actor,cmd_seq,shot)
-func apply_shot(sender: int, actor: NestActor, client_event: int, life: int, round_id: int, kind: String, pos: Vector3, direction: Vector3, session: int, zoom_level: int, cmd_seq: int, view_time: float) -> void:
+func apply_shot(sender: int, actor: NestActor, client_event: int, life: int, round_id: int, kind: String, pos: Vector3, direction: Vector3, session: int, zoom_level: int, cmd_seq: int, view_time: float, received_at: float=-1.0) -> void:
 	if not is_instance_valid(actor) or session!=match_session or not network_active or not running or finished or break_until>now:return
 	if not actor.alive or actor.life_id!=life or round_id!=round_number or client_event<=actor.remote_shot_id:return
 	actor.remote_shot_id=client_event
@@ -1293,6 +1358,9 @@ func apply_shot(sender: int, actor: NestActor, client_event: int, life: int, rou
 	var weapon=actor.weapons[actor.slot];var config=NestWeaponCatalog.for_kind(kind)
 	if weapon.kind!=kind or kind=="plasma_sword" or actor.ammo[actor.slot]<=0:net_stat("shots_rejected_weapon");return
 	if pos.distance_to(actor.eye.global_position)>1.25:net_stat("shots_rejected_origin");return
+	# Allow recoil/spread and sub-tick mouse motion, but reject unrelated aim.
+	var command_aim: Vector3=actor.command_aims.get(cmd_seq,-actor.eye.global_basis.z)
+	if direction.dot(command_aim)<cos(deg_to_rad(35)):net_stat("shots_rejected_aim");return
 	var levels=maxi(config.get("scope_fov",[]).size(),config.get("zoom_factors",[]).size())
 	if zoom_level<0 or zoom_level>levels:return
 	# Cadence: sequenced shots are timed on the shooter's command timeline (one
@@ -1306,6 +1374,9 @@ func apply_shot(sender: int, actor: NestActor, client_event: int, life: int, rou
 		clock={"next":(-INF if sequenced else actor.cooldown),"burst":0,"sequenced":sequenced}
 		if sequenced and actor.cooldown>now: clock.next=shot_time+actor.cooldown-now
 	if shot_time+tolerance<float(clock.next):net_stat("shots_rejected_cadence");return
+	# Sequence gaps must not create fire-rate credit. Bound catch-up on the
+	# host's real simulation clock as well as the ordered command timeline.
+	if now+.1<float(clock.get("wall_next",now)):net_stat("shots_rejected_wall_cadence");return
 	# pos is the bounded client view origin, not the weapon model's muzzle.
 	# A clear crosshair must not be clipped by the offset gun. Retain the eye-to-
 	# origin cover check so a client cannot place its ray on the far side of a wall.
@@ -1319,13 +1390,18 @@ func apply_shot(sender: int, actor: NestActor, client_event: int, life: int, rou
 		interval=float(config.burst_interval) if int(clock.burst)>0 else float(config.burst_delay)
 	if sequenced: clock.next=(float(clock.next) if shot_time-float(clock.next)<=tolerance else shot_time)+actor.fire_interval(interval)
 	else: clock.next=actor.next_deadline(float(clock.next),actor.fire_interval(interval))
+	clock.wall_next=maxf(now-.1,float(clock.get("wall_next",now)))+actor.fire_interval(interval)
 	remote_shot_clocks[sender]=clock;actor.cooldown=now+float(clock.next)-shot_time if sequenced else float(clock.next)
 	var key=str(sender)+":"+str(client_event)
 	shot_authorizations[key]={"origin":pos,"weapon":weapon,"category":"explosion" if weapon.explosive else "bullet","damage":weapon.damage,"precision":weapon.precision,"pellets":weapon.pellets,"id":next_event()*16,"expires":now+maxf(7.0,weapon.max_range/maxf(weapon.speed,1.0)+1.0),"round":round_number,"hits":{},"actor":actor,"authoritative":true}
 	actor.accepted_shots+=1
 	net_stat("shots_accepted")
-	var rewind=sequenced and lag_compensation_enabled and view_time>0
-	if rewind: begin_rewind(actor,view_time)
+	var age: float=network_policy.rewind_age(sender)
+	if age>0 and received_at>=0:age=minf(network_policy.maximum_rewind,age+clampf(local_clock()-received_at,0,.05))
+	if absf(view_time-(now-age))>.05:net_stat("shot_time_hints_ignored")
+	var rewind=sequenced and lag_compensation_enabled and weapon.speed<=0 and not weapon.explosive and age>0
+	# Client view_time is diagnostic only. Host probes determine the budget.
+	if rewind: begin_rewind(actor,now-age)
 	actor.prepare_ak_shot(client_event,shot_time,sequenced)
 	var directions=actor.shot_directions(direction.normalized(),pos,client_event,pos)
 	for i in range(directions.size()):launch_bullet(actor,weapon,pos,directions[i],i,false,int(shot_authorizations[key].id)+i,first)
@@ -1337,11 +1413,13 @@ func report_local_hit(victim: NestActor, region: String, category: String, amoun
 	elif category=="explosion": report_blast.rpc_id(1,event_id,victim.net_id,victim.life_id,clampf(amount/160.0,0,1),Vector3.UP,match_session)
 @rpc("any_peer","call_remote","reliable")
 func report_hit(client_event: int, target_id: int, target_life: int, region: String, falloff: float, session: int, reported_distance: float=-1, view_time: float=-1.0) -> void:
+	if film_retaining_transport:return
 	# Retain the RPC signature for diagnostics; every actual hit is queried by the host.
 	# Neither predicted bullets nor melee client contact claims can cause damage.
 	if network_active and multiplayer.is_server() and session==match_session:net_stat("client_hit_claims_ignored")
 @rpc("any_peer","call_remote","reliable")
 func report_blast(client_event: int, target_id: int, target_life: int, factor: float, direction: Vector3, session: int) -> void:
+	if film_retaining_transport:return
 	if matchmaking.blocks_simulation():return
 	if session!=match_session or not direction.is_finite(): return
 	if not multiplayer.is_server() or not is_finite(factor): return
@@ -1360,6 +1438,7 @@ func report_blast(client_event: int, target_id: int, target_life: int, factor: f
 		confirm_hit.rpc_id(sender)
 @rpc("any_peer","call_remote","reliable")
 func report_direct_hit(client_event: int, target_id: int, target_life: int, session: int) -> void:
+	if film_retaining_transport:return
 	if matchmaking.blocks_simulation():return
 	if not network_active or not multiplayer.is_server() or session!=match_session: return
 	var sender=multiplayer.get_remote_sender_id(); var key=str(sender)+":"+str(client_event)
@@ -1371,12 +1450,15 @@ func report_direct_hit(client_event: int, target_id: int, target_life: int, sess
 	if victim.take_damage(float(definition.damage_direct),"torso","heavy",false,auth.actor,auth.id,auth.get("origin",auth.actor.eye.global_position),auth.weapon.kind): confirm_hit.rpc_id(sender,"torso",not victim.alive,victim.global_position,match_session)
 @rpc("authority","call_remote","reliable")
 func confirm_hit(region: String="torso", killed: bool=false, position: Vector3=Vector3.INF, session: int=0) -> void:
+	if film_retaining_transport:return
 	if not running or (session!=0 and session!=match_session): return
+	if film_recorder!=null:film_recorder.event("confirmed_hit",{"region":region,"killed":killed})
 	if not position.is_finite(): position=player.eye.global_position
 	hit_until=now+0.13
 	audio.play_sound("headshot_kill" if killed and region=="head" else "kill_confirm" if killed else "hit_head" if region=="head" else "hit_body",position)
 @rpc("any_peer","call_remote","reliable")
 func relay_chat(text: String, session: int) -> void:
+	if film_retaining_transport:return
 	if not multiplayer.is_server() or not running or finished or session!=match_session: return
 	var sender=multiplayer.get_remote_sender_id()
 	if not lobby_members.has(matchmaking.peers.get(sender,sender)): return
@@ -1391,11 +1473,13 @@ func clean_message(text: String) -> String:
 	return text.strip_edges().replace("\n"," ").replace("\r"," ").substr(0,200)
 @rpc("authority","call_remote","reliable")
 func receive_chat(text: String) -> void:
+	if film_retaining_transport:return
 	if not prefs.values.chat: return
 	messages.append(text)
 	if messages.size()>4: messages.pop_front()
 @rpc("authority","call_remote","unreliable",2)
 func snapshot_packet(sequence: int, index: int, total: int, data: PackedByteArray, session: int) -> void:
+	if film_retaining_transport:return
 	if matchmaking.hybrid.enabled:matchmaking.hybrid.session.observed_host_packet(matchmaking.hybrid.session.match_id,matchmaking.hybrid.session.epoch,matchmaking.hybrid.session.authority)
 	if session!=match_session: return
 	if sequence<=snapshot_received or total<1 or total>24 or index<0 or index>=total or data.size()>850: return
@@ -1413,6 +1497,7 @@ func snapshot_packet(sequence: int, index: int, total: int, data: PackedByteArra
 		if key<=snapshot_received or key<sequence-4: snapshot_fragments.erase(key)
 @rpc("authority","call_remote","unreliable",3)
 func cosmetic_bullet(actor_id: int, kind: String, pos: Vector3, direction: Vector3, session: int, round_id: int, play_audio: bool=true, first_in_burst: bool=true) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number: return
 	var actor=actor_by_id(actor_id)
 	if actor==null or actor.local_player: return
@@ -1422,17 +1507,20 @@ func cosmetic_bullet(actor_id: int, kind: String, pos: Vector3, direction: Vecto
 	if play_audio: actor.combat_audio.on_fire(first_in_burst)
 @rpc("authority","call_remote","reliable")
 func cosmetic_grenade(actor_id: int, kind: int, origin: Vector3, direction: Vector3, inherited_velocity: Vector3, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number: return
 	var actor=actor_by_id(actor_id)
 	if actor==null or actor.local_player: return
 	launch_grenade(actor,kind,true,0,origin,direction,inherited_velocity)
 @rpc("any_peer","call_remote","reliable")
 func authorize_melee(client_event: int, life: int, round_id: int, session: int, cmd_seq: int=-1, lunge: Vector3=Vector3.ZERO) -> void:
+	if film_retaining_transport:return
 	if matchmaking.blocks_simulation():return
 	if session!=match_session or not multiplayer.is_server() or client_event<=0 or client_event%16!=0: return
 	var sender=multiplayer.get_remote_sender_id()
 	var actor=actor_for_peer(sender)
 	if actor==null: return
+	if not network_policy.admit(sender,"melee",local_clock(),8,4):return
 	# Bound the prediction hint; the host derives the actual lunge on its command tick.
 	if not lunge.is_finite() or absf(lunge.y)>.001 or lunge.length()>float(damage_rules.melee_max_lunge_m)+.01: lunge=Vector3.ZERO
 	var melee=apply_melee.bind(sender,actor,client_event,life,round_id,session,lunge)
@@ -1453,6 +1541,7 @@ func apply_melee(sender: int, actor: NestActor, client_event: int, life: int, ro
 	cosmetic_melee.rpc(actor.net_id,match_session,round_number,actor.sword_draw,actor.action_until)
 @rpc("authority","call_remote","reliable")
 func cosmetic_melee(actor_id: int, session: int, round_id: int, draw: float=-1, until: float=-1) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number:return
 	var actor=actor_by_id(actor_id)
 	if actor==null or actor.local_player:return
@@ -1462,12 +1551,14 @@ func cosmetic_melee(actor_id: int, session: int, round_id: int, draw: float=-1, 
 	sound("melee",actor.global_position,false)
 @rpc("any_peer","call_remote","reliable")
 func authorize_grenade(client_event: int, life: int, round_id: int, kind: int, origin: Vector3, direction: Vector3, inherited_velocity: Vector3, session: int, cmd_seq: int=-1) -> void:
+	if film_retaining_transport:return
 	if matchmaking.blocks_simulation():return
 	if session!=match_session or not multiplayer.is_server(): return
 	if kind<0 or kind>1 or not origin.is_finite() or not direction.is_finite() or not inherited_velocity.is_finite() or origin.length()>1000: return
 	var sender=multiplayer.get_remote_sender_id()
 	var actor=actor_for_peer(sender)
 	if actor==null: return
+	if not network_policy.admit(sender,"grenade",local_clock(),8,4):return
 	var grenade=apply_grenade.bind(sender,actor,client_event,life,round_id,kind,origin,direction,inherited_velocity,session)
 	if cmd_seq<=0: grenade.call()
 	else: defer_for_command(actor,cmd_seq,grenade)
@@ -1518,14 +1609,29 @@ func clear_held_input() -> void:
 # ---- Network timing ----
 func local_clock() -> float:
 	return Time.get_ticks_usec()/1000000.0
+@rpc("authority","call_remote","unreliable",1)
+func network_probe(nonce: int, session: int, one_way: float=0) -> void:
+	if film_retaining_transport:return
+	if is_client() and session==match_session:
+		if is_finite(one_way):host_oneway=clampf(one_way,0,.25)
+		network_probe_reply.rpc_id(1,nonce,session,interp_delay)
+@rpc("any_peer","call_remote","unreliable",1)
+func network_probe_reply(nonce: int, session: int, view_delay: float=.075) -> void:
+	if film_retaining_transport:return
+	if not network_active or not multiplayer.is_server() or session!=match_session:return
+	var peer=multiplayer.get_remote_sender_id()
+	if actor_for_peer(peer)!=null and network_policy.finish_probe(peer,nonce,local_clock(),view_delay):net_stat("latency_probes_accepted")
 func net_stat(key: String, amount: float=1.0) -> void:
 	net_stats[key]=float(net_stats.get(key,0.0))+amount
 func net_stat_max(key: String, value: float) -> void:
 	net_stats[key]=maxf(float(net_stats.get(key,0.0)),value)
 func reset_network_timing() -> void:
-	clock_ready=false; clock_offset=0; clock_spread=0; interp_delay=.1; remote_view_time=0
+	network_policy=NestNetworkPolicy.new();probe_at=0;physics_samples.clear();transport_sample_at=local_clock()
+	network_policy.maximum_rewind=clampf(maximum_hitscan_rewind_ms/1000,0,NestNetworkPolicy.MAX_REWIND)
+	clock_ready=false; clock_offset=0; clock_spread=0; host_oneway=0;interp_delay=.1; remote_view_time=0
 	prediction_ready=false; prediction_offset=0; lift_sync_ready=false; lift_offset=0
 	hitbox_history.clear(); rewind_active=false; rewind_boxes.clear(); rewind_poses.clear()
+	blocker_history.clear();rewind_blockers.clear()
 	command_drop_packets=0; command_send_paused=false; snapshot_tick=0; net_stats.clear()
 	var lift=lift_node()
 	if lift!=null: lift.clock_source=Callable()
@@ -1534,13 +1640,14 @@ func observe_server_clock(match_state: Dictionary) -> void:
 	# the earliest arrivals (least delayed) and relaxes slowly, so it stays
 	# stable under jitter; the observed spread sizes the interpolation buffer.
 	var server_now=float(match_state.now)
-	var sample=server_now-local_clock()
+	var sample=server_now+host_oneway-local_clock()
 	if not clock_ready or absf(sample-clock_offset)>1.0:
 		clock_offset=sample; clock_spread=0; clock_ready=true; now=server_now; remote_view_time=0
 	else:
 		clock_offset+=(sample-clock_offset)*(.3 if sample>clock_offset else .02)
 		clock_spread=lerpf(clock_spread,absf(clock_offset-sample),.1)
-	interp_delay=clampf(float(SNAPSHOT_TICKS)*NET_TICK+.02+2.5*clock_spread,.075,.3)
+	var minimum_delay=maxf(NestNetworkPolicy.INTERPOLATION_MIN,float(snapshot_interval_ticks)*NET_TICK*1.5)
+	interp_delay=clampf(float(snapshot_interval_ticks)*NET_TICK+.02+2.5*clock_spread,minimum_delay,NestNetworkPolicy.INTERPOLATION_MAX)
 	net_stats["interp_delay_ms"]=interp_delay*1000
 	if multiplayer.multiplayer_peer is ENetMultiplayerPeer:
 		var host=(multiplayer.multiplayer_peer as ENetMultiplayerPeer).get_peer(1)
@@ -1585,7 +1692,28 @@ func on_lift_column(pos: Vector3, lift_y: float) -> bool:
 	if lift==null or not lift is PhysicsBody3D: return false
 	var shaft: Vector2=lift.shaft_position
 	return absf(pos.x-shaft.x)<=2.9 and absf(pos.z-shaft.y)<=2.9 and pos.y-lift_y>=-.3 and pos.y-lift_y<=2.6
+func finish_physics_measurement() -> void:
+	if physics_started>0:
+		var cost=Time.get_ticks_usec()-physics_started
+		physics_samples.append(float(cost)/1000)
+		if physics_samples.size()>180:physics_samples.pop_front()
+		net_stat("physics_ticks");net_stat("physics_us_sum",cost);net_stat_max("physics_us_max",cost)
+		if cost>16667:net_stat("physics_overruns")
+		physics_started=0
 func late_physics() -> void:
+	if network_active and multiplayer.multiplayer_peer is ENetMultiplayerPeer and local_clock()-transport_sample_at>=1:
+		var elapsed=local_clock()-transport_sample_at
+		transport_sample_at=local_clock()
+		var connection=(multiplayer.multiplayer_peer as ENetMultiplayerPeer).host
+		for metric in [["transport_bytes_sent",ENetConnection.HOST_TOTAL_SENT_DATA],["transport_packets_sent",ENetConnection.HOST_TOTAL_SENT_PACKETS],["transport_bytes_received",ENetConnection.HOST_TOTAL_RECEIVED_DATA],["transport_packets_received",ENetConnection.HOST_TOTAL_RECEIVED_PACKETS]]:
+			var amount=connection.pop_statistic(metric[1])
+			net_stat(metric[0],amount);net_stats[str(metric[0])+"_per_second"]=amount/elapsed
+	if running and network_active and multiplayer.is_server() and local_clock()>=probe_at:
+		probe_at=local_clock()+1
+		for peer in multiplayer.get_peers():
+			if actor_for_peer(peer)!=null:
+				var nonce: int=network_policy.start_probe(peer,local_clock())
+				network_probe.rpc_id(peer,nonce,match_session,network_policy.one_way(peer))
 	if matchmaking.blocks_simulation():return
 	# Runs after every actor has simulated this tick.
 	if not running or not network_active or not multiplayer.is_server(): return
@@ -1593,13 +1721,13 @@ func late_physics() -> void:
 	for actor in actors:
 		if not actor.cmd_deferred.is_empty(): run_deferred_commands(actor)
 	snapshot_tick+=1
-	if snapshot_tick>=SNAPSHOT_TICKS: snapshot_tick=0; send_snapshot()
+	if snapshot_tick>=snapshot_interval_ticks: snapshot_tick=0; send_snapshot()
 # ---- Command-ordered client actions ----
 func defer_for_command(actor: NestActor, seq: int, action: Callable) -> void:
 	# If the host is not simulating this client's commands at all (stalled
 	# stream), waiting would only add delay: apply on arrival instead.
+	if seq>actor.cmd_last_seq+NestNetworkPolicy.MAX_COMMAND_LEAD or seq<actor.cmd_last_seq-30 or actor.cmd_deferred.size()>=NestNetworkPolicy.MAX_PENDING_ACTIONS: net_stat("deferred_rejected"); return
 	if seq<=actor.cmd_last_seq or now-actor.net_last_command>COMMAND_STALL: action.call(); return
-	if seq>actor.cmd_last_seq+600: net_stat("deferred_rejected"); return
 	actor.cmd_deferred.append({"seq":seq,"action":action,"at":now})
 	net_stat("deferred_actions")
 func run_deferred_commands(actor: NestActor) -> void:
@@ -1613,7 +1741,33 @@ func run_deferred_commands(actor: NestActor) -> void:
 		if not ready: net_stat("deferred_timeouts")
 		item.action.call()
 # ---- Bounded server-side lag compensation ----
+func record_blocker_history() -> void:
+	var bodies: Array=get_tree().get_nodes_in_group("network_rewind_blocker")
+	for group in arena.sealed_bodies:
+		for body in group:
+			if body not in bodies:bodies.append(body)
+	var boxes=[]
+	for body in bodies:
+		if not is_instance_valid(body) or not body is CollisionObject3D or (body.collision_layer&1)==0:continue
+		for collision in body.find_children("*","CollisionShape3D",true,false):
+			if collision.disabled or collision.shape==null:continue
+			var shape: Shape3D=collision.shape
+			var xf: Transform3D=collision.global_transform
+			if shape is ConvexPolygonShape3D and not shape.has_meta("hull_planes"):
+				# Changing ore cover uses a conservative cached hull bound. This
+				# may deny an edge shot; it cannot expose a historical solid.
+				if not shape.has_meta("rewind_bound"):
+					var low=Vector3.INF;var high=-Vector3.INF
+					for p in shape.points:low=low.min(p);high=high.max(p)
+					var bound=BoxShape3D.new();bound.size=high-low
+					shape.set_meta("rewind_bound",bound);shape.set_meta("rewind_center",(low+high)*.5)
+				xf.origin=xf*Vector3(shape.get_meta("rewind_center"))
+				shape=shape.get_meta("rewind_bound")
+			boxes.append({"body":body,"rid":body.get_rid(),"shape":shape,"xf":xf})
+	blocker_history.append({"t":now,"boxes":boxes})
+	while blocker_history.size()>1 and now-float(blocker_history[0].t)>LAG_COMP_HISTORY:blocker_history.pop_front()
 func record_hitbox_history() -> void:
+	record_blocker_history()
 	var live={}
 	for actor in actors:
 		var id=actor.get_instance_id(); live[id]=true
@@ -1648,6 +1802,12 @@ func begin_rewind(shooter: NestActor, view_time: float) -> void:
 	if view_time<now-LAG_COMP_MAX_REWIND: net_stat("rewinds_clamped")
 	net_stat("rewinds"); net_stat("rewind_ms_sum",(now-target)*1000); net_stat_max("rewind_ms_max",(now-target)*1000)
 	rewind_active=true; rewind_boxes.clear(); rewind_poses.clear()
+	rewind_blockers.clear()
+	# Keep current cover AND historical cover. Opening/removing a blocker must
+	# not let an older shot pass through where that cover used to be.
+	for frame in blocker_history:
+		if float(frame.t)>target:break
+		rewind_blockers=frame.boxes
 	for actor in actors:
 		if actor==shooter or not actor.alive: continue
 		var pose=historical_pose(actor,target)
@@ -1656,7 +1816,7 @@ func begin_rewind(shooter: NestActor, view_time: float) -> void:
 		for i in range(actor.hitboxes.size()):
 			rewind_boxes.append({"area":actor.hitboxes[i],"rid":actor.hitboxes[i].get_rid(),"xf":pose.boxes[i],"shape":actor.hitbox_shapes[i]})
 func end_rewind() -> void:
-	rewind_active=false; rewind_boxes.clear(); rewind_poses.clear()
+	rewind_active=false; rewind_boxes.clear(); rewind_poses.clear();rewind_blockers=[]
 func aim_pose_of(other: NestActor) -> Dictionary:
 	if rewind_active: return rewind_poses.get(other.get_instance_id(),{})
 	return {"pos":other.global_position,"crouched":other.crouched,"air_duck":other.air_duck}
@@ -1673,6 +1833,10 @@ func rewound_trace(start: Vector3, finish: Vector3, mask: int, excludes: Array[R
 		query.collide_with_areas=true; query.hit_from_inside=true
 		var world=get_world_3d().direct_space_state.intersect_ray(query)
 		if not world.is_empty(): hit=world; best=start.distance_to(world.position)/length
+	for box in rewind_blockers:
+		if box.rid in excludes or not is_instance_valid(box.body):continue
+		var f=ray_shape_fraction(start,finish,box.xf,box.shape)
+		if f>=0 and f<best:best=f;hit={"position":start.lerp(finish,f),"normal":(start-finish)/length,"collider":box.body,"rid":box.rid,"shape":0}
 	for box in rewind_boxes:
 		if box.rid in excludes: continue
 		var f=ray_shape_fraction(start,finish,box.xf,box.shape)
@@ -1740,7 +1904,7 @@ func bot_name(team: int, index: int) -> String:
 func team_name(team: int) -> String:
 	# Teams are named after their current character; mirror matchups add A/B.
 	var name="NAKI" if team_characters[team]==0 else "ANNU"
-	return name+(" A" if team==0 else " B") if team_characters[0]==team_characters[1] else name
+	return ("RED " if team==0 else "GREEN ")+name if team_characters[0]==team_characters[1] else name
 func switch_sides() -> void:
 	# Every role_switch_rounds rounds the teams exchange characters and starting
 	# sides. Scores stay with the teams (players), not with the characters.
@@ -1822,6 +1986,7 @@ func ctf_event(kind: String, team: int, actor: NestActor) -> void:
 	if network_active and multiplayer.is_server(): ctf_sound.rpc(pos,match_session)
 @rpc("authority","call_remote","reliable")
 func ctf_sound(pos: Vector3, session: int) -> void:
+	if film_retaining_transport:return
 	if running and session==match_session: sound("objective",pos,false)
 func build_flag_visuals() -> void:
 	if not flag_nodes.is_empty(): return
@@ -1898,6 +2063,7 @@ func apply_personal_lobby(peer: int, choice: int, ready: bool) -> bool:
 	return true
 @rpc("any_peer","call_remote","reliable")
 func request_personal_lobby(choice: int, ready: bool) -> void:
+	if film_retaining_transport:return
 	if not network_active or not multiplayer.is_server() or running:return
 	# The packet cannot name another slot. Only its authenticated sender is edited.
 	var sender=multiplayer.get_remote_sender_id()
@@ -1925,6 +2091,7 @@ func add_death_body(spec: Dictionary) -> NestDeathBody:
 
 @rpc("authority","call_remote","reliable")
 func receive_death_body(spec: Dictionary, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number:return
 	add_death_body(spec)
 
@@ -1948,6 +2115,7 @@ func push_death_bodies(start: Vector3, finish: Vector3, direction: Vector3, weap
 
 @rpc("authority","call_remote","reliable")
 func receive_body_impulse(key: String, point: Vector3, impulse: Vector3, shot_key: String, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number:return
 	for body in corpses.get_children():
 		if body.body_key==key:body.apply_bullet_impulse(point,impulse,shot_key);return
@@ -2101,6 +2269,7 @@ func apply_lobby_team(peer: int, team: int) -> bool:
 	return true
 @rpc("any_peer","call_remote","reliable")
 func request_lobby_team(team: int) -> void:
+	if film_retaining_transport:return
 	if not multiplayer.is_server():return
 	var peer=multiplayer.get_remote_sender_id()
 	if not apply_lobby_team(peer,team):receive_chat.rpc_id(peer,"Team change unavailable: team is full or the match has started.")
@@ -2124,6 +2293,7 @@ func create_offline_actors() -> void:
 
 @rpc("authority","call_remote","reliable")
 func receive_pending_rules(data: Dictionary, session: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session:return
 	pending_game_type=GameTypeSettings.new();pending_game_type.apply_network_dict(data)
 func save_actor_totals() -> Dictionary:
@@ -2166,6 +2336,7 @@ func restart_round_in_match() -> bool:
 	return true
 @rpc("authority","call_remote","reliable")
 func restart_network_round(previous: int, config: Dictionary, members: Dictionary, number: int, score_state: Array, host_now: float, attacker_team: int, totals: Dictionary) -> void:
+	if film_retaining_transport:return
 	if not running or match_session!=previous:return
 	var old_mode=mode;var old_roster=round_roster_signature()
 	applying_round_restart=true;pending_game_type=null
@@ -2179,15 +2350,18 @@ func restart_network_round(previous: int, config: Dictionary, members: Dictionar
 
 @rpc("authority","call_remote","reliable")
 func receive_rating_result(packet: Dictionary) -> void:
+	if film_retaining_transport:return
 	if not running or not is_client():return
 	ranked.accept(packet)
 
 @rpc("any_peer","call_remote","reliable")
 func request_forge_edit(epoch: int, revision: int, sequence: int, action: String, args: Dictionary) -> void:
+	if film_retaining_transport:return
 	if not network_active or not multiplayer.is_server():return
 	forge_session.execute(multiplayer.get_remote_sender_id(),epoch,revision,sequence,action,args)
 @rpc("authority","call_remote","reliable")
 func receive_forge_state(epoch: int, revision: int, state: Dictionary, active: bool, peer: int, key: String, message: String) -> void:
+	if film_retaining_transport:return
 	forge_session.receive(epoch,revision,state,active,peer,key,message)
 
 func mark_first_impact(point: Vector3, normal: Vector3) -> void:
@@ -2201,6 +2375,7 @@ func add_debug_impact(point: Vector3, normal: Vector3) -> void:
 
 @rpc("authority","call_remote","reliable")
 func receive_debug_impact(point: Vector3, normal: Vector3, session: int, round_id: int) -> void:
+	if film_retaining_transport:return
 	if not running or session!=match_session or round_id!=round_number or not point.is_finite() or not normal.is_finite():return
 	add_debug_impact(point,normal)
 

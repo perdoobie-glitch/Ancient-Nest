@@ -167,11 +167,11 @@ func host_run():
 		await create_timer(.3).timeout
 	game.lag_compensation_enabled=true
 	# E: a forged, very old view time is clamped to the rewind bound.
-	var clamped0=stat("rewinds_clamped")
+	var clamped0=stat("shot_time_hints_ignored")
 	gate.mark.rpc_id(peer,"E_go")
 	if not await phase("E_done"): check(false,"Client sends forged view time"); return
 	await create_timer(.4).timeout
-	check(stat("rewinds_clamped")-clamped0>=1,"Rewind requests older than %.0f ms are clamped to the bound"%(game.LAG_COMP_MAX_REWIND*1000))
+	check(stat("shot_time_hints_ignored")-clamped0>=1 and stat("rewind_ms_max")<=game.LAG_COMP_MAX_REWIND*1000+.001,"Forged old timestamps cannot enlarge the host-measured rewind budget")
 	# D: full-auto rifle under jitter: no false cadence rejections.
 	var accepted_d0=stat("shots_accepted"); var cadence0=stat("shots_rejected_cadence")
 	gate.mark.rpc_id(peer,"D_go")

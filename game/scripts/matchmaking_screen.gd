@@ -46,10 +46,11 @@ static func show(owner) -> void:
  var margin=MarginContainer.new();owner.screen.add_child(margin);margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
  for edge in ["left","right"]:margin.add_theme_constant_override("margin_"+edge,32)
  for edge in ["top","bottom"]:margin.add_theme_constant_override("margin_"+edge,18)
- var scroll=ScrollContainer.new();scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;margin.add_child(scroll)
+ var outer=VBoxContainer.new();outer.size_flags_vertical=Control.SIZE_EXPAND_FILL;outer.add_theme_constant_override("separation",8);margin.add_child(outer)
+ var scroll=ScrollContainer.new();scroll.name="MatchmakingDetailsScroll";scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;outer.add_child(scroll)
  var v=VBoxContainer.new();v.size_flags_horizontal=Control.SIZE_EXPAND_FILL;v.add_theme_constant_override("separation",10);scroll.add_child(v)
  v.add_child(owner.label("ANCIENT NEST  /  ONLINE MULTIPLAYER",12,GOLD))
- v.add_child(owner.title("MATCHMAKING",34))
+ v.add_child(owner.title("CUSTOM GAME" if mm.custom_match() else "MATCHMAKING",34))
  var tabs=HBoxContainer.new();v.add_child(tabs)
  var play=owner.button("Playlists",func():pass);play.disabled=true;tabs.add_child(play)
  var ranks=owner.button("Ranks & rating",func():owner.set_meta("rank_guide",true);owner.show_matchmaking());ranks.name="MatchmakingRanksTab";tabs.add_child(ranks)
@@ -76,10 +77,12 @@ static func show(owner) -> void:
  scene.count_text=owner.label("",16,GOLD);status_card.add_child(scene.count_text)
  scene.countdown=scene.wrapped("",14,GOLD);status_card.add_child(scene.countdown)
  if mm.phase in ["idle","party","queue","error","connecting"]:
-  var setup=scene.card(main_column,GOLD);setup.add_child(owner.label("READY WHEN YOU ARE",13,GOLD))
+  var setup=scene.card(outer,GOLD);setup.get_parent().name="MatchmakingActions";setup.add_child(owner.label("READY WHEN YOU ARE",13,GOLD))
   setup.add_child(scene.wrapped("Party limit: %d. Friends in your party play on the same team."%mm.team_size(),14,MUTED))
-  var row=HBoxContainer.new();row.add_theme_constant_override("separation",12);setup.add_child(row)
-  scene.search_button=owner.button("Cancel Search" if mm.phase=="queue" else "Reconnect" if mm.phase in ["error","idle"] else "Search",scene.search_or_cancel);scene.search_button.custom_minimum_size=Vector2(190,48);scene.search_button.disabled=mm.phase=="connecting" or (mm.phase in ["party","queue"] and not mm.party_leader());row.add_child(scene.search_button)
+  var row=HFlowContainer.new();row.add_theme_constant_override("h_separation",12);row.add_theme_constant_override("v_separation",8);setup.add_child(row)
+  scene.search_button=owner.button("Cancel Search" if mm.phase=="queue" else "Search",scene.search_or_cancel);scene.search_button.name="MatchmakingSearch";scene.search_button.custom_minimum_size=Vector2(190,48);scene.search_button.disabled=mm.phase in ["connecting","error","idle"] or not mm.hybrid.master_connected() or not mm.party_leader();scene.search_button.tooltip_text="Reconnect to the master server before searching." if not mm.hybrid.master_connected() else "Search for an online ranked match.";row.add_child(scene.search_button)
+  if mm.phase in ["error","idle"]:
+   var reconnect=owner.button("Reconnect",scene.search_or_cancel);reconnect.name="MatchmakingReconnect";row.add_child(reconnect)
   if mm.phase=="party":
    row.add_child(owner.button("Invite",scene.invite))
    row.add_child(owner.button("Join Party",scene.join_dialog))
@@ -108,8 +111,9 @@ static func show(owner) -> void:
   scene.ballot_status=scene.wrapped("",13,GREEN);vote_card.add_child(scene.ballot_status)
   scene.tally=scene.wrapped("",13,IVORY);vote_card.add_child(scene.tally)
   vote_card.add_child(scene.wrapped("Most votes wins. Ties are randomized only among the leading choices.\nMap and mode are counted separately, then life type is voted. Extraction skips life voting and uses Annu vs Naki.",12,MUTED))
- var footer=HBoxContainer.new();v.add_child(footer)
+ var footer=HFlowContainer.new();footer.add_theme_constant_override("h_separation",12);outer.add_child(footer)
  footer.add_child(owner.button("Back",owner.leave_matchmaking))
+ var discord=owner.button("[I] Discord dashboard",func():owner.open_discord_dashboard());discord.name="MatchmakingDiscordDashboard";footer.add_child(discord)
  var motion=owner.button("Effects: ON" if mm.lobby_effects else "Effects: OFF",func():
   mm.lobby_effects=not mm.lobby_effects;scene.atmosphere.set_enabled(mm.lobby_effects)
   for button in footer.get_children():
@@ -229,10 +233,7 @@ func search_or_cancel() -> void:
   else:mm.begin_search_countdown()
  else:mm.open_party()
 func invite() -> void:
- var code=str(mm.party.get("code",""))
- if code.is_empty():return
- DisplayServer.clipboard_set(code)
- var popup=AcceptDialog.new();popup.title="Invite friends";popup.dialog_text="Invite code: "+code+"\n\nCode copied. Send it to a friend. They can open Play → Join Party and paste it.\nParty limit for this playlist: %d."%mm.team_size();game.screen.add_child(popup);popup.confirmed.connect(popup.queue_free);popup.canceled.connect(popup.queue_free);popup.popup_centered(Vector2i(550,210))
+ AncientNestDiscordSocial.show_invite_dialog(game)
 func join_dialog() -> void:
  var popup=ConfirmationDialog.new();popup.title="Join Party";popup.ok_button_text="Join"
  var box=VBoxContainer.new();popup.add_child(box);box.add_child(wrapped("Paste your friend's invite code",16,IVORY))

@@ -1,3 +1,4 @@
+import { publicGameUser } from './game-profile.js';
 // Discord proves identity; game usernames and revocable device sessions remain server-owned.
 export function discordSignIn({ HttpError, json, body, authenticate, bearer, rateLimit, discord,
   newSession, sessionInsert, sessionResponse }) {
@@ -6,7 +7,7 @@ export function discordSignIn({ HttpError, json, body, authenticate, bearer, rat
     if (path === '/auth/discord/config') {
       if (request.method !== 'GET') throw new HttpError(405, 'method_not_allowed');
       discord.configured(env);
-      return json({ auth_provider: 'discord', application_id: env.DISCORD_CLIENT_ID });
+      return json({ auth_provider: 'discord', application_id: env.DISCORD_CLIENT_ID, game_username_selection: true });
     }
     if (request.method !== 'POST') throw new HttpError(405, 'method_not_allowed');
     if (path === '/profile/username') {
@@ -17,10 +18,14 @@ export function discordSignIn({ HttpError, json, body, authenticate, bearer, rat
         throw new HttpError(400, 'invalid_game_username');
       }
       try {
-        const saved = await db.prepare('UPDATE users SET username = ? WHERE id = ? AND banned = 0 RETURNING id, username, created_at')
+        const saved = await db.prepare(`UPDATE users SET username = ?,
+          metadata = json_set(CASE WHEN json_valid(metadata) THEN
+            CASE json_type(metadata) WHEN 'object' THEN metadata ELSE json_object('legacy_metadata', json(metadata)) END
+            ELSE json_object('legacy_metadata_raw', metadata) END, '$.game_username_chosen', json('true'))
+          WHERE id = ? AND banned = 0 RETURNING *`)
           .bind(username, auth.user.id).first();
         if (!saved) throw new HttpError(401, 'invalid_token');
-        return json({ user: saved });
+        return json({ user: publicGameUser(saved) });
       } catch (error) {
         if (/UNIQUE constraint failed/.test(String(error))) throw new HttpError(409, 'username_taken');
         throw error;
@@ -39,13 +44,12 @@ export function discordSignIn({ HttpError, json, body, authenticate, bearer, rat
     let user = await db.prepare('SELECT * FROM users WHERE discord_id = ?').bind(discordId).first();
     if (!user) {
       const id = crypto.randomUUID();
-      // Start with a Discord-derived default; the player may change it after signing in.
-      const stem = String(discordUser.username ?? 'Player').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 3) || 'P';
-      let username = stem + '_' + discordId;
+      // Private placeholder until the player chooses a game name. No provider name/ID in aliases.
+      let username = 'Player_' + crypto.randomUUID().replaceAll('-', '').slice(0, 16);
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           await db.prepare(`INSERT INTO users (id, username, password_hash, password_salt, email, discord_id,
-            discord_username, auth_provider, created_at) VALUES (?, ?, 'DISCORD_ONLY', '', ?, ?, ?, 'discord', ?)`)
+            discord_username, auth_provider, created_at, metadata) VALUES (?, ?, 'DISCORD_ONLY', '', ?, ?, ?, 'discord', ?, '{"game_username_chosen":false}')`)
             // Compatibility placeholder for the old NOT NULL schema; never used for contact or merging.
             .bind(id, username, id + '@discord.identity.invalid', discordId,
               String(discordUser.username ?? discordId).slice(0, 80), Math.floor(Date.now() / 1000)).run();

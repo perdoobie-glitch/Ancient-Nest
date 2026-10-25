@@ -93,6 +93,7 @@ func _ready() -> void:
 	lobby_vote=NestLobbyVote.new();lobby_vote.name="LobbyVote";lobby_vote.game=self;add_child(lobby_vote)
 	if not matchmaking.active:select_normal_preset(mode,game_type.map_selection,game_type.matchup,false)
 	accounts=NestAccountLink.new();accounts.game=self;add_child(accounts)
+	AncientNestDiscordSocial.attach_game(self)
 	if "--hybrid-worker" in OS.get_cmdline_user_args():
 		var args=OS.get_cmdline_user_args();var url="";var token="";var port=7780
 		for i in range(args.size()-1):
@@ -192,6 +193,9 @@ func title(text: String, size: int=40) -> Label:
 	var l=label(text,size,Color("80e9b4")); l.add_theme_font_override("font",load("res://assets/title.ttf")); return l
 func button(text: String, action: Callable, min_width: float=0) -> Button:
 	var b=Button.new(); b.text=text; b.custom_minimum_size=Vector2(min_width,48); b.pressed.connect(action); return b
+func open_films() -> void:
+	clear_screen();shade();current_screen="films";context="menu"
+	film_viewer=load("res://scripts/film_viewer.gd").new();film_viewer.game=self;canvas.add_child(film_viewer)
 func clear_screen() -> void:
 	# Opaque artwork menus do not need a second, hidden 3D arena render.
 	get_viewport().disable_3d=not running
@@ -218,18 +222,19 @@ func show_main() -> void:
 	if is_instance_valid(forge_editor):forge_editor.exit_editor(false)
 	current_screen="main";context="menu";clear_screen();hud.visible=false
 	menu_camera.current=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
+	var backdrop=ColorRect.new();backdrop.color=Color("101718");backdrop.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(backdrop);backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var art=TextureRect.new();art.name="SanctuaryMenuArtwork";art.texture=NestMenuSurface.artwork();art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED;art.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(art);art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var size=get_viewport().get_visible_rect().size
 	var panel=PanelContainer.new();panel.name="MainNavigation";screen.add_child(panel);panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	panel.offset_left=24;panel.offset_right=-24;panel.offset_top=-220 if size.x>=1000 else -278;panel.offset_bottom=-12
-	var style=NestMenuSurface.glossy_white();style.content_margin_top=12;style.content_margin_bottom=12;panel.add_theme_stylebox_override("panel",style)
+	var style=StyleBoxEmpty.new();style.content_margin_left=16;style.content_margin_right=16;style.content_margin_top=12;style.content_margin_bottom=12;panel.add_theme_stylebox_override("panel",style)
 	var column=VBoxContainer.new();column.add_theme_constant_override("separation",8);panel.add_child(column)
 	var studio=label("PERDOOBIE & MISHWAD STUDIO",13,GOLD);NestMenuSurface.plasma_lettering(studio);studio.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;column.add_child(studio)
-	var grid=GridContainer.new();grid.columns=5 if size.x>=1000 else 2;grid.add_theme_constant_override("h_separation",10);grid.add_theme_constant_override("v_separation",8);column.add_child(grid)
-	var choices=[["Play",show_play_menu],["Nest Forge",open_forge],["Armory",show_armory],["Settings",func():open_settings("main")],["Quit Game",quit_dialog]]
+	var grid=GridContainer.new();grid.columns=6 if size.x>=1000 else 2;grid.add_theme_constant_override("h_separation",10);grid.add_theme_constant_override("v_separation",8);column.add_child(grid)
+	var choices=[["Play",show_play_menu],["Server Browser",open_server_browser],["Films",open_films],["Nest Forge",open_forge],["Armory",show_armory],["Settings",func():open_settings("main")],["Quit Game",quit_dialog]]
 	var primary: Array[Button]=[]
 	for choice in choices:
-		var entry=button(choice[0],choice[1]);NestMenuSurface.main_button(entry);entry.clip_text=true;entry.size_flags_horizontal=Control.SIZE_EXPAND_FILL;entry.custom_minimum_size=Vector2(0,42);grid.add_child(entry);primary.append(entry)
+		var entry=button(choice[0],choice[1]);NestMenuSurface.main_button(entry,true);entry.clip_text=true;entry.size_flags_horizontal=Control.SIZE_EXPAND_FILL;entry.custom_minimum_size=Vector2(0,42);grid.add_child(entry);primary.append(entry)
 	for i in range(primary.size()):
 		primary[i].focus_neighbor_left=primary[i].get_path_to(primary[(i+primary.size()-1)%primary.size()]);primary[i].focus_neighbor_right=primary[i].get_path_to(primary[(i+1)%primary.size()])
 	var selected=primary.filter(func(entry):return entry.text==restore_focus)
@@ -237,6 +242,7 @@ func show_main() -> void:
 	var note=label("ANCIENT NEST 10.5-dev  /  FRONTIER MAPS",11,MUTED);NestMenuSurface.plasma_lettering(note);note.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;column.add_child(note)
 	var identity=button("Player: "+current_username(),func():accounts.show_service_card());NestMenuSurface.main_button(identity);identity.name="EditUsername";identity.clip_text=true;identity.add_theme_font_size_override("font_size",14)
 	screen.add_child(identity);identity.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT);identity.offset_left=-320;identity.offset_right=-24;identity.offset_top=20;identity.offset_bottom=66
+	var discord=button("[I] Discord dashboard",open_discord_dashboard);NestMenuSurface.main_button(discord,true);discord.name="DiscordDashboardShortcut";column.add_child(discord);discord.custom_minimum_size.y=36
 	# Warm new shared geometry and materials before a player enters combat.
 	if not has_meta("menu_weapons_warmed"):
 		set_meta("menu_weapons_warmed",true)
@@ -325,6 +331,8 @@ func leave_forge_editor_ui(show_lobby_after: bool=true) -> void:
 	forge_editor=null;clear_held_input();hud.visible=false;menu_camera.current=true
 	if show_lobby_after:show_lobby()
 func show_lobby() -> void:
+	if matchmaking.browser_mode and not running:
+		matchmaking.leave();open_server_browser();return
 	if matchmaking.active:show_matchmaking();return
 	NestLobbyScreen.show(self)
 func lobby_tab(tabs: TabContainer, tab_name: String) -> VBoxContainer:
@@ -527,7 +535,7 @@ func _process(delta: float) -> void:
 	if not running or not is_instance_valid(player): return
 	if is_instance_valid(hud_top) and (hud_health_model!=player.damage_model() or hud_capacities!=Vector3(player.tuning.health_capacity,player.tuning.shield_capacity,player.tuning.armor_capacity)):create_hud()
 	update_flag_visuals()
-	if finished and not results_shown: results_shown=true; show_results()
+	if finished and not results_shown and not replay_active: results_shown=true; show_results()
 	if not is_instance_valid(hud_top): return
 	if is_instance_valid(rank_badge):rank_badge.update_rating(player.rank_human if ranked.channel=="human" else player.rank_practice,ranked.channel,player.kills,player.deaths,not matchmaking.active)
 	if hud_top.visible:
@@ -595,7 +603,7 @@ func _process(delta: float) -> void:
 	for item in kill_feed:
 		if item.until>now:feed_text+=item.text+"\n"
 	if hud_feed.text!=feed_text:hud_feed.text=feed_text
-	var show_board=context=="scoreboard" or (context=="playing" and Input.is_action_pressed("scoreboard"))
+	var show_board=bool(replay_state.get("scoreboard",false)) if replay_active else (context=="scoreboard" or (context=="playing" and Input.is_action_pressed("scoreboard")))
 	if scoreboard.visible!=show_board:
 		scoreboard.visible=show_board
 		if show_board:scoreboard.refresh(true)
@@ -633,6 +641,10 @@ func scoreboard_summary() -> String:
 		text+="\n"
 	return text
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(film_viewer):
+		if film_viewer.input(event):get_viewport().set_input_as_handled()
+		return
+	if AncientNestDiscordShortcut.is_open(): return
 	if running and context=="scoreboard" and is_escape_key(event):
 		if is_instance_valid(accounts.service_dialog):accounts.service_dialog.queue_free()
 		scoreboard.end_inspection();get_viewport().set_input_as_handled();return
@@ -656,6 +668,8 @@ func _input(event: InputEvent) -> void:
 		if event is InputEventKey and event.keycode==KEY_ESCAPE: binding_action=""; get_viewport().set_input_as_handled(); show_settings(); return
 		if event is InputEventKey:
 			var code=event.physical_keycode
+			if code==KEY_I:
+				binding_action="";show_settings();info("Reserved shortcut","I opens the Discord dashboard. Choose another key for this action.");get_viewport().set_input_as_handled();return
 			for action in draft_keys:
 				if action!=binding_action and draft_keys[action]==code:
 					binding_action=""; show_settings(); info("Binding conflict",OS.get_keycode_string(code)+" is assigned to "+action+". Choose another key."); get_viewport().set_input_as_handled(); return
@@ -682,7 +696,7 @@ func _input(event: InputEvent) -> void:
 			"lobby": leave_custom_lobby()
 			"character": show_lobby()
 			"rating", "play", "armory", "player": show_main()
-			"matchmaking":leave_matchmaking()
+			"matchmaking", "server_browser":leave_matchmaking()
 			"matchmaking_ranks":set_meta("rank_guide",false);show_matchmaking()
 		return
 	if context=="playing" and event.is_action_pressed("chat"):
@@ -723,7 +737,7 @@ func show_pause() -> void:
 	v.add_child(button("Back to Nest Forge" if is_instance_valid(forge_editor) else "Return to Lobby",leave_dialog))
 	v.add_child(button("Quit Game",quit_dialog))
 	v.add_child(button("Connection Details",show_connection_details))
-	v.add_child(label("Nu: Q · Grenade type: B · Wield sword: 3\nMove: %s / %s / %s / %s · Jump: %s · Crouch: %s\nReload: %s · Interact: %s · Melee: %s · Grenade: %s\nWeapons: %s / Wheel · Scoreboard: %s · Chat: %s"%[prefs.key_label("forward"),prefs.key_label("left"),prefs.key_label("backward"),prefs.key_label("right"),prefs.key_label("jump"),prefs.key_label("crouch"),prefs.key_label("reload"),prefs.key_label("interact"),prefs.key_label("melee"),prefs.key_label("grenade"),prefs.key_label("switch_weapon"),prefs.key_label("scoreboard"),prefs.key_label("chat")],13,MUTED))
+	v.add_child(label("Nu: %s · Grenade type: %s · Melee weapon: %s\nMove: %s / %s / %s / %s · Jump: %s · Crouch: %s\nReload: %s · Interact: %s · Melee: %s · Grenade: %s\nCycle weapons: %s / Wheel · Primary: %s · Secondary: %s · Scoreboard: %s · Chat: %s"%[prefs.key_label("nu"),prefs.key_label("grenade_type"),prefs.key_label("sword"),prefs.key_label("forward"),prefs.key_label("left"),prefs.key_label("backward"),prefs.key_label("right"),prefs.key_label("jump"),prefs.key_label("crouch"),prefs.key_label("reload"),prefs.key_label("interact"),prefs.key_label("melee"),prefs.key_label("grenade"),prefs.key_label("switch_weapon"),prefs.key_label("primary_weapon"),prefs.key_label("secondary_weapon"),prefs.key_label("scoreboard"),prefs.key_label("chat")],13,MUTED))
 	focus_later(resume_button)
 func resume_game() -> void:
 	clear_screen(); current_screen="playing"; context="playing"; clear_held_input(); capture_mouse()
@@ -769,21 +783,31 @@ func open_settings(caller: String) -> void:
 	settings_caller=caller; settings_tab="Controls";preferences_query=""
 	draft=prefs.values.duplicate(true); draft_keys=prefs.keys.duplicate(true)
 	show_settings()
+func open_discord_settings(caller: String) -> void:
+	open_settings(caller)
+	settings_tab="Discord"
+	filter_preferences()
+func open_discord_dashboard() -> void:
+	AncientNestDiscordShortcut.open_dashboard(self)
 func show_settings() -> void:
 	current_screen="settings"; context="settings"; clear_screen(); shade(0.82); Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
-	var v=center_panel(1080,790); header(v,"PERSONAL PREFERENCES", "Settings")
+	var viewport_size=get_viewport().get_visible_rect().size
+	var v=center_panel(minf(1080,viewport_size.x-32),minf(790,viewport_size.y-32)); header(v,"PERSONAL PREFERENCES", "Settings")
+	if viewport_size.y<650:
+		v.add_theme_constant_override("separation",8);v.get_child(0).hide();v.get_child(1).add_theme_font_size_override("font_size",28)
 	preferences_groups.clear();preferences_headings.clear();preferences_buttons.clear()
 	preferences_search=LineEdit.new();preferences_search.name="PreferencesSearch";preferences_search.placeholder_text="Search all preferences · sensitivity, resolution, sound, radar…";preferences_search.clear_button_enabled=true;preferences_search.text=preferences_query;v.add_child(preferences_search)
+	preferences_search.add_theme_color_override("font_placeholder_color",Color("3f5448"))
 	preferences_search.text_changed.connect(func(value):preferences_query=value;filter_preferences())
 	preferences_results=label("",12,MUTED);v.add_child(preferences_results)
-	var tabs=HBoxContainer.new(); tabs.add_theme_constant_override("separation",12); v.add_child(tabs)
-	for tab_name in ["Controls","Video","Audio","HUD"]:
-		var b=button(tab_name,func(): settings_tab=tab_name;preferences_query="";preferences_search.text="";filter_preferences(),175)
+	var tabs=HFlowContainer.new(); tabs.add_theme_constant_override("h_separation",12); v.add_child(tabs)
+	for tab_name in ["Controls","Video","Audio","HUD","Discord"]:
+		var b=button(tab_name,func(): settings_tab=tab_name;preferences_query="";preferences_search.text="";filter_preferences(),90 if viewport_size.x<800 else 130)
 		if tab_name==settings_tab: b.add_theme_color_override("font_color",GOLD)
 		tabs.add_child(b);preferences_buttons[tab_name]=b
 	var scroll=ScrollContainer.new(); scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL; v.add_child(scroll)
 	var groups=VBoxContainer.new();groups.size_flags_horizontal=Control.SIZE_EXPAND_FILL;groups.add_theme_constant_override("separation",16);scroll.add_child(groups)
-	for category in ["Controls","Video","Audio","HUD"]:
+	for category in ["Controls","Video","Audio","HUD","Discord"]:
 		var heading=label(category.to_upper(),16,GOLD);groups.add_child(heading);preferences_headings[category]=heading
 		var body=VBoxContainer.new();body.size_flags_horizontal=Control.SIZE_EXPAND_FILL;body.add_theme_constant_override("separation",14);groups.add_child(body);preferences_groups[category]=body
 		build_preferences_category(body,category)
@@ -794,19 +818,25 @@ func show_settings() -> void:
 	var spacer=Control.new(); spacer.size_flags_horizontal=Control.SIZE_EXPAND_FILL; f.add_child(spacer)
 	f.add_child(button("Apply",apply_draft,190))
 func filter_preferences() -> void:
+	var dashboard_only=settings_tab=="Discord" and preferences_query.strip_edges().is_empty()
+	preferences_search.visible=not dashboard_only;preferences_results.visible=not dashboard_only
 	if is_instance_valid(preferences_reset):preferences_reset.text="Reset "+settings_tab+" Defaults"
 	var total=0
 	for category in preferences_groups:
 		var group: Control=preferences_groups[category]
 		var count=NestMenuSearch.filter_group(group,preferences_query,category)
 		group.visible=(category==settings_tab) if preferences_query.strip_edges().is_empty() else count>0
-		preferences_headings[category].visible=group.visible
+		preferences_headings[category].visible=group.visible and not (dashboard_only and category=="Discord")
 		if group.visible:total+=count
-		preferences_buttons[category].add_theme_color_override("font_color",GOLD if category==settings_tab and preferences_query.is_empty() else IVORY)
+		preferences_buttons[category].add_theme_color_override("font_color",Color("5c491c") if category==settings_tab and preferences_query.is_empty() else Color("124c38"))
 	preferences_results.text="Choose a category, or search across all preferences." if preferences_query.strip_edges().is_empty() else ("%d matching entries across all preferences"%total if total>0 else "No matching preferences. Try another term or clear search.")
 func build_preferences_category(body: VBoxContainer, category: String) -> void:
+	if category=="Discord":
+		var dashboard=load("res://addons/ancient_nest/discord_dashboard.gd").new();dashboard.game=self;body.add_child(dashboard);return
 	match category:
 		"Controls":
+			check_row(body,"Allow my PC to host online matches","allow_host")
+			check_row(body,"Record films and my local perspective (29 Hz)","record_films")
 			slider_row(body,"Mouse sensitivity","sensitivity",0.1,20,0.05)
 			slider_row(body,"Zoom sensitivity multiplier","aim_sensitivity",0.5,1.5,0.05)
 			slider_row(body,"Zoom feel tweak","zoom_feel_tweak",0.5,1.5,0.05)
@@ -818,7 +848,7 @@ func build_preferences_category(body: VBoxContainer, category: String) -> void:
 			var grid=GridContainer.new(); grid.columns=2; grid.add_theme_constant_override("h_separation",20); body.add_child(grid)
 			for action in NestPreferences.KEYS:
 				var h=HBoxContainer.new(); h.custom_minimum_size.x=450; grid.add_child(h)
-				var l=label(action.replace("_"," ").capitalize(),15); l.size_flags_horizontal=Control.SIZE_EXPAND_FILL; h.add_child(l)
+				var l=label("Melee weapon" if action=="sword" else action.replace("_"," ").capitalize(),15); l.size_flags_horizontal=Control.SIZE_EXPAND_FILL; h.add_child(l)
 				var bind=button(OS.get_keycode_string(draft_keys[action]),func(): binding_action=action; binding_button=bind_button_for(action),165)
 				bind.set_meta("action",action); h.add_child(bind)
 			body.add_child(label("Aim with the mouse · Fire: Left Mouse · Wheel: switch weapon\nZoom: Right Mouse or Zoom key · Battle rifle 2× · Sniper 5× / 10×.\nZoom sensitivity follows tan(FOV/2), so 2× is ~0.5 speed and 10× is ~0.1 speed at multiplier 1.00.\nEnemy-hover slowdown stacks on top and never moves the aim for you.",13,MUTED))
@@ -920,7 +950,8 @@ func slider_row(parent: VBoxContainer, name: String, key: String, minimum: float
 func check_row(parent: VBoxContainer, name: String, key: String) -> void:
 	var check=CheckButton.new(); check.text=name; check.button_pressed=draft[key]; parent.add_child(check); check.toggled.connect(func(on): draft[key]=on)
 func restore_tab() -> void:
-	var keys_for_tab={"Controls":["nu_sensitivity","nu_flight_assist","sensitivity","aim_sensitivity","zoom_feel_tweak","hover_sensitivity_multiplier","invert_y","chat"],"Video":["exclusive_fullscreen","render_scale","antialiasing","graphics_quality","fullscreen","resolution_width","resolution_height","aspect_ratio","vsync","shadows","fps_limit","fov"],"Audio":["master","effects"],"HUD":["hud_scale","hud_opacity","radar","crosshair","crosshair_color","crosshair_size","crosshair_gap","dynamic_crosshair","naki_radar_size","annu_radar_size","naki_radar_corner","annu_radar_corner","radar_background_opacity","radar_sweep","radar_colorblind"]}
+	if settings_tab=="Discord":AncientNestDiscordVoice.reset_voice_preferences();show_settings();return
+	var keys_for_tab={"Controls":["record_films","allow_host","nu_sensitivity","nu_flight_assist","sensitivity","aim_sensitivity","zoom_feel_tweak","hover_sensitivity_multiplier","invert_y","chat"],"Video":["exclusive_fullscreen","render_scale","antialiasing","graphics_quality","fullscreen","resolution_width","resolution_height","aspect_ratio","vsync","shadows","fps_limit","fov"],"Audio":["master","effects"],"HUD":["hud_scale","hud_opacity","radar","crosshair","crosshair_color","crosshair_size","crosshair_gap","dynamic_crosshair","naki_radar_size","annu_radar_size","naki_radar_corner","annu_radar_corner","radar_background_opacity","radar_sweep","radar_colorblind"]}
 	if settings_tab=="Audio":
 		for bus in prefs.audio_buses:
 			if not bus.slider.key in keys_for_tab.Audio:keys_for_tab.Audio.append(bus.slider.key)
@@ -943,6 +974,7 @@ func settings_back() -> void:
 func return_from_settings() -> void:
 	if settings_caller=="pause" and running: show_pause()
 	elif settings_caller=="lobby":show_lobby()
+	elif settings_caller=="matchmaking":show_matchmaking()
 	else: restore_focus="Settings"; show_main()
 func apply_draft() -> void:
 	if display_until>0: return
@@ -1047,6 +1079,9 @@ func network_match_started() -> void:
 	if is_instance_valid(forge_editor):forge_editor.close_ui()
 	close_username_dialog()
 	clear_screen(); current_screen="playing"; context="playing"; results_shown=false; create_hud(); hud.visible=true
+	# Frozen matchmaking UI can select the overhead camera after actors spawn.
+	# Reclaim the local view on resume as well as on the initial actor creation.
+	if is_instance_valid(player) and is_instance_valid(player.camera):player.camera.make_current()
 func show_character(faction: int) -> void:
 	current_screen="character"; context="menu"; clear_screen(); shade(0.86)
 	var v=center_panel(1140,760)
@@ -1105,6 +1140,7 @@ func update_menu_music(delta: float) -> void:
 
 func show_username_dialog() -> void:
 	if running:return
+	if accounts != null and accounts.linked():accounts.show_panel();return
 	if is_instance_valid(modal) and modal.visible:modal.grab_focus();return
 	get_tree().root.gui_embed_subwindows=true
 	var dialog=ConfirmationDialog.new();dialog.name="UsernameDialog";dialog.theme=screen.get_parent().theme;dialog.title="Choose Your Username";dialog.ok_button_text="Save Username";dialog.cancel_button_text="Cancel";dialog.dialog_hide_on_ok=false
@@ -1140,12 +1176,25 @@ func round_restarted_ui() -> void:
 
 func open_matchmaking() -> void:
 	if running:return
-	if network_active:lobby_network.leave_lobby()
+	if network_active and not film_retaining_transport:lobby_network.leave_lobby()
 	matchmaking.active=true;matchmaking.phase="idle";matchmaking.open_party();show_matchmaking()
+func open_server_browser() -> void:
+	if running:return
+	if network_active and not film_retaining_transport:lobby_network.leave_lobby()
+	matchmaking.browser_mode=true;matchmaking.browser_lobbies.clear();matchmaking.browser_loaded=false;matchmaking.browser_refresh_at=0
+	if not matchmaking.active:
+		matchmaking.active=true;matchmaking.phase="idle";matchmaking.open_party()
+	show_server_browser()
+func show_server_browser() -> void:
+	load("res://scripts/server_browser.gd").show(self)
 func show_matchmaking() -> void:
 	NestMatchmakingScreen.show(self)
 func matchmaking_ui_changed() -> void:
+	if replay_active:return
 	if matchmaking.dedicated:return
+	if current_screen=="settings":return
+	if matchmaking.browser_mode and not running and matchmaking.phase in ["idle","party","connecting","error"]:
+		show_server_browser();return
 	if matchmaking.active and (not running or matchmaking.blocks_simulation()):show_matchmaking()
 func leave_matchmaking() -> void:
 	matchmaking.leave();hud.visible=false;show_main()

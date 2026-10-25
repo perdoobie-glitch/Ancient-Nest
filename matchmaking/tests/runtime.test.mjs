@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Miniflare } from "miniflare";
@@ -14,7 +15,7 @@ const pem = (bytes) =>
 async function setup(options = {}) {
   const mf = new Miniflare({
     modules: true,
-    scriptPath: new URL("../dist/worker.js", import.meta.url).pathname,
+    scriptPath: fileURLToPath(new URL("../dist/worker.js", import.meta.url)),
     compatibilityDate: "2026-08-06",
     durableObjects: {
       MATCHMAKER: { className: "Matchmaker", useSQLite: true },
@@ -363,7 +364,7 @@ test('real accounts Worker issues key-bound assertions accepted by the matchmaki
   const { build } = await import('esbuild');
   const { readFile, readdir } = await import('node:fs/promises');
   const accountRoot = new URL('../../ancient-nest-accounts/', import.meta.url);
-  const bundle = await build({ entryPoints: [new URL('src/index.js', accountRoot).pathname], bundle: true, write: false, format: 'esm', platform: 'browser' });
+  const bundle = await build({ entryPoints: [fileURLToPath(new URL('src/index.js', accountRoot))], bundle: true, write: false, format: 'esm', platform: 'browser' });
   const accounts = new Miniflare({ modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-08-01', d1Databases: ['DB'],
     bindings: { JWT_SECRET: 'test-cross-worker-jwt-secret-at-least-32', COORDINATOR_API_KEY: 'test-cross-worker-coordinator-secret-at-least-32', DISCORD_CLIENT_ID: '1562796619722793010', DISCORD_CLIENT_SECRET: 'test-cross-worker-discord-secret' },
     serviceBindings: { DISCORD_HTTP: async request => {
@@ -390,6 +391,8 @@ test('real accounts Worker issues key-bound assertions accepted by the matchmaki
       const response = await accounts.dispatchFetch('https://accounts.local/auth/discord/exchange', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ code:id,code_verifier:'A'.repeat(43),redirect_uri:'http://127.0.0.1:4567/callback' }) });
       assert.equal(response.status,200);
       const login = await response.json();
+      const named = await accounts.dispatchFetch('https://accounts.local/profile/username', { method: 'POST', headers: {'Content-Type':'application/json', Authorization:'Bearer '+login.token}, body: JSON.stringify({username:'Nest_'+id}) });
+      assert.equal(named.status,200);
       clients.push(await client(master, 'duel_1v1', async public_key => {
         const result = await accounts.dispatchFetch('https://accounts.local/api/game/assertion', { method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+login.token},body:JSON.stringify({public_key}) });
         assert.equal(result.status,200);return (await result.json()).assertion;

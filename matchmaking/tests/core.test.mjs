@@ -1,7 +1,26 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { rankHosts, majority, balancedTeams, PLAYLISTS } from "../dist/core.js";
+import { rankHosts, snapshotTicksForHost, majority, balancedTeams, PLAYLISTS } from "../dist/core.js";
 const people = ["a", "b", "c", "d", "e", "f"];
+test("snapshot rate uses actual outgoing routes, room size and CPU headroom",()=>{
+ const capacity={cpu_p95_ms:4,logical_cpus:8,samples:180};
+ const reports={a:{b:{bytes:500000,seconds:1}},b:{a:{bytes:70000,seconds:1}}};
+ assert.equal(snapshotTicksForHost("a",["a","b"],reports,capacity),2,"Slow host upload cannot be hidden by fast incoming traffic");
+ reports.b.a.bytes=200000;
+ assert.equal(snapshotTicksForHost("a",["a","b"],reports,capacity),2,"Default remains 30 Hz even on fast links");
+ assert.equal(snapshotTicksForHost("a",["a","b"],reports,capacity,60),1,"Explicit fast two-player link permits 60 Hz");
+ assert.equal(snapshotTicksForHost("a",["a","b"],reports,{...capacity,cpu_p95_ms:11}),2,"Busy host retains 30 Hz");
+ assert.equal(snapshotTicksForHost("a",["a","b"],reports),2,"Missing CPU measurement cannot enable 60 Hz");
+ const room=["a","b","c","d","e","f","g","h","i","j"];
+ const all=Object.fromEntries(room.filter(p=>p!=="a").map(p=>[p,{a:{bytes:70000,seconds:1}}]));
+ assert.equal(snapshotTicksForHost("a",room,all,capacity),3,"Large room on a marginal upload retains 20 Hz");
+ for(const p of room.filter(p=>p!=="a"))all[p].a.bytes=180000;
+ assert.equal(snapshotTicksForHost("a",room,all,capacity),2,"Moderate upload supports 30 Hz");
+ for(const p of room.filter(p=>p!=="a"))all[p].a.bytes=350000;
+ assert.equal(snapshotTicksForHost("a",room,all,capacity,60),1,"Explicit large room requires more upload headroom for 60 Hz");
+ delete all.j;
+ assert.equal(snapshotTicksForHost("a",room,all,capacity),3,"Missing outgoing route selects conservative cadence");
+});
 const fixture = () =>
   Object.fromEntries(
     people.map((observer) => [
@@ -120,4 +139,9 @@ test('low upload candidate loses eligibility even with slightly better ping',()=
 });
 test('overloaded host is excluded without changing peer connectivity requirements',()=>{
  const r=fixture();assert(!rankHosts(people,r,{f:{cpu_p95_ms:25,logical_cpus:4,samples:60}}).includes('f'));
+});
+test('unwilling players remain players but cannot be elected host',()=>{
+ const r=fixture();
+ assert(!rankHosts(people,r,{a:{cpu_p95_ms:1,logical_cpus:8,samples:180,allow_host:false}}).includes('a'));
+ assert.deepEqual(rankHosts(people,r,Object.fromEntries(people.map(p=>[p,{cpu_p95_ms:1,logical_cpus:8,samples:180,allow_host:false}]))),[]);
 });

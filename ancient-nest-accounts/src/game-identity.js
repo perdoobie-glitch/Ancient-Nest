@@ -1,4 +1,5 @@
 import { SignJWT } from 'jose';
+import { needsGameUsername } from './game-profile.js';
 
 const audience = 'ancient-nest-matchmaking';
 const encoder = new TextEncoder();
@@ -12,6 +13,7 @@ export function gameIdentity({ HttpError, json, body, bearer, authenticate, rate
     const value = await body(request);
     if (path === '/api/game/assertion') {
       const auth = await authenticate(bearer(request), db, key);
+      if (needsGameUsername(auth.record)) throw new HttpError(409, 'game_username_required');
       await rateLimit(db, key, 'game-assertion', auth.user.id, 30);
       const pem = value.public_key;
       if (typeof pem !== 'string' || pem.length > 3000 || !pem.startsWith('-----BEGIN PUBLIC KEY-----') || !pem.includes('-----END PUBLIC KEY-----')) {
@@ -37,6 +39,7 @@ export function gameIdentity({ HttpError, json, body, bearer, authenticate, rate
     await rateLimit(db, key, 'game-verify-ip', request.headers.get('CF-Connecting-IP') ?? 'local', 1200);
     try {
       const auth = await authenticate(value.assertion, db, key, audience);
+      if (needsGameUsername(auth.record)) return json({ valid: false }, 401);
       if (auth.claims.kind !== 'game-assertion' || auth.claims.key_hash !== value.key_hash) return json({ valid: false }, 401);
       return json({ valid: true, account_id: auth.user.id, username: auth.user.username, key_hash: value.key_hash });
     } catch (error) {

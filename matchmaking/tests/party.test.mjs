@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Miniflare } from "miniflare";
@@ -14,7 +15,7 @@ const pem = (bytes) =>
 async function setup(options = {}) {
   const mf = new Miniflare({
     modules: true,
-    scriptPath: new URL("../dist/worker.js", import.meta.url).pathname,
+    scriptPath: fileURLToPath(new URL("../dist/worker.js", import.meta.url)),
     compatibilityDate: "2026-08-06",
     durableObjects: {
       MATCHMAKER: { className: "Matchmaker", useSQLite: true },
@@ -93,6 +94,100 @@ async function action(c,type,extra={},reply="party") {
 async function party(c){return c.wait("party");}
 async function closeAll(mf,cs){try {for(const c of cs){try{c.ws.close();}catch{}}}finally{await mf.dispose();}}
 
+test("browser lists public custom lobbies, enforces capacity and owner start, then starts unranked WebRTC",async()=>{
+ const mf=await setup(),cs=[];
+ try{
+  const a=await client(mf),b=await client(mf),c=await client(mf);cs.push(a,b,c);
+  assert((await party(a)).server_browser_supported);
+  assert.match((await action(a,"custom_create",{name:"Bad",mode:9,map:0,matchup:0,capacity:2},"party_error")).reason,/valid/);
+  const created=await action(a,"custom_create",{name:"Mirror Duel",mode:2,map:4,matchup:2,capacity:2});
+  assert.equal(created.custom.name,"Mirror Duel");
+  assert.match((await action(a,"custom_start",{},"party_error")).reason,/two players/);
+  const list=await action(b,"browse",{},"server_list");
+  assert.deepEqual(Object.keys(list.lobbies[0]).sort(),["capacity","code","host","map","matchup","mode","name","players"].sort());
+  assert.equal(list.lobbies[0].code,created.code);
+  await action(a,"privacy",{privacy:"private"});
+  assert.equal((await action(b,"browse",{},"server_list")).lobbies.length,0);
+  await action(a,"privacy",{privacy:"open"});
+  assert.equal((await action(b,"join",{code:created.code})).members.length,2);
+  assert.match((await action(c,"join",{code:created.code},"party_error")).reason,/full/);
+  assert.match((await action(b,"custom_start",{},"party_error")).reason,/owner/);
+  assert.match((await action(a,"search",{},"party_error")).reason,/Start Game/);
+  await action(a,"custom_start");
+  const probe=await a.wait("collect_telemetry");
+  assert.equal(probe.config.custom,true);assert.equal(probe.config.map,4);assert.equal(probe.config.matchup,2);
+  assert.deepEqual(Object.values(probe.roster).map(m=>m.faction).sort(),[0,1]);
+  assert.equal((await action(c,"browse",{},"server_list")).lobbies.length,0);
+  assert.match((await action(c,"join",{code:created.code},"party_error")).reason,/Cancel search|already/);
+  for(const player of [a,b]){const other=player===a?b:a;player.ws.send(JSON.stringify({type:"telemetry",epoch:probe.epoch,round:probe.round,routes:{[other.user]:{rtts:Array(50).fill(20),bytes:120000,seconds:1.5}}}));}
+  await Promise.race([a.wait("host_offer"),b.wait("host_offer")]);
+  const host=[a,b].find(player=>player.events.some(e=>e.type==="host_offer"));
+  const offer=host.events.findLast(e=>e.type==="host_offer");assert.equal(offer.config.custom,true);
+  assert(!a.events.some(e=>e.type==="voting"));host.ws.send(JSON.stringify({type:"host_ready",epoch:offer.epoch}));
+  for(const player of [a,b]){await player.wait("connect");player.ws.send(JSON.stringify({type:"loaded",epoch:offer.epoch}));}
+  await a.wait("resume");await b.wait("resume");
+  const heartbeat=setInterval(()=>{for(const player of [a,b])player.ws.send(JSON.stringify({type:"heartbeat",epoch:offer.epoch}));},500);
+  try{
+   host.ws.send(JSON.stringify({type:"complete",epoch:offer.epoch}));
+   const until=Date.now()+16000;
+   while(Date.now()<until&&!a.events.some(e=>e.type==="return_queue"))await pause(100);
+   assert(a.events.some(e=>e.type==="return_queue"),"Custom completion returns to its lobby");
+   assert(!a.events.some(e=>e.type==="result_status"&&e.status==="pending_review"));
+   const restored=await action(a,"sync");assert.equal(restored.searching,false);assert.equal(restored.custom.name,"Mirror Duel");
+  }finally{clearInterval(heartbeat);}
+ }finally{await closeAll(mf,cs);}
+});
+
+test("TURN failure returns both players to a retryable party and recovery uses one credential request",async()=>{
+ const ids=["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"];
+ let working=false,turnCalls=0;
+ const mf=await setup({bindings:{ALLOW_GUESTS:"false",LOCAL_TEST:"true",ACCOUNT_API:"https://account.test",COORDINATOR_API_KEY:"fixture-coordinator-key-12345678901234567890",TURN_KEY_ID:"fixture-turn-id",TURN_KEY_API_TOKEN:"fixture-token-not-a-real-secret"},outboundService:async req=>{
+  const url=new URL(req.url);
+  if(url.hostname==='rtc.live.cloudflare.com'){
+   turnCalls++;return working?Response.json({iceServers:[{urls:['turn:turn.cloudflare.com:3478?transport=udp'],username:'fixture-user',credential:'fixture-credential'}]},{status:201}):new Response('provider response must not be exposed',{status:403});
+  }
+  const data=await req.json();
+  if(url.pathname==='/api/game/verify')return Response.json({valid:true,account_id:data.assertion,key_hash:data.key_hash,username:ids.indexOf(data.assertion)?'Friend':'Player'});
+  if(url.pathname==='/api/game/profile')return Response.json({playlists:{}});
+  if(url.pathname==='/api/internal/players/ratings')return Response.json({ratings:Object.fromEntries(data.account_ids.map(id=>[id,Object.fromEntries(['duel_1v1','doubles_2v2','tactical_3v3','arena_4v4','bomb_defuse_5v5'].map(p=>[p,1]))]))});
+  throw Error('Unexpected fixture route');
+ }}),cs=[];
+ try{
+  for(const id of ids)cs.push(await client(mf,'duel_1v1',id));
+  await action(cs[0],'search');await action(cs[1],'search');
+  for(const c of cs){
+   const error=await c.wait('party_error');assert.match(error.reason,/TURN.*HTTP 403/);
+   assert.equal((await party(c)).searching,false);
+   assert(!JSON.stringify(error).includes('fixture-token')&&!JSON.stringify(error).includes('provider response'));
+   assert(!c.events.some(e=>e.type==='collect_telemetry'));
+  }
+  working=true;
+  await action(cs[0],'search');await action(cs[1],'search');
+  for(const c of cs)assert.equal(Object.keys((await c.wait('collect_telemetry')).roster).length,2);
+  assert.equal(turnCalls,2);
+ }finally{await closeAll(mf,cs);}
+});
+
+test("lobby privacy is leader-controlled, blocks code-only joins and rotates private invitations",async()=>{
+ const mf=await setup(),cs=[];
+ try{
+  const a=await client(mf,"tactical_3v3"),b=await client(mf,"tactical_3v3"),c=await client(mf,"tactical_3v3");cs.push(a,b,c);
+  const initial=await party(a);assert.equal(initial.privacy,"open");assert(initial.lobby_privacy_supported);
+  const closed=await action(a,"privacy",{privacy:"private"});assert.match(closed.invite_token,/^[a-f0-9]{32}$/);assert.notEqual(closed.invite_token,initial.invite_token);
+  assert.match((await action(b,"join",{code:closed.code},"party_error")).reason,/private/);
+  assert.match((await action(b,"join",{code:closed.code,invite_token:"wrong"},"party_error")).reason,/private/);
+  assert.equal((await action(b,"join",{code:closed.code,invite_token:closed.invite_token})).members.length,2);
+  assert.match((await action(b,"privacy",{privacy:"open"},"party_error")).reason,/leader/);
+  await action(b,"leave");
+  const refreshed=await action(a,"sync");assert.notEqual(refreshed.invite_token,closed.invite_token);
+  assert.match((await action(c,"join",{code:closed.code,invite_token:closed.invite_token},"party_error")).reason,/private/);
+  assert.match((await action(a,"privacy",{privacy:"invalid"},"party_error")).reason,/Invalid/);
+  assert.equal((await action(a,"privacy",{privacy:"open"})).privacy,"open");
+  assert.equal((await action(c,"join",{code:closed.code})).members.length,2);
+  await action(a,"search");assert.match((await action(a,"privacy",{privacy:"private"},"party_error")).reason,/Cancel search/);
+ }finally{await closeAll(mf,cs);}
+});
+
 test("party opens without searching; team-size limit, leadership and repeated search enforced",async()=>{
  const mf=await setup(),cs=[];
  try{
@@ -139,7 +234,7 @@ test("leaving cancels whole-party search and transfers leader; invite errors pre
   const remaining=await party(b);assert.equal(remaining.leader,b.user);assert.equal(remaining.searching,false);assert.equal(remaining.members.length,1);
   assert.match((await action(a,"join",{code:"BADCODE"},"party_error")).reason,/not found/);
   assert.equal((await action(a,"sync")).leader,a.user);
-  await action(a,"join",{code:old});await action(b,"search");a.ws.close();await pause(100);
+  await action(a,"join",{code:old});await action(b,"search");a.ws.send(JSON.stringify({type:"leave_match"}));await pause(30);a.ws.close();await pause(100);
   const final=await party(b);assert.equal(final.searching,false);assert.equal(final.members.length,1);assert.equal(final.leader,b.user);
  }finally{await closeAll(mf,cs);}
 });

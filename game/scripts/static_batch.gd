@@ -15,7 +15,9 @@ static func build(arena: NestArena) -> Dictionary:
 		if dynamic: continue
 		var transform=arena.global_transform.affine_inverse()*original.global_transform
 		var p=transform.origin
-		var key="%d:%d:%d:%d:%d"%[mat.get_instance_id(),floori(p.x/16),floori(p.y/8),floori(p.z/16),original.cast_shadow]
+		# Wider Sanctuary cells reduce submission cost while retaining separate floors.
+		var cell_width=24.0 if arena.map_selection==0 else 16.0
+		var key="%d:%d:%d:%d:%d"%[mat.get_instance_id(),floori(p.x/cell_width),floori(p.y/8),floori(p.z/cell_width),original.cast_shadow]
 		if not groups.has(key):
 			var tool=SurfaceTool.new(); tool.begin(Mesh.PRIMITIVE_TRIANGLES); tool.set_material(mat)
 			groups[key]={"tool":tool,"shadow":original.cast_shadow}

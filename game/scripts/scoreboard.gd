@@ -30,6 +30,7 @@ func cell(text: String,weight: float,color: Color=Color("eeede2"),center: bool=t
  var l=Label.new();l.text=text;l.clip_text=true;l.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS;l.size_flags_horizontal=Control.SIZE_EXPAND_FILL;l.size_flags_stretch_ratio=weight;l.custom_minimum_size.y=maxf(16,(pixels+8)*scale_factor)
  l.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER if center else HORIZONTAL_ALIGNMENT_LEFT;l.vertical_alignment=VERTICAL_ALIGNMENT_CENTER;l.add_theme_color_override("font_color",color);l.add_theme_font_override("font",load("res://assets/title.ttf" if serif else "res://assets/body.ttf"));l.add_theme_font_size_override("font_size",roundi(pixels*scale_factor));l.mouse_filter=Control.MOUSE_FILTER_IGNORE;return l
 func team_color(faction: int) -> Color:
+ if game.team_characters[0]==game.team_characters[1]:return Color("b73535") if faction==0 else Color("65a675")
  return Color("b73535") if game.team_characters[clampi(faction,0,1)]==1 else Color("7da680")
 func stats_for(actor: NestActor) -> Array:
  if game.mode==game.MODE_CTF:return [actor.kills,actor.deaths,actor.assists,actor.captures,actor.flag_returns,actor.captures]
