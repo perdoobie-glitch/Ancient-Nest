@@ -226,7 +226,7 @@ func show_main() -> void:
 	current_screen="main";context="menu";clear_screen();hud.visible=false
 	menu_camera.current=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	var backdrop=ColorRect.new();backdrop.color=Color("101718");backdrop.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(backdrop);backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var art=TextureRect.new();art.name="SanctuaryMenuArtwork";art.texture=NestMenuSurface.artwork();art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED;art.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(art);art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var art=TextureRect.new();art.name="SanctuaryMenuArtwork";art.texture=NestMenuSurface.artwork();art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.stretch_mode=TextureRect.STRETCH_SCALE;art.mouse_filter=Control.MOUSE_FILTER_IGNORE;screen.add_child(art);art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var size=get_viewport().get_visible_rect().size
 	var panel=PanelContainer.new();panel.name="MainNavigation";screen.add_child(panel);panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	panel.offset_left=24;panel.offset_right=-24;panel.offset_top=-220 if size.x>=1000 else -278;panel.offset_bottom=-12

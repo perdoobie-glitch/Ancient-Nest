@@ -1,6 +1,7 @@
 class_name NestCampaignWorld
 extends NestArena
 var region="preparation"
+var maze: NestCampaignMaze
 var locations={}
 var smoke_volumes=[]
 var cover_points=[]
@@ -36,16 +37,16 @@ func environment_setup():
   var atmosphere=ShaderMaterial.new();atmosphere.shader=load("res://assets/connectuct_atmosphere.gdshader");atmosphere.set_shader_parameter("weather_noise",load("res://assets/stone_noise.png"));atmosphere.set_shader_parameter("low_detail",quality==0);sky.sky_material=atmosphere;sky.radiance_size=Sky.RADIANCE_SIZE_128;sky.process_mode=Sky.PROCESS_MODE_QUALITY
  ambience.background_mode=Environment.BG_SKY;ambience.sky=sky;ambience.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;ambience.ambient_light_color=Color("bed6d2");ambience.ambient_light_energy=.6 if region=="preparation" else .48
  ambience.fog_enabled=true;ambience.fog_light_color=Color("47605a");ambience.fog_density=.001 if region=="preparation" else .006;ambience.tonemap_mode=Environment.TONE_MAPPER_FILMIC
- sun=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-34,-25,0);sun.light_energy=1.0 if region=="preparation" else .85;sun.light_color=Color("ffe4bd");sun.shadow_enabled=quality>0;sun.directional_shadow_mode=DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS;sun.directional_shadow_max_distance=65;add_child(sun)
+ sun=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-34,-25,0);sun.light_energy=.72 if region=="preparation" else .72;sun.light_color=Color("ffe4bd");sun.shadow_enabled=quality>0;sun.directional_shadow_mode=DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS;sun.directional_shadow_max_distance=65;add_child(sun)
  ambience.ambient_light_energy=.38 if region=="preparation" else .35
- ambience.fog_light_color=Color("b4c5bc") if region=="preparation" else Color("697c70")
+ ambience.fog_light_color=Color("b89e97") if region=="preparation" else Color("697c70")
  ambience.fog_density=.0015 if region=="preparation" else .0035
  ambience.fog_sky_affect=0.0
- palette["panel"]=surface("abbcb9","d5d5bc",1,.25)
+ palette["panel"]=surface("8d9f9f","bcc0aa",1,.25)
  palette["hull"]=surface("718c8d","bdc8b6",1,.55)
- palette["soil"]=surface("3a3025","536345",0)
+ palette["soil"]=surface("3a3025","536345",4)
  palette["bark"]=surface("3c2b23","736348",2)
- palette["leaf"]=surface("193c31","71854a",3)
+ palette["leaf"]=surface("193c31","687750",3)
  palette["rock"]=surface("485456","7b806b",0)
  palette["tower_teal"]=surface("426b78","7a9c9a",1,.2)
  palette["tower_copper"]=surface("825c48","b29c76",1,.3)
@@ -84,14 +85,14 @@ func build_preparation():
  station("service",Vector3(-14,0,12),"01 • SUIT / EQUIPMENT CHECK")
  station("calibration",Vector3(-5,0,4),"02 • SHIELD CALIBRATION")
  block(Vector3(-5,1.5,9),Vector3(6,3,.6),white);cover_points.append(Vector3(-5,0,11))
- station("range",Vector3(6,0,3),"03 • SAFE FIRING BAY")
- for x in [3,6,9]:block(Vector3(x,1.4,-10),Vector3(1.1,2.8,.5),kit.gold)
- block(Vector3(6,2,-12),Vector3(15,4,1),white)
+ station("range",Vector3(12,0,3),"03 • SAFE FIRING BAY")
+ for x in [9,12,15]:block(Vector3(x,1.4,-10),Vector3(1.1,2.8,.5),kit.gold)
+ block(Vector3(12,2,-12),Vector3(12,4,1),white)
  block(Vector3(18,1.6,7),Vector3(.5,3.2,16),white);block(Vector3(24,1.6,7),Vector3(.5,3.2,16),white);block(Vector3(21,3.4,7),Vector3(6.5,.4,16),kit.dark)
- block(Vector3(21,2.5,4),Vector3(6,1.1,.4),kit.dark);block(Vector3(21,.2,10),Vector3(5,.4,.5),kit.gold)
+ block(Vector3(21,2.5,4),Vector3(6,1.1,.4),kit.dark);block(Vector3(21,.025,10),Vector3(5,.05,.5),kit.gold,false)
  sign_at(Vector3(21,3,17),"04 • DARK SERVICE PASSAGE / CROUCH • FLASHLIGHT")
  locations["inspection"]=Vector3(21,0,4)
- ship(Vector3(-2,0,-17),false);locations["board"]=Vector3(-2,0,-13);locations["manifest"]=Vector3(-7,0,-8);locations["shield_cover"]=Vector3(-5,0,12)
+ ship(Vector3(-2,0,-17),false);locations["board"]=Vector3(-2,0,-15);locations["manifest"]=Vector3(-7,0,-8);locations["shield_cover"]=Vector3(-5,0,12)
  station("manifest",locations.manifest,"05 • SURVEY CARGO / SEALED CHARGE")
  sign_at(Vector3(-2,4,-7),"EXPEDITION • OLD EARTH\nBOARD AFTER PERSONAL READINESS",Color("a8efd0"),32)
  sign_at(Vector3(-2,2.4,-11),"CABIN • SECURE BOARDING POSITION",Color("93e5ed"),22)
@@ -105,57 +106,54 @@ func build_preparation():
     if str(clip).ends_with("idle"):animator.play(clip);break
  for i in range(5):block(Vector3(-8+i*.45,1.1,-6),Vector3(.2,.2,1.8),kit.gold,false)
  for i in range(3):block(Vector3(-35+i,1,-1),Vector3(.7,1.6,1),kit.gold)
- dress_preparation();build_routes()
+ ship_armory(Vector3(-2,0,-17));dress_preparation();NestCampaignScenery.new(self).city();NestCampaignBase.new(self).build();build_routes()
 func ship(origin: Vector3,crashed: bool):
  var parent=scene_root;ship_root=Node3D.new();ship_root.name="ExpeditionHull";parent.add_child(ship_root);scene_root=ship_root
  var hull=palette.hull
  block(origin+Vector3(0,.12,0),Vector3(12,.24,19),hull)
- for x in [-6,6]:block(origin+Vector3(x,1.9,-1),Vector3(.6,3.8,17),hull)
- block(origin+Vector3(0,3.9,-3),Vector3(12,.35,12),hull);block(origin+Vector3(0,2,-9.4),Vector3(12,4,.5),hull)
- block(origin+Vector3(-14,.9,-3),Vector3(16,.5,6),hull);block(origin+Vector3(14,.9,-3),Vector3(16,.5,6),hull)
- for x in [-4,4]:
-  kit.cylinder(scene_root,origin+Vector3(x,1,-11),1.4,3,kit.dark);kit.sphere(scene_root,origin+Vector3(x,1,-12.5),.8,kit.lamp)
+ NestCampaignShip.new(self,origin).build()
  for z in [-5,-1,3]:
   for x in [-4,4]:block(origin+Vector3(x,.8,z),Vector3(1.2,1.6,1),kit.dark)
  sign_at(origin+Vector3(0,3,7),"ANKI • CONNECTUCT EXPEDITION",Color("a7f4d0"),26)
- if crashed:block(origin+Vector3(8,.8,10),Vector3(7,1.6,2),hull)
- # Ribbing, cockpit glass, navigation strips and equipment fasteners stay with the animated hull.
- for z in [-7,-3,1,5]:
-  for x in [-5.65,5.65]:block(origin+Vector3(x,2,z),Vector3(.12,3.3,.16),kit.dark,false)
- for x in [-3,0,3]:block(origin+Vector3(x,2.5,-9.08),Vector3(2.5,1.1,.08),kit.dark,false)
  for x in [-5,5]:
   block(origin+Vector3(x,.27,0),Vector3(.12,.035,15),kit.gold,false)
-  for z in [-6,0,6]:block(origin+Vector3(x,3.55,z),Vector3(.5,.1,.3),kit.lamp,false)
  scene_root=parent
+func ship_armory(origin: Vector3):
+ var previous=scene_root;scene_root=ship_root
+ for item in [["ship_sniper","plasma_sniper",-2.0,"PLASMA SNIPER"],["ship_assault","plasma_auto",2.0,"PLASMA ASSAULT RIFLE"]]:
+  var p=origin+Vector3(item[2],0,-6)
+  station(item[0],p,item[3]+" / HOLD INTERACT")
+  var art=NestWeaponArt.create(item[1],0);scene_root.add_child(art);art.position=p+Vector3(0,1.6,0);art.scale=Vector3.ONE*.7;art.rotation.y=PI*.5
+ scene_root=previous
 func build_forest():
- ground(Vector2(150,150),palette.soil)
+ ground(Vector2(480,480),palette.soil)
  ship_position=Vector3(0,0,9);ship(ship_position,true)
  locations={"radio":Vector3(-4,0,5),"secure":Vector3(4,0,4),"charge0":Vector3(-13,0,15),"charge1":Vector3(12,0,20),"charge2":Vector3(-8,0,-7),"engine":Vector3(-18,0,-2),"exit":Vector3(0,0,23)}
- station("radio",locations.radio,"EMERGENCY RADIO • LINK DAMAGED")
  station("secure",locations.secure,"SURVIVING CARGO LOCKER")
  charge_mesh=block(locations.charge0+Vector3(0,.45,0),Vector3(1.2,.9,.8),kit.gold,false);charge_sign=sign_at(locations.charge0+Vector3(0,1.6,0),"EXCAVATION CHARGE • ISOLATED",Color("a8efd0"),19)
  secure_mesh=block(locations.secure+Vector3(0,1.8,0),Vector3(.9,.5,.65),kit.gold,false);secure_mesh.visible=false
  station("ammo0",Vector3(-9,0,23),"CARBINE / PISTOL AMMUNITION")
  station("ammo1",Vector3(8,0,25),"ESCAPE SUPPLIES • PISTOL")
  station("ammo2",Vector3(3,0,2),"RESERVE AMMUNITION")
- station("weapon",Vector3(-12,0,8),"DAMAGED CRATE • NAKI PLASMA RIFLE")
+ station("weapon",Vector3(-13,0,20),"DAMAGED CRATE • NAKI PLASMA RIFLE")
  var leaf=palette.leaf;var bark=palette.bark;var rng=RandomNumberGenerator.new();rng.seed=41519
+ var autumn=surface("354c37","8f8051",3)
  for i in range(70):
-  var angle=i*2.399963;var radius=44+float(i%4)*6;var p=Vector3(cos(angle)*radius,0,sin(angle)*radius)
-  var height=rng.randf_range(26,43);kit.cylinder(scene_root,p+Vector3(0,height*.5,0),1.1,height,bark)
+  var angle=i*2.399963;var radius=172+float(i%4)*8;var p=Vector3(cos(angle)*radius,0,sin(angle)*radius)
+  var height=rng.randf_range(26,43);kit.cylinder(scene_root,p+Vector3(0,height*.5,0),1.1,height,bark,true)
   block(p+Vector3(0,.7,0),Vector3(2.1,1.4,2.1),bark)
   for j in range(4):
    var end=p+Vector3(cos(angle+j*1.57)*6,2.2,sin(angle+j*1.57)*6);kit.branch(scene_root,p+Vector3(0,.7,0),end,.5,bark)
    kit.branch(scene_root,p+Vector3(0,height*.68,0),p+Vector3(cos(j*1.7)*7,height*.85,sin(j*1.7)*7),.35,bark)
   for j in range(3):
-   var canopy=kit.sphere(scene_root,p+Vector3(cos(j*2)*4,height-2+j*1.6,sin(j*2)*4),5.5,leaf);canopy.scale=Vector3(1.4,.55,1.3)
- for i in range(15):
-  var angle=i*TAU/15;var p=Vector3(cos(angle)*34,1,sin(angle)*34);block(p,Vector3(6,2,2),bark);cover_points.append(p+Vector3(0,-1,3))
- for p in [Vector3(-16,1,24),Vector3(16,1,17),Vector3(-19,1,-13),Vector3(19,1,-18),Vector3(0,1,34)]:
-  block(p,Vector3(4,2,2.5),kit.stone);cover_points.append(p+Vector3(0,-1,2))
+   if i%5==0:
+    var cone=CylinderMesh.new();cone.top_radius=.25;cone.bottom_radius=6-j;cone.height=8;cone.radial_segments=9
+    kit.mesh(scene_root,cone,p+Vector3(0,height-6+j*2.7,0),leaf)
+   else:
+    var canopy=kit.sphere(scene_root,p+Vector3(cos(j*2)*4,height-2+j*1.6,sin(j*2)*4),5.5,autumn if i%7==0 else leaf);canopy.scale=Vector3(1.4,.55,1.3)
  for x in [-1,1]:
-  block(Vector3(x*52,2,0),Vector3(8,4,110),bark)
-  block(Vector3(0,2,x*52),Vector3(110,4,8),bark)
+  block(Vector3(10+x*106,7,10),Vector3(12,14,224),bark)
+  block(Vector3(10,7,10+x*106),Vector3(224,14,12),bark)
  # These opaque engine-smoke columns have identical gameplay occlusion at all quality levels.
  for p in [Vector3(-19,2,-4),Vector3(19,2,-5)]:
   smoke_volumes.append({"center":p,"radius":3.3});var smoke=kit.material(Color("1d2424"))
@@ -164,16 +162,19 @@ func build_forest():
  for i in range(12 if quality==0 else 32):
   var ash=kit.sphere(scene_root,Vector3(rng.randf_range(-30,30),rng.randf_range(1,9),rng.randf_range(-30,30)),.025,kit.gold);moving.append({"node":ash,"origin":ash.position,"phase":i})
  ancient_light=block(Vector3(8,.04,-13),Vector3(4,.08,.12),kit.lamp,false);ancient_light.visible=false
- for i in range(4):spawns[0].append(Vector3(-3+i*2,0,11))
+ for i in range(4):spawns[0].append(Vector3(-2.1+i*1.4,0,13))
  spawns[1]=[Vector3(-39,0,-22),Vector3(38,0,-18),Vector3(0,0,43)]
- for p in [Vector3(-35,1.8,-21),Vector3(34,1.8,-17),Vector3(0,1.8,38)]:block(p,Vector3(5,3.6,2),kit.stone)
- dress_forest();build_routes()
+ maze=NestCampaignMaze.new(self);maze.build()
+ locations.radio=maze.checkpoints[4]+Vector3(0,0,3);station("radio",locations.radio,"EXPEDITION RELAY / SIGNAL FOR HELP")
+ ancient_light.position=locations.radio+Vector3(5,.04,-3)
+ ship_armory(ship_position);dress_forest();NestCampaignScenery.new(self).forest();build_routes()
 func build_routes():
  nav_points.clear();nav_graph.clear();nav_links.clear()
  rebuild_cover_index()
  var grid={}
- for x in range(-44,45,4):
-  for z in range(-44,45,4):
+ var low=-44 if region=="preparation" else -88;var high=45 if region=="preparation" else 109
+ for x in range(low,high,4):
+  for z in range(low,high,4):
    var p=Vector3(x,0,z)
    if blocked_point(p):continue
    var id=nav_points.size();nav_points.append(p);nav_graph.add_point(id,p);grid[Vector2i(x,z)]=id
@@ -204,18 +205,28 @@ func blocked_point(p: Vector3) -> bool:
   if absf(d.x)<box.size.x*.5+.55 and absf(d.z)<box.size.z*.5+.55:return true
  return false
 func segment_open(a: Vector3,b: Vector3) -> bool:
- for i in range(7):
-  if blocked_point(a.lerp(b,i/6.0)):return false
+ var steps=maxi(6,ceili(a.distance_to(b)/.5))
+ for i in range(steps+1):
+  if blocked_point(a.lerp(b,float(i)/steps)):return false
  return true
 func route(start: Vector3,finish: Vector3,_avoid: Array=[]) -> Array[Vector3]:
  var result: Array[Vector3]=[]
  if segment_open(start,finish):result.append(finish);return result
- var a=nav_graph.get_closest_point(start);var b=nav_graph.get_closest_point(finish)
+ var a=reachable_nav(start);var b=reachable_nav(finish)
  if a>=0 and b>=0:
   for p in nav_graph.get_point_path(a,b):result.append(p)
+  if not result.is_empty():result.append(finish)
  return result
+func reachable_nav(p: Vector3) -> int:
+ var closest=nav_graph.get_closest_point(p)
+ if closest>=0 and segment_open(p,nav_points[closest]):return closest
+ var best=-1;var distance=INF
+ for i in range(nav_points.size()):
+  var d=p.distance_squared_to(nav_points[i])
+  if d<distance and segment_open(p,nav_points[i]):best=i;distance=d
+ return best
 func bot_surface_height(_point: Vector3,_reference: float,_max_delta: float=1.5) -> float:return 0.0
-func has_walk_support(p: Vector3,_tolerance: float=.5) -> bool:return absf(p.x)<70 and absf(p.z)<70
+func has_walk_support(p: Vector3,_tolerance: float=.5) -> bool:return absf(p.x)<70 and absf(p.z)<70 if region=="preparation" else p.x> -90 and p.x<110 and p.z> -90 and p.z<110
 func validate_navigation(_revision: int):pass
 func set_sides(_attacking_faction: int,_names: Array=["NAKI","ANNU"]):pass
 func set_site_visual(_index: int,_stage: String,_clock: float):pass
@@ -250,7 +261,7 @@ func dress_preparation():
  var glass=kit.material(Color("1b5067"),.72);glass.roughness=.22
  var copper=kit.material(Color("a26046"),.55);var blue=kit.material(Color("326887"),.4)
  # Color-coded bay panels and repair infrastructure make the departure route legible.
- for setup in [[Vector3(-14,0,12),Color("478fa0")],[Vector3(-5,0,4),Color("9068a0")],[Vector3(6,0,3),Color("c68b45")],[Vector3(21,0,4),Color("547d63")]]:
+ for setup in [[Vector3(-14,0,12),Color("478fa0")],[Vector3(-5,0,4),Color("9068a0")],[Vector3(12,0,3),Color("c68b45")],[Vector3(21,0,4),Color("547d63")]]:
   var p=setup[0];var paint=kit.material(setup[1],.2)
   for side in [-1,1]:block(p+Vector3(side*1.8,.05,1.5),Vector3(.28,.06,3.2),paint,false)
  for side in [-1,1]:
@@ -319,7 +330,7 @@ func batch_campaign_scenery():
  for parent in [scene_root,ship_root]:
   if parent==null:continue
   for original in parent.get_children():
-   if not original is MeshInstance3D or original in dynamic or not original.visible:continue
+   if not original is MeshInstance3D or original in dynamic or not original.visible or original.get_meta("keep_mesh",false):continue
    var mat=original.material_override
    if mat==null:continue
    var p=original.position;var cell=Vector3i(floori(p.x/16),floori(p.y/12),floori(p.z/16))

@@ -1,0 +1,703 @@
+{
+  "version": 1,
+  "canon": "Continuation of The Last Departure; existing Anki, Brutus, Ancient AI, Relay, Naki and Annu only.",
+  "chapters": [
+    {
+      "index": 2,
+      "title": "Broken Canopy",
+      "briefing": [
+        [
+          "Relay",
+          "The extraction corridor is closed. Reach the floodgate transmitter and we can trace a safe approach."
+        ],
+        [
+          "Brutus",
+          "Four expedition motorcycles survived in the sealed cargo cradle. Take one. Keep your speed up: Annu have the service road covered."
+        ],
+        [
+          "Anki",
+          "The charge comes with us. We are not leaving a weapon in their forest."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "Leave the wreck behind",
+          "action": "Reach the first road marker",
+          "seconds": 2.5,
+          "enemies": 0,
+          "mode": "ride",
+          "dialogue": [
+            "Brutus",
+            "Throttle forward, steer early. Four times walking speed means less time to correct."
+          ]
+        },
+        {
+          "title": "The fallen giants",
+          "action": "Cross the root slalom",
+          "seconds": 2.5,
+          "enemies": 0,
+          "mode": "ride",
+          "dialogue": [
+            "Brutus",
+            "Read the open lane beyond the next trunk. Keep the motorcycle upright."
+          ]
+        },
+        {
+          "title": "Broken river spans",
+          "action": "Clear the ramp crossings",
+          "seconds": 2.5,
+          "enemies": 0,
+          "mode": "ride",
+          "dialogue": [
+            "Brutus",
+            "Build speed before the ramp. Level the motorcycle before you land."
+          ]
+        },
+        {
+          "title": "Annu observation line",
+          "action": "Break the road ambush",
+          "seconds": 2.5,
+          "enemies": 0,
+          "mode": "ride",
+          "dialogue": [
+            "Brutus",
+            "They are tracking slow targets. A clean landing is better protection than stopping here."
+          ]
+        },
+        {
+          "title": "The old haul road",
+          "action": "Ride through the quarry switchbacks",
+          "seconds": 2.5,
+          "enemies": 0,
+          "mode": "ride",
+          "dialogue": [
+            "Brutus",
+            "Brake before the bend, accelerate as it opens."
+          ]
+        },
+        {
+          "title": "Floodgate approach",
+          "action": "Park at the floodgate relay",
+          "seconds": 2.5,
+          "enemies": 0,
+          "mode": "ride",
+          "dialogue": [
+            "Brutus",
+            "The pumping station is ahead. Leave the bikes in cover; we continue on foot."
+          ]
+        }
+      ],
+      "ending": [
+        [
+          "Anki",
+          "Why does the road lead into a reservoir?"
+        ],
+        [
+          "Brutus",
+          "It did not when our maps were drawn. The floodgate can lower the freight channel."
+        ]
+      ],
+      "duration_target_seconds": 300
+    },
+    {
+      "index": 3,
+      "title": "The Floodgate",
+      "briefing": [
+        [
+          "Brutus",
+          "The drowned freight causeway is our route inland. Restore the intake, open the bypass, and drain the lower basin."
+        ],
+        [
+          "Anki",
+          "That water feeds their settlements. Lower the channel, not the reservoir."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "Restore intake pressure",
+          "action": "Turn the intake isolation valve",
+          "seconds": 2.5,
+          "enemies": 6,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "Open the valve slowly; the old bearings are still carrying pressure."
+          ]
+        },
+        {
+          "title": "Open the bypass",
+          "action": "Hold the bypass valve open",
+          "seconds": 2.5,
+          "enemies": 7,
+          "mode": "hold",
+          "dialogue": [
+            "Brutus",
+            "Keep the bypass open while pressure equalizes. The upper reservoir must stay full."
+          ],
+          "hold_seconds": 14
+        },
+        {
+          "title": "Lower the freight basin",
+          "action": "Engage the channel pumps",
+          "seconds": 2.5,
+          "enemies": 8,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "The lower channel is draining. We have a route without cutting off their water."
+          ]
+        },
+        {
+          "title": "Recover the ancient route",
+          "action": "Read the freight relay",
+          "seconds": 2.5,
+          "enemies": 7,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "This route terminates at Sanctuary. The gold network is still responding."
+          ]
+        }
+      ],
+      "ending": [
+        [
+          "Ancient AI",
+          "Hydraulic balance preserved. Returning survey party acknowledged."
+        ],
+        [
+          "Anki",
+          "It noticed what we chose to protect."
+        ],
+        [
+          "Brutus",
+          "Then we should keep giving it reasons to listen."
+        ]
+      ],
+      "evidence": [
+        [
+          "Brutus",
+          "These modern repair plates fit machinery older than Connectuct. The Annu have kept this water system running for generations."
+        ],
+        [
+          "Ancient AI",
+          "Upper basin: residential supply. Lower basin: freight overflow. Do not conflate custodial functions."
+        ]
+      ]
+    },
+    {
+      "index": 4,
+      "title": "Sanctuary of Records",
+      "briefing": [
+        [
+          "Anki",
+          "Our oldest drawings showed this place empty."
+        ],
+        [
+          "Brutus",
+          "The Annu rebuilt around the old machines. Align the archive circuits; we need to know what the reserves sustain."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "The arrival record",
+          "action": "Align the western archive ring",
+          "seconds": 3,
+          "enemies": 6,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "This circuit records our ancestors leaving. We were not the last people to live here."
+          ]
+        },
+        {
+          "title": "The living grid",
+          "action": "Align the eastern archive ring",
+          "seconds": 3,
+          "enemies": 7,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "These conductors regulate water and hospitals. Extracting them would endanger the people here."
+          ]
+        },
+        {
+          "title": "The abandoned reserve",
+          "action": "Align the reserve ledger",
+          "seconds": 2.5,
+          "enemies": 8,
+          "mode": "hold",
+          "dialogue": [
+            "Brutus",
+            "There is another stockpile: retired conductors. Protect the archive while I recover its inventory."
+          ],
+          "hold_seconds": 16
+        },
+        {
+          "title": "A different objective",
+          "action": "Transmit reclamation coordinates",
+          "seconds": 2.5,
+          "enemies": 6,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "The foundry can reclaim abandoned stock without stripping their active grid."
+          ]
+        }
+      ],
+      "ending": [
+        [
+          "Anki",
+          "We came for enough gold to save Connectuct. Not permission to take someone else's home."
+        ],
+        [
+          "Ancient AI",
+          "Custodial restriction retained. Reclamation route available."
+        ]
+      ],
+      "evidence": [
+        [
+          "Anki",
+          "Our departure is carved here. Someone kept our history even after we forgot theirs."
+        ],
+        [
+          "Ancient AI",
+          "Retired conductors: awaiting reclamation. Active conductors: protected. Resource allocation must preserve the living."
+        ]
+      ]
+    },
+    {
+      "index": 5,
+      "title": "The Hollow Foundry",
+      "briefing": [
+        [
+          "Brutus",
+          "Cooling, sorting, refinement, freight: restore this foundry in that order."
+        ],
+        [
+          "Anki",
+          "Only retired stock. Leave every live conductor connected."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "Cold before current",
+          "action": "Restore the coolant flywheel",
+          "seconds": 3,
+          "enemies": 7,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "Cooling first. The furnaces reject a restart while the return loop is dry."
+          ]
+        },
+        {
+          "title": "Sort the broken network",
+          "action": "Start the salvage separator",
+          "seconds": 2.5,
+          "enemies": 8,
+          "mode": "hold",
+          "dialogue": [
+            "Brutus",
+            "The separator is freeing gold components from retired equipment. Hold this floor."
+          ],
+          "hold_seconds": 18
+        },
+        {
+          "title": "The first usable gold",
+          "action": "Stabilize refining controls",
+          "seconds": 3,
+          "enemies": 9,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "Refined conductors are coming off the line. Gold is the control material, not the fuel."
+          ]
+        },
+        {
+          "title": "Freight for Connectuct",
+          "action": "Seal recovered conductor crates",
+          "seconds": 3,
+          "enemies": 8,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "Crates sealed. The rail yard can move the load to the orbital relay."
+          ]
+        }
+      ],
+      "ending": [
+        [
+          "Anki",
+          "A district could keep its lights on with this."
+        ],
+        [
+          "Brutus",
+          "If we can get it home. The freight signals just went dark."
+        ]
+      ],
+      "evidence": [
+        [
+          "Brutus",
+          "Gold regulates these control assemblies. The thermal plant supplies their energy. The archive makes the distinction explicit."
+        ],
+        [
+          "Anki",
+          "Every crate is marked retired equipment. We can account for every piece we take."
+        ]
+      ]
+    },
+    {
+      "index": 6,
+      "title": "Blackout Rail",
+      "briefing": [
+        [
+          "Brutus",
+          "Annu defenders isolated the freight yard. Restore its signals and switch heaters before moving the recovered stock."
+        ],
+        [
+          "Anki",
+          "We need the line, not their city."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "Restore the yard signal",
+          "action": "Reconnect the first signal breaker",
+          "seconds": 2.5,
+          "enemies": 7,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "Signal power is back. Follow the lit service lane."
+          ]
+        },
+        {
+          "title": "Free the frozen switch",
+          "action": "Energize the rail-switch heater",
+          "seconds": 2.5,
+          "enemies": 8,
+          "mode": "hold",
+          "dialogue": [
+            "Brutus",
+            "The turnout is seized. Hold the heater current until the rails release."
+          ],
+          "hold_seconds": 15
+        },
+        {
+          "title": "Reserve the freight line",
+          "action": "Set the transfer interlock",
+          "seconds": 2.5,
+          "enemies": 10,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "Cargo route secured. The passenger branch remains isolated from us."
+          ]
+        },
+        {
+          "title": "The orbital feed",
+          "action": "Restore power to the sky relay",
+          "seconds": 3,
+          "enemies": 9,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "Its approach registry still thinks the last expedition never left."
+          ]
+        }
+      ],
+      "ending": [
+        [
+          "Ancient AI",
+          "Arrival record incomplete. Airspace remains quarantined."
+        ],
+        [
+          "Brutus",
+          "The same response we heard before the crash. The registry may be the fault."
+        ]
+      ],
+      "evidence": [
+        [
+          "Anki",
+          "The passenger schedules are recent. This is their working railway."
+        ],
+        [
+          "Brutus",
+          "The orbital feed and the freight interlock share a much older control network. Reconnecting one woke the other."
+        ]
+      ]
+    },
+    {
+      "index": 7,
+      "title": "The Sky Mirror",
+      "briefing": [
+        [
+          "Brutus",
+          "The orbital mirror carries the ancient approach registry. Align the dishes and compare its orders with our flight recorder."
+        ],
+        [
+          "Anki",
+          "Find out what happened before another ship comes through."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "Align azimuth",
+          "action": "Rotate the western sky mirror",
+          "seconds": 3,
+          "enemies": 8,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "The old beacon is transmitting a flight-control handoff that predates our ship."
+          ]
+        },
+        {
+          "title": "Align elevation",
+          "action": "Rotate the eastern sky mirror",
+          "seconds": 3,
+          "enemies": 9,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "The flight recorder matches an incompatible quarantine handoff. An obsolete system triggered the fault, not an Annu weapon."
+          ]
+        },
+        {
+          "title": "Rebuild the corridor",
+          "action": "Power the corrected approach channel",
+          "seconds": 2.5,
+          "enemies": 10,
+          "mode": "hold",
+          "dialogue": [
+            "Brutus",
+            "Hold the antenna while I transmit a compatible flight profile. No one repeats our landing."
+          ],
+          "hold_seconds": 20
+        },
+        {
+          "title": "Open the sky",
+          "action": "Broadcast the safe return corridor",
+          "seconds": 3,
+          "enemies": 9,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "We have a safe corridor. The reclamation engine still will not release the reserve."
+          ]
+        }
+      ],
+      "ending": [
+        [
+          "Relay",
+          "Approach record received. A safe return window is opening."
+        ],
+        [
+          "Ancient AI",
+          "Reserve transfer denied. Quarantine interlock remains engaged."
+        ],
+        [
+          "Anki",
+          "Then we go to the lock itself."
+        ]
+      ],
+      "evidence": [
+        [
+          "Brutus",
+          "The recorder contains a control handoff, then incompatible attitude commands. We have evidence now; the signal alone was never proof."
+        ],
+        [
+          "Ancient AI",
+          "Departure register incomplete. Quarantine duration exceeds original maintenance interval. Custodial review overdue."
+        ]
+      ]
+    },
+    {
+      "index": 8,
+      "title": "The Last Reserve",
+      "briefing": [
+        [
+          "Brutus",
+          "The reserve gallery was sealed centuries ago. Our recovered excavation charge can open its obsolete access wall."
+        ],
+        [
+          "Anki",
+          "Verify the gallery is empty. The charge opens stone, not the living grid."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "Open the sealed gallery",
+          "action": "Place the recovered excavation charge",
+          "seconds": 4,
+          "enemies": 9,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "The gallery is clear. Set the charge in the old survey recess and stand behind stone cover."
+          ]
+        },
+        {
+          "title": "Verify the reserve",
+          "action": "Read the retired-stock register",
+          "seconds": 3,
+          "enemies": 10,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "This stock was removed from service before the Annu rebuilt the surface."
+          ]
+        },
+        {
+          "title": "Isolate the transport cradle",
+          "action": "Disconnect the obsolete transfer lock",
+          "seconds": 3,
+          "enemies": 11,
+          "mode": "assault",
+          "dialogue": [
+            "Brutus",
+            "The engine mistakes an obsolete transport lock for a life-support circuit."
+          ]
+        },
+        {
+          "title": "Protect the transfer",
+          "action": "Hold reserve transfer controls",
+          "seconds": 2.5,
+          "enemies": 12,
+          "mode": "hold",
+          "dialogue": [
+            "Brutus",
+            "Keep the controls powered. The reclamation engine is waking; protect the reserve."
+          ],
+          "hold_seconds": 24
+        }
+      ],
+      "ending": [
+        [
+          "Ancient AI",
+          "Conflicting custodial orders. Reclamation defense engaged."
+        ],
+        [
+          "Anki",
+          "We are here to finish the repair."
+        ],
+        [
+          "Brutus",
+          "Three mechanical interlocks. Break their actuators, then restore the original custodial priorities."
+        ]
+      ],
+      "evidence": [
+        [
+          "Anki",
+          "The charge survived the wreck, the forest and the road. Now we can finally use it for the excavation it was built for."
+        ],
+        [
+          "Brutus",
+          "Both instructions are valid separately: preserve the reserve, and reclaim unused stock. The obsolete transport lock prevents the machine distinguishing them."
+        ]
+      ]
+    },
+    {
+      "index": 9,
+      "title": "Ancient Nest",
+      "briefing": [
+        [
+          "Brutus",
+          "The reclamation engine is enforcing incompatible orders. Arm each maintenance bypass, then destroy its exposed actuator."
+        ],
+        [
+          "Anki",
+          "Keep the reserve intact. We stop the machinery, not the intelligence inside it."
+        ],
+        [
+          "Ancient AI",
+          "Custodial conflict unresolved. Stand clear of reclamation sweep."
+        ]
+      ],
+      "stages": [
+        {
+          "title": "Break the first interlock",
+          "action": "Arm western maintenance bypass",
+          "seconds": 2.5,
+          "enemies": 8,
+          "mode": "boss",
+          "dialogue": [
+            "Brutus",
+            "Fire at the amber actuator. When the floor turns amber, move into a dark lane."
+          ],
+          "boss_health": 350,
+          "hazard": "sweep"
+        },
+        {
+          "title": "Break the second interlock",
+          "action": "Arm eastern maintenance bypass",
+          "seconds": 2.5,
+          "enemies": 10,
+          "mode": "boss",
+          "dialogue": [
+            "Brutus",
+            "Use the stone baffles between sweeps. The next lock is carrying the load."
+          ],
+          "boss_health": 450,
+          "hazard": "sweep"
+        },
+        {
+          "title": "Break the final interlock",
+          "action": "Arm reserve maintenance bypass",
+          "seconds": 2.5,
+          "enemies": 12,
+          "mode": "boss",
+          "dialogue": [
+            "Brutus",
+            "Break the last mechanical lock, then reach the custodial console."
+          ],
+          "boss_health": 550,
+          "hazard": "sweep"
+        },
+        {
+          "title": "Bring the gold home",
+          "action": "Restore custodial priorities and authorize departure",
+          "seconds": 5,
+          "enemies": 0,
+          "mode": "traverse",
+          "dialogue": [
+            "Anki",
+            "Protect the living. Reclaim what was abandoned. Let us keep another world alive."
+          ]
+        }
+      ],
+      "ending": [
+        [
+          "Ancient AI",
+          "Conflict resolved. Living infrastructure preserved. Reclaimed reserve released."
+        ],
+        [
+          "Relay",
+          "Extraction ship docked. Cargo verified. Return corridor clear. Connectuct is waiting."
+        ],
+        [
+          "Anki",
+          "Home is also what we choose to protect."
+        ],
+        [
+          "Brutus",
+          "Gold for the repairs. The engineering archive for what comes after. Departure authorized."
+        ],
+        [
+          "",
+          "The expedition returns with reclaimed gold and a shared history. The first restoration district comes back into light."
+        ]
+      ],
+      "evidence": [
+        [
+          "Ancient AI",
+          "Original custodial priority: sustain the living. Secondary priority: preserve knowledge. Reserve retention: subordinate."
+        ],
+        [
+          "Anki",
+          "There is enough here for the repairs, if we bring back the knowledge to keep repairing."
+        ]
+      ]
+    }
+  ]
+}

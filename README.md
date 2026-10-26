@@ -1,5 +1,15 @@
 # Ancient Nest — unified development source
 
+**Nine-mission campaign expansion, 2026-10-26:** levels 2–9 continue the City-Ambush build with four motorcycles, a 7.9 km escape, seven distinct mission environments, optional archive records and Ancient AI's three-stage machinery boss. Open **Play Expanded Campaign.cmd**, then **Mission Select / Play Levels 2–9**, or continue from Mission 1. [Campaign details](docs/CAMPAIGN_NINE_MISSIONS.md) · [Validation](docs/CAMPAIGN_NINE_VALIDATION.md).
+
+Working folder: `C:\Users\Corey\Games\AncientNest-Campaign-2-9-20261026`. Base is the exact City-Ambush source `59f005c3dcf3caed2f938c9d44098776c426d7e4`. The original City-Ambush build and checkout remain intact. New progress uses `campaign/nine_missions.json`; an existing Mission 1 checkpoint is read only for initial migration and is preserved. All co-op peers need `campaign-5-nine-missions`.
+
+Newest private update: eight-round Naki pistol, richer city/army departure base, forest trail props and concealed Annu ambushes. [Details and local checks](docs/CAMPAIGN_CITY_AND_AMBUSH.md). Build: `C:\Users\Corey\Games\AncientNest-City-Ambush-20261025`; reopen **Ancient Nest - Take back Home** after export.
+
+Latest private update expands the base and landing pad, builds a larger single-route maze with climbing gardens and staged encounters, and adds physical bot weapon pickups. Floating labels are smaller; plasma carbine shots travel twice as fast. See [current expansion and checks](docs/CAMPAIGN_EXPANSION_AND_LOOT.md).
+
+Current private update adds the forest checkpoint campaign, curved expedition ship, plasma weapon racks, contact momentum, visible lobby map selection, Forge rendering and concluded Film previews/playback. Matchmaking includes account-timing and reconnect fixes; live coordinator connectivity remains unverified. See [current implementation and checks](docs/CAMPAIGN_FOREST_AND_GAMEPLAY_FIXES.md).
+
 **10.5-dev**, protocol **10.5-discord2**. Displayed game name: Ancient Nest. Project identity: AncientNest-Reforged-2026-10-23.
 
 One playable Godot game now combines the recovered full 10.2 game/maps with the current Discord account system. The coordinator, account-backed playlist rankings, service cards and team-voice lifecycle are integrated in this source. This is a development integration, not a certified public release.
@@ -29,6 +39,8 @@ controls, actual tests and limits. Historical multiplayer modes remain available
 The newest [guided introduction](docs/CAMPAIGN_GUIDANCE.md) adds clear controls,
 waypoints, cabin boarding and a damaged-atmosphere sky. It supports recordings
 and local system-speech fallback; recorded actor assets remain unavailable.
+The subsequent [landscape pass](docs/CAMPAIGN_LANDSCAPE.md) adds mountains,
+freight structures, ruins, varied foliage and cabin detail with traversal tests.
 
 Install Git, Node.js 24 LTS, Python 3.11+ and Godot 4.6.3 (matching export templates if building). Ensure `node`, `npm`, `python` and `godot` work in CMD. Read [the PC handoff](PC_CODEX_HANDOFF.md), then run **Setup Ancient Nest.cmd** and **Play Ancient Nest.cmd**. The launch script now opens the full game. Native Discord/keyring downloads are pinned and checksum-verified; WebRTC runtime dependencies are included.
 

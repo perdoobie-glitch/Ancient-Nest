@@ -121,7 +121,7 @@ func pose_landing() -> void:
 			skeleton.set_bone_pose_rotation(index,skeleton.get_bone_pose_rotation(index).slerp(goal,weight))
 func update_view_weapon(speed: float) -> void:
 	if actor.weapon_view==null: return
-	actor.weapon_view.visible=actor.alive and not actor.game.nu.birds.has(actor.net_id) and not actor.scoped_overlay() and (actor.weapons[actor.slot].kind!="none" or actor.action_state=="melee")
+	actor.weapon_view.visible=actor.alive and not actor.is_motorcycle_rider() and not actor.game.nu.birds.has(actor.net_id) and not actor.scoped_overlay() and (actor.weapons[actor.slot].kind!="none" or actor.action_state=="melee")
 	var knife_active=actor.alive and actor.action_state=="melee"
 	if view_bomb!=null:
 		view_bomb.visible=actor.bomb_equipped

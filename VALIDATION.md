@@ -1,6 +1,26 @@
 # Unified integration validation — 2026-10-23
 
+Current expansion: [nine-mission campaign validation, 2026-10-26](docs/CAMPAIGN_NINE_VALIDATION.md). Separate City-Ambush-based worktree, eight new playable missions, full physical motorcycle course, chapter/boss integration, traversal, save migration, and two/four native-client checks. Earlier entries below remain historical evidence.
+
+Newest private update: eight-round Naki pistol, richer city/army departure base, forest trail props and concealed Annu ambushes. [Details and local checks](docs/CAMPAIGN_CITY_AND_AMBUSH.md). Build: `C:\Users\Corey\Games\AncientNest-City-Ambush-20261025`; reopen **Ancient Nest - Take back Home** after export.
+
+Latest expansion: [base/maze/physical loot validation](docs/CAMPAIGN_EXPANSION_AND_LOOT.md). Full main-route movement and climbing, staged Annu, physical loot and carbine sweep checks pass. Four native clients pass 39 progression/pickup checkpoints. Live matchmaking and production deployment remain outside this verification.
+
+Latest source: [forest, ship, contact physics and gameplay fixes](docs/CAMPAIGN_FOREST_AND_GAMEPLAY_FIXES.md). Actual recorded quit/completed Films and rendered previews pass; the input walkthrough clears the tutorial, charge recovery and first real wave. Four-client campaign progression passes. Live matchmaking/WAN remains unverified. Four launcher landing failures reproduce with the untouched actor and are documented separately.
+
 ## Changes verified locally
+
+Current follow-up removes dedicated sprint from actor speed, controls, tutorial,
+RPC actions and replicated state. Legacy saved sprint evidence is accepted only
+for migration and discarded on restore. Tutorial waypoints and floating station
+labels show only the current local step. Isolated guidance/state/mission and
+movement-controls regressions pass; see the current campaign guidance handoff.
+
+The [landscape/structure pass](docs/CAMPAIGN_LANDSCAPE.md) records actual rendered
+intro and input-route tests, new terrain/structure/trunk-occlusion checks and
+failed rehearsals. Creation took roughly 20 minutes; test corrections extended
+the requested 10-minute testing block. No human playthrough or narration quality
+is claimed from these fixtures.
 
 Guided Connectuct follow-up: [CAMPAIGN_GUIDANCE.md](docs/CAMPAIGN_GUIDANCE.md)
 records tutorial/boarding changes, damaged-atmosphere rendering, corrected quality

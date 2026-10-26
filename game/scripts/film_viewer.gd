@@ -27,6 +27,11 @@ var updating=false
 var previous_time=0.0
 var view_mask
 var recorded_fov=90.0
+var play_button: Button
+var library_list: VBoxContainer
+var library_signature=""
+var library_busy=false
+var refresh_at=0.0
 func _ready():
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);process_priority=-100
 	theme=game.screen.theme
@@ -39,7 +44,8 @@ func _ready():
 	label_view.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;label_view.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	library()
 func library():
-	var list=VBoxContainer.new();list.size_flags_vertical=Control.SIZE_EXPAND_FILL;panel.add_child(list)
+	var scroll=ScrollContainer.new();scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;panel.add_child(scroll)
+	var list=VBoxContainer.new();list.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(list);library_list=list
 	list.add_child(game.button("Open exported film…",func():file_dialog(false)))
 	var dir=DirAccess.open(NestFilmArchive.ROOT)
 	if dir!=null:
@@ -48,7 +54,21 @@ func library():
 			if name.get_extension()!="nestfilm" or not NestFilmArchive.valid_id(name.get_basename()):continue
 			var filename=NestFilmArchive.ROOT+"/"+name
 			var date=Time.get_datetime_string_from_unix_time(FileAccess.get_modified_time(filename))
-			list.add_child(game.button(date+" · "+name.substr(0,8),load_film.bind(filename)))
+			var summary={};var summary_path=NestFilmArchive.ROOT+"/"+name.get_basename()+".json"
+			if FileAccess.file_exists(summary_path):
+				var info=FileAccess.open(summary_path,FileAccess.READ)
+				if info!=null and info.get_length()<8192:
+					var decoded=JSON.parse_string(info.get_as_text())
+					if decoded is Dictionary and decoded.get("ready",false):summary=decoded
+			if filename==NestFilmArchive.path(game.film_recorder.id) and (game.film_recorder.active or game.film_recorder.worker!=null or not game.film_recorder.queue.is_empty()):continue
+			var card=HBoxContainer.new();list.add_child(card)
+			var preview=TextureRect.new();preview.name="FilmPreview";preview.custom_minimum_size=Vector2(192,108);preview.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;preview.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			var picture=NestFilmArchive.ROOT+"/"+name.get_basename()+".png"
+			var image=Image.load_from_file(picture) if FileAccess.file_exists(picture) else null
+			preview.texture=ImageTexture.create_from_image(image) if image!=null and not image.is_empty() else NestMenuSurface.artwork();card.add_child(preview)
+			var text=date+" / "+name.substr(0,8)
+			if not summary.is_empty():text+="\n"+str(summary.get("map","Map")).substr(0,64)+" / "+str(summary.get("mode","Match")).substr(0,80)+"\n%02d:%02d / %d players / %s"%[int(float(summary.get("duration",0)))/60,int(float(summary.get("duration",0)))%60,int(summary.get("players",0)),str(summary.get("outcome","Concluded")).substr(0,80)]
+			var open=game.button(text,load_film.bind(filename));open.name="FilmOpen_"+name.get_basename();open.size_flags_horizontal=Control.SIZE_EXPAND_FILL;card.add_child(open)
 	list.add_child(game.label("Films and temporary perspective tracks: 7 days, 2 GiB total.\nPlayer-submitted tracks are not trusted evidence of honest play.",14))
 func file_dialog(save: bool):
 	var dialog=FileDialog.new();dialog.access=FileDialog.ACCESS_FILESYSTEM;dialog.use_native_dialog=true
@@ -64,7 +84,7 @@ static func copy_film(from: String, to: String) -> Dictionary:
 	return {"error":"Export failed"} if DirAccess.copy_absolute(from,to)!=OK else {"exported":to}
 func load_film(filename: String):
 	if worker!=null:return
-	if game.running or (game.network_active and not game.film_retaining_transport):label_view.text="Leave the current match/lobby before opening a film";return
+	if game.running:label_view.text="Leave the current match/lobby before opening a film";return
 	source=filename;worker_kind="load";worker=Thread.new();worker.start(NestFilmArchive.read.bind(filename));label_view.text="Loading film asynchronously…"
 func _process(delta):
 	if worker!=null and not worker.is_alive():
@@ -73,7 +93,13 @@ func _process(delta):
 		if result.has("error"):label_view.text=result.error
 		elif worker_kind=="load":open_film(result)
 		else:label_view.text="Export complete · "+str(result.exported)
+	if film.is_empty() and not closing:
+		var busy=game.film_recorder.worker!=null or not game.film_recorder.queue.is_empty()
+		if library_busy and not busy and is_instance_valid(library_list):
+			var scroll=library_list.get_parent();panel.remove_child(scroll);scroll.queue_free();library()
+		library_busy=busy
 	if film.is_empty() or closing:return
+	if is_instance_valid(play_button):play_button.text="Play" if paused else "Pause"
 	var from=timestamp;var was_paused=paused
 	if not paused:
 		timestamp=clampf(timestamp+delta*speed,0,float(film.metadata.get("duration",0)))
@@ -111,13 +137,19 @@ func open_film(data: Dictionary):
 	var spacer=Control.new();spacer.size_flags_vertical=Control.SIZE_EXPAND_FILL;spacer.mouse_filter=Control.MOUSE_FILTER_IGNORE;panel.add_child(spacer)
 	var bottom=HBoxContainer.new();panel.add_child(bottom)
 	for rate in [-2,-1,1,2]:bottom.add_child(game.button(str(rate)+"×",set_speed.bind(float(rate))))
-	bottom.add_child(game.button("Pause / Play",func():paused=not paused))
+	play_button=game.button("Pause",toggle_playback);play_button.name="FilmPlayPause";bottom.add_child(play_button)
 	bottom.add_child(game.button("◀ Frame",step.bind(-1)));bottom.add_child(game.button("Frame ▶",step.bind(1)))
 	bottom.add_child(game.button("Export…",func():file_dialog(true)))
 	panel.add_child(game.label("Interactive reconstruction · player-submitted tracks are untrusted · first-person mouse aim is locked",12))
 	timeline=HSlider.new();timeline.min_value=0;timeline.max_value=float(data.metadata.get("duration",0));timeline.step=.001;panel.add_child(timeline)
 	timeline.value_changed.connect(func(value):if not updating:seek(value))
-	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;selected="";timestamp=0;paused=true;apply_time()
+	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;selected="";timestamp=float(data.frames[0].t);paused=false
+	if not actors.is_empty():select(str(actors.keys()[0]))
+	else:apply_time()
+func toggle_playback():
+	if film.is_empty():return
+	if paused and timestamp>=float(film.metadata.get("duration",0))-.0001:timestamp=float(film.frames[0].t)
+	paused=not paused
 func select(who: String):
 	if not who.is_empty() and not actors.has(who):return
 	selected=who
@@ -138,7 +170,7 @@ func input(event: InputEvent) -> bool:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.physical_keycode==int(game.prefs.keys.film_previous):cycle(-1)
 		elif event.physical_keycode==int(game.prefs.keys.film_next):cycle(1)
-		elif event.keycode==KEY_SPACE:paused=not paused
+		elif event.keycode==KEY_SPACE:toggle_playback()
 		elif event.keycode==KEY_LEFT:step(-1)
 		elif event.keycode==KEY_RIGHT:step(1)
 		else:return false

@@ -168,7 +168,7 @@ func _process(_delta: float) -> void:
    if raw=="nest-pong":master_last_reply=clock();continue
    var value=JSON.parse_string(raw)
    if value is Dictionary:control(value)
- elif ws.get_ready_state()==WebSocketPeer.STATE_CLOSED and hello_sent:
+ elif ws.get_ready_state()==WebSocketPeer.STATE_CLOSED:
   while ws.get_available_packet_count()>0:
    var pending=JSON.parse_string(ws.get_packet().get_string_from_utf8())
    if pending is Dictionary:control(pending)
@@ -196,7 +196,11 @@ func handle_control(e: Dictionary) -> void:
  if game.film_retaining_transport and kind in ["collect_telemetry","voting","host_offer","connect"]:release_film_transport("A new match started before every perspective was available")
  master_last_reply=clock()
  if kind=="failed" and not e.has("epoch"):
-  scheduler.lost(true);ws.close();return
+  scheduler.lost(true);ws.close()
+  var reason=str(e.get("reason","Master rejected the connection")).replace("\n"," ").replace("\r"," ").substr(0,240)
+  failure_reason=reason;mm.status="Matchmaking: "+reason
+  if not game.running:mm.phase="error"
+  mm.changed();return
  if e.has("server_time"):server_offset=float(e.server_time)-clock()
  match kind:
   "challenge":send({"type":"proof","signature":Marshalls.raw_to_base64(Crypto.new().sign(HashingContext.HASH_SHA256,sha(str(e.nonce).to_utf8_buffer()),identity))})
@@ -535,7 +539,13 @@ func fail(reason: String) -> void:
  failure_reason=reason;session.freeze(reason);close_game_transport();mm.phase="error";mm.status=reason;mm.changed();print("HYBRID FAILED: ",reason)
 
 func account_handshake() -> void:
- if not await game.accounts.refresh_session():
+ # Account refresh has its own bounded HTTP timeout. Do not race it against
+ # the shorter WSS hello timer, or send its result into a replacement socket.
+ var connection=ws;control_deadline=0
+ mm.status="Verifying account for matchmaking...";mm.changed()
+ var refreshed=await game.accounts.refresh_session()
+ if not enabled or ws!=connection:return
+ if not refreshed:
   if game.running and scheduler.reconnecting:scheduler.lost(true)
   else:fail("Account sign-in expired or unavailable. Open Account in the main menu.")
   return

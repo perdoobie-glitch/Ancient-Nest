@@ -18,6 +18,16 @@ static func path(id: String, track: bool=false) -> String:
 	return ROOT+"/"+id+(".track" if track else ".nestfilm")
 static func write_block(job: Dictionary) -> Dictionary:
 	var started=Time.get_ticks_usec()
+	if job.get("finalize",false):
+		DirAccess.make_dir_recursive_absolute(ROOT)
+		var png: PackedByteArray=job.get("preview_png",PackedByteArray())
+		if not png.is_empty() and png.size()<1024*1024:
+			var picture=FileAccess.open(ROOT+"/"+job.id+".png",FileAccess.WRITE)
+			if picture!=null:picture.store_buffer(png);picture.close()
+		var summary=FileAccess.open(ROOT+"/"+job.id+".json",FileAccess.WRITE)
+		if summary==null:return {"error":"Cannot finalize film listing"}
+		summary.store_string(JSON.stringify(job.summary));summary.close()
+		return {"bytes":png.size(),"worker_us":Time.get_ticks_usec()-started}
 	var raw=var_to_bytes(job.payload)
 	if raw.size()>MAX_BLOCK:return {"error":"Recording block exceeds limit"}
 	var encoded=raw.compress(FileAccess.COMPRESSION_DEFLATE)
@@ -125,7 +135,7 @@ static func cleanup(except_id: String="") -> void:
 	var groups={};var total=0
 	for name in dir.get_files():
 		var id=name.get_basename()
-		if not valid_id(id) or name.get_extension() not in ["nestfilm","track"]:continue
+		if not valid_id(id) or name.get_extension() not in ["nestfilm","track","json","png"]:continue
 		var filename=ROOT+"/"+name;var f=FileAccess.open(filename,FileAccess.READ)
 		if f==null:continue
 		var bytes=f.get_length();f.close();total+=bytes

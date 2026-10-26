@@ -39,7 +39,7 @@ static func show(game) -> void:
  var map_section=section(game,left,"MAP & OBJECTIVES",sections,headings)
  var map_choice=OptionButton.new();map_choice.name="LobbyMap";map_choice.fit_to_longest_item=false
  for map_name in NestArena.MAP_NAMES:map_choice.add_item(map_name)
- map_choice.select(game.game_type.map_selection);map_choice.disabled=game.is_client() or game.lobby_vote.active();game.row(map_section,"Map",map_choice)
+ map_choice.select(game.game_type.map_selection);map_choice.disabled=game.is_client() or game.lobby_vote.active();game.row(setup,"Map",map_choice)
  map_choice.item_selected.connect(func(index):game.select_normal_preset(game.mode,index,game.matchup);game.show_lobby())
  map_section.add_child(game.label(game.arena.map_title()+" · "+("Edited Nest Forge layout" if game.forge_session.model!=null else "Default layout"),14))
  var forge=game.button("Open Nest Forge · Edit Map & Sites",func():game.open_forge());forge.name="LobbyOpenForge";forge.disabled=game.is_client();map_section.add_child(forge)

@@ -65,6 +65,11 @@ func resolve_hit(start: Vector3, finish: Vector3) -> bool:
 		if not cosmetic:result.collider.get_meta("nu").destroy("shot")
 		if profile.explosive:game.explode(result.position,owner_actor,event_id,float(NestWeaponCatalog.for_kind(profile.kind).splash_damage_max),cosmetic,profile.kind)
 		return true
+	if result.collider.has_meta("campaign_weakpoint"):
+		if not cosmetic and not game.is_client():
+			result.collider.get_meta("campaign_weakpoint").hit_weakpoint(owner_actor,profile.damage,event_id)
+		game.impact(result.position,result.normal,profile.explosive)
+		return true
 	var hit_actor=result.collider.get_meta("actor") if result.collider is Area3D and result.collider.has_meta("actor") else null
 	if hit_actor!=game.player:check_flyby(start,hit_position)
 	if profile.explosive:

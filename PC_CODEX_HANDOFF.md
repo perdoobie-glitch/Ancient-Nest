@@ -1,6 +1,31 @@
 # Windows Codex handoff
 
+## Current nine-mission expansion — 2026-10-26
+
+Work only in `C:\Users\Corey\Games\AncientNest-Campaign-2-9-20261026`, branch `feature/campaign-nine-missions-2026-10-26`, based exactly on City-Ambush `59f005c`. This separate worktree preserves the original build and source. Use `Play Expanded Campaign.cmd`; private compiled files are under `builds/windows/`. Read [campaign design](docs/CAMPAIGN_NINE_MISSIONS.md) and [actual verification](docs/CAMPAIGN_NINE_VALIDATION.md). New co-op protocol is `campaign-5-nine-missions`; competitive protocol and services are unchanged.
+
+The entries below are historical. New saves use `campaign/nine_missions.json` with backup, preserving legacy Mission 1 save files. No public executable release or production-service deployment is part of this expansion.
+
+Newest private update: eight-round Naki pistol, richer city/army departure base, forest trail props and concealed Annu ambushes. [Details and local checks](docs/CAMPAIGN_CITY_AND_AMBUSH.md). Build: `C:\Users\Corey\Games\AncientNest-City-Ambush-20261025`; reopen **Ancient Nest - Take back Home** after export.
+
+Latest private build target: `C:\Users\Corey\Games\AncientNest-Expanded-Route-Loot-20261025`. Restart the **Ancient Nest - Take back Home** desktop shortcut. Campaign peers need `campaign-4`. Includes the expanded single-route maze, landing pad/base detail, physical bot weapon loot, smaller floating labels and doubled carbine projectile speed. See [current expansion handoff](docs/CAMPAIGN_EXPANSION_AND_LOOT.md).
+
+Previous private build target: `C:\Users\Corey\Games\AncientNest-FullMenu-20261025` (includes uncropped main-menu artwork). Desktop **Ancient Nest - Take back Home** points to the named executable in that folder once exported. Close the old running copy and reopen the shortcut. Campaign co-op requires `campaign-3`. Full changes, controls, test evidence and matchmaking limitations: [forest/gameplay handoff](docs/CAMPAIGN_FOREST_AND_GAMEPLAY_FIXES.md). No production services were deployed; local commits are awaiting a successful Git push.
+
 ## Identity and source
+
+Previous controls/waypoint build: `C:\Users\Corey\Games\AncientNest-Campaign-NoSprint-20261025`.
+Sprint is removed; tutorial waypoints show only the active local step. Campaign
+co-op uses `campaign-2` (all members need this updated build). Existing old
+checkpoints remain loadable. The Take back Home desktop shortcut targets the
+updated named executable; previous binaries are backed up before replacement.
+The older executable inside the desktop package was running and could not be
+overwritten. The Take back Home shortcut instead targets the identically named
+new executable in the NoSprint build folder. Reopen through that shortcut.
+
+Latest landscape/private build: `C:\Users\Corey\Games\AncientNest-Campaign-Landscape-20261025`.
+See [landscape objects and traversal validation](docs/CAMPAIGN_LANDSCAPE.md).
+The earlier build paths below remain historical milestones; do not remove them.
 
 Newest campaign build: `C:\Users\Corey\Games\AncientNest-Campaign-Guided-20261025`.
 See [guided Connectuct/atmosphere and voice status](docs/CAMPAIGN_GUIDANCE.md).

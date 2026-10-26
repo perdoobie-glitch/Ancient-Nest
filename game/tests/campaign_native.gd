@@ -22,6 +22,16 @@ func run():
      "join":c.open_coop(false,"127.0.0.1",port)
      "ready":c.send_action("ready",{})
      "start":c.start_expedition()
+     "select_mission":c.selected_mission=int(command.get("mission",2))
+     "chapter":c.journey.start_standalone(int(command.get("mission",3)))
+     "at_objective":
+      var hero=game.actor_by_id(int(command.get("slot",1)))
+      hero.global_position=c.world.locations["objective"+str(c.state.chapter_stage)]+Vector3(0,.25,2)
+      hero.controlled=Vector3.ZERO;hero.external=Vector3.ZERO
+     "chapter_clear":
+      for enemy in game.actors.duplicate():
+       if enemy.faction==1:enemy.die(game.actor_by_id(1),"qa")
+      c.tick(0);c.broadcast()
      "skip":c.send_action("skip",{})
      "flashlight":c.send_action("flashlight",{})
      "move":Input.action_press("forward")
@@ -47,7 +57,15 @@ func run():
       var actor=game.actor_by_id(1);actor.global_position=c.world.locations["charge"+str(c.state.charge_site)]+Vector3(0,0,2);await physics_frame;var choice=c.interaction(actor);result.charge=c.interact(actor,choice);result.duplicate_charge=c.interact(actor,choice);c.broadcast()
      "secure":
       var actor=game.actor_by_id(1);actor.global_position=c.world.locations.secure+Vector3(0,0,2);await physics_frame;result.secure=c.interact(actor,c.interaction(actor));c.broadcast()
-     "wave":c.phase_elapsed=100;c.tick(0)
+     "drop_bot":
+      var enemy=c.make_actor(-9900,false,0,"Loot QA",c.world.locations.exit+Vector3(0,.3,13));enemy.ammo[0]=17;enemy.reserve[0]=40;enemy.die(game.actor_by_id(1),"qa");game.actors.erase(enemy);enemy.queue_free();c.broadcast()
+     "place_at_loot":
+      if not c.loot.drops.is_empty():
+       var drop=c.loot.drops.values()[0];var point=drop.pickup_point();game.actor_by_id(int(command.get("slot",2))).global_position=Vector3(point.x,.25,point.z+1.5);c.broadcast()
+     "pickup_hold":Input.action_press("interact")
+     "stop_interact":Input.action_release("interact")
+     "wave":
+       game.actor_by_id(1).global_position=c.world.maze.checkpoints[clampi(c.state.completed_waves,0,4)];c.tick(0)
      "finish_wave":
       var wave=c.state.wave_index()
       if wave>=0:
@@ -62,9 +80,14 @@ func run():
      "wipe":
       for slot in c.connected_slots():c.down(game.actor_by_id(slot))
       c.tick(0)
-     "quit":game.queue_free();await process_frame;quit();return
-  var state={"sequence":sequence,"active":c.active,"phase":c.state.phase,"difficulty":c.state.difficulty,"slot":c.local_slot,"members":c.members.size(),"connected":c.connected_slots().size(),"loaded":c.all_loaded(),"running":game.running,"context":game.context,"actors":game.actors.size(),"practice":c.state.practice,"waves":c.state.completed_waves,"kills":c.state.defeated.size(),"bomb":c.state.bomb,"epoch":c.phase_epoch,"elapsed":c.phase_elapsed,"result":result,"flashlights":c.flashlights,"downed":c.downed.size(),"completion":c.state.completion_count,"input_packets":game.net_stats.get("input_payload_bytes_received",0),"snapshots":game.net_stats.get("snapshots_completed",0),"errors":c.notice}
-  if game.player!=null:state["alive"]=game.player.alive;state["ammo"]=game.player.ammo;state["camera"]=game.get_viewport().get_camera_3d()==game.player.camera
+     "quit":
+      c.exit_campaign();game.queue_free()
+      for i in range(4):await process_frame
+      quit();return
+  var state={"sequence":sequence,"active":c.active,"phase":c.state.phase,"difficulty":c.state.difficulty,"slot":c.local_slot,"members":c.members.size(),"connected":c.connected_slots().size(),"loaded":c.all_loaded(),"running":game.running,"context":game.context,"actors":game.actors.size(),"practice":c.state.practice,"waves":c.state.completed_waves,"kills":c.state.defeated.size(),"bomb":c.state.bomb,"epoch":c.phase_epoch,"elapsed":c.phase_elapsed,"result":result,"flashlights":c.flashlights,"downed":c.downed.size(),"completion":c.state.completion_count,"input_packets":game.net_stats.get("input_payload_bytes_received",0),"snapshots":game.net_stats.get("snapshots_completed",0),"errors":c.notice,"loot_count":c.loot.drops.size()}
+  state["mission"]=c.state.mission_index;state["chapter_stage"]=c.state.chapter_stage
+  if c.state.mission_index>1:state["journey"]=c.journey.pack()
+  if game.player!=null:state["alive"]=game.player.alive;state["ammo"]=game.player.ammo;state["weapon_kinds"]=game.player.weapons.map(func(weapon):return weapon.kind);state["camera"]=game.get_viewport().get_camera_3d()==game.player.camera
   var positions={};var acknowledgements={}
   for actor in game.actors:
    if actor.faction==0:positions[str(actor.net_id)]=[actor.global_position.x,actor.global_position.y,actor.global_position.z];acknowledgements[str(actor.net_id)]=actor.cmd_last_seq

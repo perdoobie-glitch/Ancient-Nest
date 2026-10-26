@@ -3,7 +3,7 @@ shader_type spatial;
 uniform sampler2D noise_texture : filter_linear_mipmap, repeat_enable;
 uniform vec4 base_color : source_color = vec4(.4,.4,.4,1.0);
 uniform vec4 accent_color : source_color = vec4(.2,.3,.2,1.0);
-uniform float surface_kind = 0.0; // soil=0, panel=1, bark=2, foliage=3
+uniform float surface_kind = 0.0; // rock=0, panel=1, bark=2, foliage=3, soil=4
 uniform float metalness = 0.0;
 uniform bool low_detail = false;
 varying vec3 world_position;
@@ -27,6 +27,11 @@ void fragment(){
  }else if(surface_kind>1.5 && surface_kind<2.5){
   float ridges=sin(uv.x*24.0+broad*9.0+sin(p.y*.7));
   color*=.84+.16*smoothstep(-.7,.5,ridges);
+ }else if(surface_kind>3.5){
+  float trail=(1.0-smoothstep(1.6,4.0,abs(p.x-sin(p.z*.06)*3.0)))*(1.0-smoothstep(26.0,42.0,abs(p.z-8.0)));
+  color=mix(color,base_color.rgb*.82,trail*.65);
+  float scorch=max(1.0-smoothstep(2.0,6.0,length(p.xz-vec2(-19.0,-4.0))),1.0-smoothstep(2.0,6.0,length(p.xz-vec2(19.0,-5.0))));
+  color*=1.0-scorch*.6;
  }else if(surface_kind>2.5){color*=.94+grain*.06;}
  ALBEDO=color;ROUGHNESS=clamp(.9-metalness*.45+grain*.08,0.0,1.0);METALLIC=metalness;
 }

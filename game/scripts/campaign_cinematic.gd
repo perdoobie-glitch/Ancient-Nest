@@ -14,7 +14,7 @@ var speech_cue=""
 var speaking_os=false
 var last_volumes={}
 func _ready():
- camera=Camera3D.new();camera.name="CampaignCamera";camera.near=.1;camera.fov=62;add_child(camera)
+ camera=Camera3D.new();camera.name="CampaignCamera";camera.near=.1;camera.fov=62;camera.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF;add_child(camera)
  for bus in ["Campaign_Dialogue","Campaign_Music","Campaign_Effects"]:
   if AudioServer.get_bus_index(bus)<0:AudioServer.add_bus();AudioServer.set_bus_name(AudioServer.bus_count-1,bus)
  voice=AudioStreamPlayer.new();voice.bus="Campaign_Dialogue";add_child(voice)
@@ -78,7 +78,7 @@ func present(elapsed: float):
   title.text="OLD EARTH • EXPEDITION DAY 46";subtitle.text=dialogue_line("crash",elapsed,6)
   speak_dialogue("crash",elapsed,6)
  else:
-  camera.position=Vector3(-9+sin(elapsed*.07)*2,4,17);camera.look_at(Vector3(-4,1.5,5));title.text="THE LAST DEPARTURE • EXPEDITION RELAY";subtitle.text=dialogue_line("ending",elapsed,5)
+  var relay=campaign.world.locations.radio;camera.position=relay+Vector3(-5+sin(elapsed*.07)*2,4,9);camera.look_at(relay+Vector3.UP*1.5);title.text="THE LAST DEPARTURE • EXPEDITION RELAY";subtitle.text=dialogue_line("ending",elapsed,5)
   speak_dialogue("ending",elapsed,5)
  var votes=campaign.skip_votes.size();var people=campaign.connected_slots().size()
  title.text+="   •   ENTER: SKIP %d/%d"%[votes,people]

@@ -30,3 +30,6 @@ Desktop.ini
 **/dist/*.sha256
 
 **/node_modules
+
+# Private local campaign exports; source and checks stay in Git.
+/builds/

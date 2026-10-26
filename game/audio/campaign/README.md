@@ -29,7 +29,7 @@ the `voice` fields returned by `NestCampaignGuide.next_step()` in
 `game/scripts/campaign_guide.gd`. Deliver one naturally paced, clean mono PCM WAV
 per cue, without speaking the filename, UI title or speaker label:
 
-`look`, `walk`, `sprint`, `jump`, `service`, `calibrate`, `recover`, `aim`, `fire`,
+`look`, `walk`, `jump`, `service`, `calibrate`, `recover`, `aim`, `fire`,
 `reload`, `switch`, `crouch`, `flashlight`, `wait`, `manifest`, `board`, `boarded`,
 `crash`, `charge`, `secure`, `radio`.
 

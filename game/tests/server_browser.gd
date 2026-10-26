@@ -21,7 +21,7 @@ func run():
  game.show_main();await frames()
  check(game.screen.find_children("*","Button",true,false).any(func(button):return button.text=="Server Browser"),"Main menu offers Server Browser")
  var art=game.screen.get_node("SanctuaryMenuArtwork")
- check(art.offset_bottom==0 and art.stretch_mode==TextureRect.STRETCH_KEEP_ASPECT_COVERED,"Main menu artwork fills the area behind navigation")
+ check(art.offset_bottom==0 and art.stretch_mode==TextureRect.STRETCH_SCALE,"Complete uncropped main menu artwork fills the area behind navigation")
  mm.browser_loaded=true;mm.browser_lobbies=[{"code":"OTHER","name":"Public Duel","host":"Friend","players":1,"capacity":2,"mode":2,"map":0,"matchup":1}]
  for dimensions in [Vector2i(1920,1080),Vector2i(1280,720),Vector2i(640,480)]:
   root.size=dimensions;root.content_scale_size=dimensions;game.show_server_browser();await frames()

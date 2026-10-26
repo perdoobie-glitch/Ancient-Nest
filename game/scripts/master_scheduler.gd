@@ -24,7 +24,7 @@ func lost(fatal: bool=false):
 	if not reconnecting:
 		reconnecting=true;hub.mm.status="Master offline · gameplay continues" if hub.game.running else "Master offline · reconnecting"
 		if hub.game.running:hub.game.messages.append(hub.mm.status)
-		else:hub.mm.changed()
+		else:hub.mm.phase="error";hub.mm.changed()
 	if not fatal and retry_at<=0:
 		retry_at=hub.clock()+NestControlPolicy.retry_delay(attempt,randf());attempt+=1
 	if fatal:hub.mm.status="Master request rejected · sign in or reconnect manually";retry_at=0

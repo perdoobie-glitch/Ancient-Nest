@@ -10,7 +10,7 @@
     "bleedout_seconds":  45,
     "max_players":  4,
     "weapons":  {
-                    "carbine":  "assault_rifle",
+                    "carbine":  "plasma_br",
                     "naki_pistol":  "plasma_pistol",
                     "annu_primary":  "ak47",
                     "annu_secondary":  "magnum"

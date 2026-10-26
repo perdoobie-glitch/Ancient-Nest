@@ -11,9 +11,9 @@ func run():
   var start=Time.get_ticks_usec();var world=NestCampaignWorld.new();world.region=region;world.quality=quality;root.add_child(world)
   var build_ms=(Time.get_ticks_usec()-start)/1000.0
   var camera=Camera3D.new();root.add_child(camera);camera.current=true;camera.fov=80
-  var views=[Vector3(-19,1.8,18),Vector3(0,2,29),Vector3(28,4,28)]
+  var views=[Vector3(-19,1.8,18),Vector3(0,2,29),Vector3(28,4,28)] if region=="preparation" else [world.maze.checkpoints[0]+Vector3(0,1.8,5),world.maze.checkpoints[2]+Vector3(0,1.8,5),world.maze.checkpoints[4]+Vector3(0,1.8,5)]
   for view in views:
-   camera.position=view;camera.look_at(Vector3(0,2,-9))
+   camera.position=view;camera.look_at(Vector3(0,2,-9) if region=="preparation" else view+Vector3(12,0,-10))
    for i in range(45):await process_frame
    var frames=[];var draws=[];var primitives=[];var previous=Time.get_ticks_usec()
    for i in range(120):

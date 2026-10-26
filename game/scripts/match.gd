@@ -2014,8 +2014,8 @@ func build_flag_visuals() -> void:
 		var cloth_mat=kit.material(FLAG_COLORS[team])
 		kit.cylinder(root,Vector3(0,1.1,0),.035,2.2,kit.dark)
 		var cloth=kit.box(root,Vector3(.36,1.9,0),Vector3(.68,.42,.04),cloth_mat); cloth.name="Cloth"
-		var label=Label3D.new(); label.billboard=BaseMaterial3D.BILLBOARD_ENABLED; label.no_depth_test=true; label.fixed_size=true; label.pixel_size=.0018
-		label.font_size=26; label.outline_size=6; label.modulate=FLAG_COLORS[team]; label.position=Vector3(0,2.7,0); root.add_child(label)
+		var label=Label3D.new(); label.billboard=BaseMaterial3D.BILLBOARD_ENABLED; label.no_depth_test=true; label.fixed_size=true; label.pixel_size=.0009
+		label.font_size=26; label.outline_size=6; label.modulate=Color(FLAG_COLORS[team],.75); label.position=Vector3(0,2.7,0); root.add_child(label)
 		var base=Node3D.new(); base.name="CTFBase%d"%team; add_child(base); base.position=flag_bases[team]+Vector3(0,.03,0)
 		kit.ring(base,Vector3.ZERO,FLAG_CAPTURE_M*NestActor.SIZE*.8,cloth_mat)
 		flag_nodes.append({"flag":root,"base":base}); flag_labels.append(label)
@@ -2094,6 +2094,7 @@ func spawn_death_body(actor: NestActor, reason: String) -> void:
 	if is_client() or not running:return
 	var key="%d:%d:%s"%[match_session,round_number,actor.combat_key()]
 	if death_body_keys.has(key):return
+	if campaign!=null and campaign.active:campaign.loot.release(actor)
 	var spec=NestDeathBody.snapshot(actor,key,reason)
 	add_death_body(spec)
 	if network_active:receive_death_body.rpc(spec,match_session,round_number)

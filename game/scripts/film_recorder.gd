@@ -21,6 +21,8 @@ var connected_actors={}
 var status=""
 var metrics={"capture_us":0,"samples":0,"disk_bytes":0,"worker_us":0,"dropped_blocks":0}
 var transfer
+var preview_png=PackedByteArray()
+var preview_pending=false
 func _ready():
 	process_priority=900
 	transfer=load("res://scripts/film_transfer.gd").new();transfer.name="PerspectiveTransfer";transfer.recorder=self;add_child(transfer)
@@ -45,6 +47,7 @@ func begin():
 	session=game.match_session;id=NestFilmArchive.digest((game.NETWORK_VERSION+":"+str(session)).to_utf8_buffer()).hex_encode().substr(0,32)
 	track_owner=identity_for(game.player) if is_instance_valid(game.player) else ""
 	metadata={"id":id,"protocol":game.NETWORK_VERSION,"sample_hz":29,"created":Time.get_unix_time_from_system(),"duration":0.0,"roster":{},"config":{"game_type":game.game_type.to_network_dict(),"matchup":game.matchup,"session":session},"disclaimer":"Interactive reconstruction; local tracks are player-submitted and are not trusted gameplay evidence."}
+	preview_png=PackedByteArray();preview_pending=true
 	active=true;ended=false;accum=0;flush_at=game.local_clock()+1;frames=[];views=[];events=[];connected_actors.clear();status="Recording film at 29 Hz"
 func _process(delta):
 	poll_worker()
@@ -57,6 +60,11 @@ func _process(delta):
 	if not active:return
 	if not game.running or game.finished or game.now>=NestFilmArchive.MAX_SECONDS:finish();return
 	refresh_roster()
+	if preview_pending and game.now>.35:
+		preview_pending=false
+		if DisplayServer.get_name()!="headless":
+			var image=game.get_viewport().get_texture().get_image()
+			if image!=null and not image.is_empty():image.resize(320,180,Image.INTERPOLATE_BILINEAR);preview_png=image.save_png_to_buffer()
 	accum+=delta
 	if accum>=1.0/NestFilmArchive.SAMPLE_HZ:
 		accum=fmod(accum,1.0/NestFilmArchive.SAMPLE_HZ)
@@ -64,6 +72,7 @@ func _process(delta):
 	if game.local_clock()>=flush_at:flush_at=game.local_clock()+1;flush()
 func refresh_roster():
 	for actor in game.actors:
+		if not is_instance_valid(actor):continue
 		var who=identity_for(actor)
 		if metadata.roster.size()<10 or metadata.roster.has(who):metadata.roster[who]={"id":actor.net_id,"name":actor.username,"team":actor.faction,"character":actor.character,"peer":actor.remote_peer,"last_seen":game.now}
 		if not connected_actors.has(actor.get_instance_id()):
@@ -120,7 +129,8 @@ func flush():
 	frames=[];views=[];events=[]
 func finish():
 	if not active:return
-	metadata.duration=maxf(float(metadata.duration),game.now);flush();active=false;ended=true;status="Saving film / collecting available perspectives"
+	metadata.duration=maxf(float(metadata.duration),game.now);refresh_roster();flush();active=false;ended=true;status="Saving film / collecting available perspectives"
+	queue.append({"id":id,"finalize":true,"summary":{"id":id,"version":1,"created":metadata.created,"duration":metadata.duration,"map":NestArena.MAP_NAMES[clampi(int(metadata.config.game_type.get("map_selection",0)),0,NestArena.MAP_NAMES.size()-1)],"mode":str(metadata.config.game_type.get("game_type_name","Custom match")),"players":metadata.roster.size(),"outcome":"Match complete" if game.finished else "Match concluded / player left","ready":true},"preview_png":preview_png})
 func poll_worker():
 	if worker!=null and not worker.is_alive():
 		var result=worker.wait_to_finish();worker=null

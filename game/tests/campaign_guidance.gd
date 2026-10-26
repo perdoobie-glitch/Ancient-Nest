@@ -15,9 +15,21 @@ func run():
  c.state.practice["1"]={};c.personal.clear();c.observe_practice(game.player);c.state.practice["1"].look=true;c.personal.clear();c.observe_practice(game.player)
  check(c.state.practice["1"].look,"Restored practice evidence survives first observation after reload")
  c.state.practice["1"]={}
- for entry in [["look","look"],["walk","walk"],["sprint","sprint"],["jump","jump"],["service","interact"],["calibrate","calibrating"],["recover","shield"],["aim","aim"],["fire","fire"],["reload","reload"],["switch","switch"],["crouch","crouch"],["flashlight","flashlight"]]:
+ for entry in [["look","look"],["walk","walk"],["jump","jump"],["service","interact"],["calibrate","calibrating"],["recover","shield"],["aim","aim"],["fire","fire"],["reload","reload"],["switch","switch"],["crouch","crouch"],["flashlight","flashlight"]]:
   var step=guide.next_step();check(step.id==entry[0] and not step.voice.is_empty() and not step.keys.is_empty(),"Instruction, controls and narration cue: "+str(entry[0]));c.state.practice["1"][entry[1]]=true
  check(c.practice_complete(1),"Guidance covers every required personal check")
+ check(not NestCampaign.PRACTICE.has("sprint") and not game.prefs.keys.has("sprint") and not InputMap.has_action("sprint"),"Sprint has no practice requirement, binding or input action")
+ var legacy=c.state.pack();legacy.practice["1"]["sprint"]=true;var restored=NestCampaignState.new()
+ check(restored.restore(legacy) and not restored.practice["1"].has("sprint"),"Historical checkpoints load while discarding retired sprint evidence")
+ c.state.practice["1"].interact=false;game.player.global_position=c.world.locations.calibration;guide.update(true)
+ check(guide.marker.visible and c.world.station_signs.service.visible and c.world.station_signs.values().filter(func(label):return label.visible).size()==1,"Only the active equipment destination is marked even beside another station")
+ c.state.practice["1"].interact=true;c.state.practice["1"].calibrating=false;guide.update()
+ check(guide.current.id=="calibrate" and guide.marker.text.contains("CALIBRATION") and not c.world.station_signs.service.visible and c.world.station_signs.calibration.visible,"Completing a step immediately replaces its waypoint and station label")
+ c.state.practice["1"].calibrating=true;guide.update(true)
+ check(guide.current.id=="wait" and not guide.marker.visible and c.world.station_signs.values().all(func(label):return not label.visible),"Waiting for the squad does not reveal the upcoming cargo waypoint")
+ c.state.phase="INTRO";guide.update(true)
+ check(not guide.marker.visible and c.world.find_children("*","Label3D",true,false).all(func(label):return not label.visible),"Narrated intro hides all floating tutorial destination labels")
+ c.state.phase="PREPARATION"
  game.prefs.keys.interact=KEY_K;c.state.practice["1"].interact=false
  check(guide.next_step().keys.contains("K"),"Guidance displays the player's rebound interaction key")
  c.state.practice["1"].interact=true;game.prefs.keys.interact=KEY_E
@@ -33,6 +45,7 @@ func run():
  var sky=c.world.ambience.sky.sky_material;check(sky is ShaderMaterial and sky.shader.resource_path.ends_with("connectuct_atmosphere.gdshader"),"Connectuct uses the damaged-atmosphere sky")
  check(c.cinematic.phrase_index(PackedStringArray(["One short phrase","A considerably longer narration phrase with more words"]),.9)==1,"Subtitle timing follows phrase length")
  c.state.practice["1"].boarded=true;check(guide.next_step().id=="boarded","Solo and co-op members receive an aboard waiting instruction")
+ guide.update(true);check(not guide.marker.visible,"Completed boarding has no redundant waypoint")
  c.state.phase="DEPARTURE";c.present_phase();guide.update(true);check(not guide.panel.visible and guide.spoken_step.is_empty(),"Departure hides instructions and stops tutorial voice before cinematic audio")
  c.state.phase="CRASH";c.set_world("forest");c.rebuild_heroes();c.state.phase="CRASH_ORIENTATION";c.present_phase();guide.update(true)
  check(guide.current.id=="crash" and guide.panel.visible and guide.current.target=="exit","Post-crash gameplay receives an explicit exit and recovery briefing")

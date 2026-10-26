@@ -14,6 +14,14 @@ func run():
  for setup in [["preparation",0],["forest",0],["preparation",2],["forest",2]]:
   var region=str(setup[0]);var world=NestCampaignWorld.new();world.region=region;world.quality=int(setup[1]);root.add_child(world);await process_frame
   print("SCENERY QUALITY "+str(setup[1]))
+  var landscape=world.get_meta("landscape_stats",{})
+  check(int(landscape.get("mountain_chunks",0))==36,region+": three complete mountain layers are built at every quality")
+  check(int(landscape.get("structures",0))>=4,region+": modular structures preserve regional variety")
+  check(world.ship_root.find_child("BoardingRamp",false,false)!=null,region+": continuous boarding/escape ramp is attached to the hull")
+  if region=="forest":
+   await physics_frame
+   var ray=PhysicsRayQueryParameters3D.create(Vector3(168,2.4,0),Vector3(176,2.4,0),1)
+   check(not world.get_world_3d().direct_space_state.intersect_ray(ray).is_empty(),"Tree trunk blocks shots/perception above the former low root collider")
   var rng=RandomNumberGenerator.new();rng.seed=1934;var equivalent=true
   for i in range(2500):
    var p=Vector3(rng.randf_range(-75,75),0,rng.randf_range(-75,75))

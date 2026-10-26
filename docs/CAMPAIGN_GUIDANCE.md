@@ -12,13 +12,27 @@ on the departure deck, where a compact high-contrast card explains one action
 at a time, shows the player's current bindings and points toward the relevant
 station. Brutus has a welcome, individual lesson cues and repeatable briefings.
 
-The route is look → walk → sprint → jump → equipment terminal → shield
+The route is look → walk → jump → equipment terminal → shield
 calibration → recovery behind cover → aim/fire/reload/weapon selection → crouch
 and flashlight → cargo inspection → enter the cabin and hold Interact to board.
 No tutorial action is bypassed by the guide. Host-observed practice remains
 independent for every squad member; all members must board before departure.
 The boarding interaction moved inside the open ship cabin, instead of at the
 hatch threshold. Departure, day-46 transition and Old Earth crash remain staged.
+
+Latest owner change: sprint is removed from the current game, controls, tutorial
+and campaign replication. Legacy checkpoints accept and discard their old
+sprint flag. Campaign co-op now identifies as `campaign-2`; use the same updated
+build on every expedition member. The multiplayer matchmaking protocol is unchanged.
+Only the active local tutorial destination is marked. Completed/upcoming station
+labels remain hidden even when nearby; look/jump/reload/switch and squad-wait
+steps have no destination marker. Cinematics show no tutorial waypoints, and
+finishing a step updates its marker immediately. Physical scenery remains visible.
+This follow-up passed all 44 guidance checks, checkpoint/state and mission
+regressions, existing movement/weapon-control checks, and all 36 checkpoints
+with four native ENet clients. Reports: `%TEMP%\nest-campaign-validation-MXUrKN`
+and `nest-campaign-Ifznx2`. The active-equipment rendered capture was inspected
+in private `captures-active-step`; only that step's station/waypoint is shown.
 
 On the crash handoff, an immediate readable instruction explains escape and
 charge recovery. Its spoken cue waits for the existing 24-second story dialogue

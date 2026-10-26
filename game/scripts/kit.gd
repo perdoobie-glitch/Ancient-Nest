@@ -111,9 +111,9 @@ func label(parent: Node3D, pos: Vector3, text: String, color: Color = Color("f3e
 	l.text = text
 	l.visible = text.to_upper().contains("FLAG") or text.to_upper().contains("BOMB") or text.begins_with("A ·") or text.begins_with("B ·") or text.begins_with("A ") or text.begins_with("B ")
 	l.font_size = size
-	l.pixel_size = 0.011
-	l.modulate = color
-	l.outline_modulate = Color("172127")
+	l.pixel_size = 0.0055
+	l.modulate = Color(color,color.a*.75)
+	l.outline_modulate = Color(Color("172127"),.75)
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = false
 	parent.add_child(l)

@@ -16,7 +16,7 @@ func run():
  check(game.screen.find_child("CampaignContinue",true,false).disabled,"Continue is disabled without valid progress")
  campaign.selected_difficulty="Easy";campaign.begin_solo(false);await frames()
  check(campaign.active and game.running and game.player!=null,"New Campaign creates a playable Anki actor")
- check(game.player.weapons[0].kind=="rifle" and game.player.weapons[1].kind=="plasma_pistol","Starting Naki Carbine and pistol use approved definitions")
+ check(game.player.weapons[0].kind=="plasma_br" and game.player.weapons[1].kind=="plasma_pistol","Starting plasma carbine and plasma pistol use requested definitions")
  check(campaign.state.phase=="INTRO" and campaign.data.intro_seconds==120,"Introduction uses the exact 120-second timeline")
  campaign.phase_elapsed=119;campaign.tick(.5);check(campaign.state.phase=="INTRO","Intro does not hand off before 120 seconds")
  campaign.tick(.5);await frames();check(campaign.state.phase=="PREPARATION" and game.context=="playing","Normal 120-second handoff restores playable preparation")
@@ -43,8 +43,9 @@ func run():
  check(not charge.is_empty() and campaign.interact(actor,charge) and campaign.state.bomb=="carried","Charge is physically recoverable before combat")
  actor.global_position=campaign.world.locations.secure+Vector3(0,0,2);await frames();campaign.interact(actor,campaign.interaction(actor))
  check(campaign.state.bomb=="secured" and campaign.checkpoint.bomb=="secured","Securing charge merges durable objective into safe checkpoint")
- campaign.phase_elapsed=campaign.data.preparation_seconds;campaign.tick(0);await frames()
- check(campaign.state.phase=="WAVE_1","Brief orientation window begins the first assault")
+ campaign.phase_elapsed=1000;campaign.tick(0);check(campaign.state.phase=="CRASH_ORIENTATION","Waiting at the ship never starts a timed assault")
+ actor.global_position=campaign.world.maze.checkpoints[0];campaign.tick(0);await frames()
+ check(campaign.state.phase=="WAVE_1","Reaching Fern Gate begins the first assault")
  for wave in range(5):
   for i in range(NestCampaignState.COUNTS[wave]):
    var id=-1000-wave*100-i
@@ -52,7 +53,9 @@ func run():
     var enemy=campaign.make_actor(id,false,0,"Fixture defender");enemy.global_position=Vector3(-20+i,0,-20)
     enemy.die(game.player,"campaign-test");campaign.update_wave()
   check(campaign.state.completed_waves==wave+1,"Actual actor deaths complete wave "+str(wave+1))
-  if wave<4:campaign.phase_elapsed=float(campaign.data.recovery_seconds);campaign.tick(0)
+  if wave<4:
+   campaign.phase_elapsed=1000;campaign.tick(0);check(campaign.state.phase.begins_with("INTERMISSION_"),"Cleared checkpoint does not retrigger or start next wave on a timer")
+   actor.global_position=campaign.world.maze.checkpoints[wave+1];campaign.tick(0)
  check(campaign.state.defeated.size()==34 and campaign.state.radio_ready(),"All exact waves and secured charge enable final radio")
  actor=game.player;actor.global_position=campaign.world.locations.radio+Vector3(0,0,2);await frames();campaign.interact(actor,campaign.interaction(actor))
  check(campaign.state.phase=="ENDING","Shared radio interaction enters ending exactly once")

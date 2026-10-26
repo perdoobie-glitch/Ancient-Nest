@@ -1,13 +1,15 @@
 class_name NestCampaign
 extends Node
-const PROTOCOL="campaign-1"
-const PRACTICE=["look","walk","sprint","jump","crouch","interact","aim","fire","reload","switch","flashlight","shield"]
+const PROTOCOL="campaign-5-nine-missions"
+const PRACTICE=["look","walk","jump","crouch","interact","aim","fire","reload","switch","flashlight","shield"]
 var game
 var active=false
 var state=NestCampaignState.new()
 var data: Dictionary
 var save_store=NestCampaignSave.new()
 var selected_difficulty="Medium"
+var selected_mission=1
+var journey: NestCampaignJourney
 var notice=""
 var members={}
 var credentials={}
@@ -15,13 +17,14 @@ var local_slot=1
 var token=""
 var join_keys={}
 var checkpoint={}
-var world: NestCampaignWorld
+var world
 var original_arena: NestArena
 var original_rules: GameTypeSettings
 var original_tuning: NestTuning
 var original_bot_rules={}
 var original_selection={}
 var cinematic: NestCampaignCinematic
+var loot: NestCampaignLoot
 var guide: NestCampaignGuide
 var phase_elapsed=0.0
 var phase_epoch=0
@@ -30,7 +33,6 @@ var sync_now=0.0
 var skip_votes={}
 var downed={}
 var flashlights={}
-var sprint_until={}
 var memory={}
 var spawn_at=0.0
 var supply_at={}
@@ -42,14 +44,14 @@ var overlay: Label
 var objective_label: Label
 var radio_subtitle: Label
 var last_flash=false
-var last_sprint=false
-var next_sprint=0.0
 var next_aim=0.0
 var load_deadline=0.0
 func paused() -> bool:return active and not game.network_active and (game.context=="pause" or not game.input_window_focused)
-func frozen_actors() -> bool:return paused() or (active and (state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","COMPLETE","DEFEAT"] or not all_loaded()))
+func frozen_actors() -> bool:return paused() or (active and (state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","COMPLETE","CHAPTER_COMPLETE","DEFEAT"] or not all_loaded()))
 func _ready():
  process_priority=1100;data=JSON.parse_string(FileAccess.get_file_as_string("res://data/campaign_mission1.json"))
+ loot=NestCampaignLoot.new();loot.campaign=self;add_child(loot)
+ journey=NestCampaignJourney.new();journey.campaign=self
 func menu():
  if active:exit_campaign()
  NestCampaignUI.menu(self)
@@ -75,7 +77,10 @@ func begin_solo(resume_saved: bool):
  detach_previous_session();configure_game();active=true;local_slot=1;members={1:local_member(1,1,"Anki")};members[1].ready=true
  if resume_saved:
   checkpoint=saved.duplicate(true);state.restore(saved);selected_difficulty=state.difficulty;initialize_run();restore_checkpoint(saved)
- else:state.new_run(selected_difficulty);initialize_run();set_phase("INTRO")
+ else:
+  state.new_run(selected_difficulty);initialize_run()
+  if selected_mission>1:journey.start_standalone(selected_mission)
+  else:set_phase("INTRO")
 func open_coop(hosting: bool,address: String,port: int):
  detach_previous_session();configure_game();active=true;state=NestCampaignState.new();state.difficulty=selected_difficulty;members.clear();credentials.clear();local_slot=1 if hosting else 0
  var endpoint=address+":"+str(port)
@@ -90,7 +95,9 @@ func connected():
  game.disable_unreliable_throttle(1);game.network_status="Connected • registering expedition member";enroll.rpc_id(1,game.current_username(),token,PROTOCOL)
 @rpc("any_peer","call_remote","reliable")
 func enroll(alias: String,key: String,protocol: String):
- if not active or game.is_client() or protocol!=PROTOCOL or key.length()!=64 or not key.is_valid_hex_number(false):return
+ if not active or game.is_client():return
+ if protocol!=PROTOCOL:deny.rpc_id(multiplayer.get_remote_sender_id(),"Campaign versions differ. All expedition members must use the same updated build.");return
+ if key.length()!=64 or not key.is_valid_hex_number(false):return
  var peer=multiplayer.get_remote_sender_id();var slot=int(credentials.get(key,0))
  if slot>0:
   if members[slot].connected and int(members[slot].peer)!=peer:deny.rpc_id(peer,"This expedition seat is already connected.");return
@@ -120,7 +127,7 @@ func disconnected(peer: int):
  var slot=slot_for_peer(peer)
  if slot<1:return
  if charge_carrier==slot and state.bomb=="carried":state.bomb="missing";charge_carrier=0;state.revision+=1
- members[slot].connected=false;members[slot].ready=false;members[slot].peer=0;skip_votes.erase(slot);sprint_until.erase(slot)
+ members[slot].connected=false;members[slot].ready=false;members[slot].peer=0;skip_votes.erase(slot)
  var actor=game.actor_by_id(slot)
  if actor!=null:
   actor.remote_peer=-1;actor.controlled=Vector3.ZERO;actor.velocity=Vector3.ZERO;actor.target=null;actor.capsule.set_deferred("disabled",true)
@@ -152,30 +159,40 @@ func all_loaded() -> bool:
  return true
 func start_expedition():
  if game.is_client() or state.phase!="LOBBY" or not everyone_ready():return
- var chosen=state.difficulty;state.new_run(chosen);checkpoint={};initialize_run();set_phase("INTRO")
+ var chosen=state.difficulty;state.new_run(chosen);checkpoint={};initialize_run()
+ if selected_mission>1:journey.start_standalone(selected_mission)
+ else:set_phase("INTRO")
 func initialize_run():
  configure_game();game.now=0;game.network_clock=0;game.match_session=randi_range(1,2147483647);game.round_number=1;game.scores.assign([0,0]);game.finished=false;game.break_until=0;game.deadline=INF;game.prepare_match_input();game.site_states.assign([{"stage":"sealed","bomb_at":0.0},{"stage":"sealed","bomb_at":0.0}]);game.pad_stock.clear();game.kill_feed.clear();game.damage_events.clear();game.running=true
- set_world("preparation");rebuild_heroes();ensure_cinematic();spawn_at=0;memory.clear();downed.clear();personal.clear();supply_at.clear();notice="";set_meta("notice_until",0);phase_elapsed=0;phase_epoch=0
+ set_world("chapter_"+str(state.mission_index) if state.mission_index>1 else "preparation");rebuild_heroes();ensure_cinematic();spawn_at=0;memory.clear();downed.clear();personal.clear();supply_at.clear();notice="";set_meta("notice_until",0);phase_elapsed=0;phase_epoch=0
  if is_instance_valid(game.menu_music):game.menu_music.stop()
 func set_world(region: String):
  if world!=null and world.region==region:return
  if original_arena==null:
   original_arena=game.arena;game.remove_child(original_arena)
  if world!=null:game.remove_child(world);world.queue_free()
- world=NestCampaignWorld.new();world.name="CampaignWorld";world.region=region;world.quality=int(game.prefs.values.graphics_quality);game.arena=world;game.add_child(world)
+ if region.begins_with("chapter_"):
+  world=NestCampaignChapterWorld.new();world.mission_index=int(region.trim_prefix("chapter_"))
+ else:world=NestCampaignWorld.new()
+ world.name="CampaignWorld";world.region=region;world.quality=int(game.prefs.values.graphics_quality);game.arena=world;game.add_child(world)
  world.sun.shadow_enabled=NestGraphicsQuality.shadows_enabled(game.prefs.values)
-func make_actor(id: int,hero: bool,peer: int,name: String) -> NestActor:
+func make_actor(id: int,hero: bool,peer: int,name: String,at: Vector3=Vector3.INF) -> NestActor:
  var actor=NestActor.new();actor.game=game;actor.net_id=id;actor.faction=0 if hero else 1;actor.character_choice=0 if hero else 1;actor.username=name;actor.remote_peer=peer;actor.local_player=hero and id==local_slot;actor.name="CampaignActor_"+str(id);game.add_child(actor);game.actors.append(actor)
  if actor.local_player:game.player=actor
- actor.respawn();loadout(actor,hero);actor.respawn_at=INF
+ if at.is_finite():actor.set_meta("campaign_spawn",at)
+ actor.respawn()
+ if at.is_finite():actor.remove_meta("campaign_spawn")
+ loadout(actor,hero);actor.respawn_at=INF
+ if hero and world.region=="forest":actor.rotation.y=PI
  return actor
 func loadout(actor: NestActor,hero: bool):
  actor.weapons.clear();actor.ammo.clear();actor.reserve.clear()
- for id in ([data.weapons.carbine,data.weapons.naki_pistol] if hero else [data.weapons.annu_primary,data.weapons.annu_secondary]):
+ for id in ([data.weapons.carbine,data.weapons.naki_pistol,"plasma_sword"] if hero else [data.weapons.annu_primary,data.weapons.annu_secondary]):
   var weapon=NestWeaponCatalog.profile(id).duplicate();weapon.title=({"assault_rifle":"Naki Carbine","plasma_pistol":"Naki Pistol","ak47":"AK-47","magnum":"Magnum"}).get(id,weapon.title)
   actor.weapons.append(weapon);actor.ammo.append(weapon.magazine);actor.reserve.append(weapon.reserve*2 if hero else weapon.reserve)
  actor.slot=0;actor.action_state="ready";actor.update_weapon_art()
 func clear_actors():
+ if loot!=null:loot.clear()
  for actor in game.actors:
   game.remove_child(actor);actor.queue_free()
  game.actors.clear();game.player=null;flashlights.clear();game.clear_effects()
@@ -183,7 +200,12 @@ func rebuild_heroes():
  clear_actors()
  for slot in members:make_actor(int(slot),true,int(members[slot].peer),"Anki" if int(slot)==1 else str(members[slot].name))
 func choose_spawn(actor: NestActor) -> Vector3:
- if actor.faction==0:return world.spawns[0][posmod(actor.net_id-1,4)]+Vector3.UP*.25
+ if actor.has_meta("campaign_spawn"):return actor.get_meta("campaign_spawn")
+ if actor.faction==0:
+  if state.mission_index>1:return world.checkpoint_spawn(state.chapter_stage,actor.net_id)
+  if world.region=="forest" and state.completed_waves>0:
+   return world.maze.checkpoints[mini(4,state.completed_waves-1)]+Vector3((posmod(actor.net_id-1,4)-1.5)*1.4,.25,0)
+  return world.spawns[0][posmod(actor.net_id-1,4)]+Vector3.UP*.25
  var approaches=world.spawns[1]
  return approaches[posmod(abs(actor.net_id),maxi(1,approaches.size()))]+Vector3.UP*.25 if not approaches.is_empty() else Vector3(0,.25,-15)
 func ensure_cinematic():
@@ -203,7 +225,7 @@ func set_phase(next: String):
  if next=="CRASH_ORIENTATION" and state.completed_waves==0:checkpoint_now()
  if next.begins_with("INTERMISSION_"):checkpoint_now()
  if next=="COMPLETE":checkpoint_now()
- if next.begins_with("WAVE_"):spawn_at=game.now+1;apply_difficulty()
+ if next.begins_with("WAVE_"):spawn_at=game.now+.1;apply_difficulty()
  broadcast();present_phase()
 func apply_difficulty():
  var profile=data.difficulties[state.difficulty];var wave=maxi(0,state.wave_index());var intensity=1.0+wave*.055
@@ -216,6 +238,14 @@ func tick(delta: float):
    for slot in connected_slots():
     if int(members[slot].loaded)<phase_epoch and int(members[slot].peer)>1:
      var peer=int(members[slot].peer);disconnected(peer);game.multiplayer.multiplayer_peer.disconnect_peer(peer)
+  return
+ if state.mission_index>1:
+  if state.phase=="CHAPTER":
+   phase_elapsed+=delta;journey.tick(delta)
+   if state.phase=="CHAPTER" and not connected_slots().any(func(slot):var hero=game.actor_by_id(slot);return hero!=null and hero.alive):set_phase("DEFEAT")
+   if game.player!=null and game.player.alive and game.context=="playing":game.update_player_interaction(delta)
+   for slot in downed:
+    if game.now-float(downed[slot].at)>float(data.bleedout_seconds):downed[slot].expired=true
   return
  var is_cinematic=state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"]
  if not is_cinematic or all_loaded():phase_elapsed+=delta
@@ -230,8 +260,11 @@ func tick(delta: float):
   if actor!=null and actor.alive and game.now-float(actor.last_damage)<.3:game.remote_interactions.erase(actor.remote_peer)
  if state.phase=="PREPARATION" and connected_slots().all(func(slot):return practice_complete(slot)):set_phase("BOARDING")
  elif state.phase=="BOARDING" and connected_slots().all(func(slot):return state.practice.get(str(slot),{}).get("boarded",false)):set_phase("DEPARTURE")
- elif state.phase=="CRASH_ORIENTATION" and state.completed_waves==0 and phase_elapsed>=float(data.preparation_seconds):set_phase("WAVE_1")
- elif state.phase.begins_with("INTERMISSION_") and phase_elapsed>=float(data.recovery_seconds):set_phase("WAVE_"+str(state.completed_waves+1))
+ elif (state.phase=="CRASH_ORIENTATION" or state.phase.begins_with("INTERMISSION_")) and state.completed_waves<5:
+  for slot in connected_slots():
+   var actor=game.actor_by_id(slot)
+   if actor!=null and actor.alive and not downed.has(slot) and world.maze.near_checkpoint(actor.global_position,state.completed_waves):
+    set_phase("WAVE_"+str(state.completed_waves+1));break
  elif state.phase.begins_with("WAVE_"):update_wave()
  if state.radio_ready() and state.phase=="CRASH_ORIENTATION":set_phase("RADIO_READY")
  if state.phase not in ["INTRO","DEPARTURE","CRASH","ENDING","COMPLETE","LOBBY"] and not connected_slots().any(func(slot):var actor=game.actor_by_id(slot);return actor!=null and actor.alive):set_phase("DEFEAT")
@@ -256,7 +289,6 @@ func observe_practice(actor: NestActor):
  var p=state.practice[id];var origin=personal[id]
  if absf(actor.rotation.y-float(origin.yaw))>.35 or absf(actor.eye.rotation.x-float(origin.pitch))>.25:p.look=true
  if actor.global_position.distance_to(origin.start)>3:p.walk=true
- if sprinting(actor) and Vector2(actor.velocity.x,actor.velocity.z).length()>2:p.sprint=true
  if actor.global_position.y>.7:p.jump=true
  if actor.crouched:p.crouch=true
  if actor.scope_level>0:p.aim=true
@@ -270,18 +302,24 @@ func interaction(actor: NestActor) -> Dictionary:
  for slot in downed:
   var target=game.actor_by_id(int(slot))
   if target!=null and int(slot)!=actor.net_id and not downed[slot].get("expired",false) and actor.global_position.distance_to(target.global_position)<2.4 and game.now-actor.last_damage>.35 and visible_between(actor.eye.global_position,target.global_position+Vector3.UP*.6):return choice("revive:"+str(slot),"Revive expedition member",float(data.revive_seconds))
+ var dropped=loot.closest(actor)
+ if dropped!=null:return choice("loot:"+str(dropped.drop_id),"Swap weapon for "+NestWeaponCatalog.profile(dropped.kind).title,.35)
+ if state.mission_index>1:return journey.interaction(actor)
  if state.phase=="PREPARATION":
   if near(actor,"service"):return choice("service","Perform personal equipment check",.6)
   if near(actor,"calibration"):return choice("calibrate","Load shield / then take cover behind calibration barrier",1)
  if state.phase=="BOARDING":
   if near(actor,"manifest"):return choice("manifest","Inspect sealed excavation charge",.6)
   if near(actor,"board"):return choice("board","Board and secure your position",1)
+ for rack in ["ship_sniper","ship_assault"]:
+  if state.phase in ["PREPARATION","BOARDING","CRASH_ORIENTATION","RADIO_READY"] or state.phase.begins_with("WAVE_") or state.phase.begins_with("INTERMISSION_"):
+   if near(actor,rack) and actor.global_position.distance_to(world.locations[rack])<1.9:return choice(rack,"Equip plasma sniper" if rack=="ship_sniper" else "Equip plasma assault rifle",.5)
  if world.region=="forest":
   if near(actor,"radio"):return choice("radio","Transmit position" if state.radio_ready() else "Check damaged radio link",1)
   if state.bomb=="missing" and actor.global_position.distance_to(world.locations["charge"+str(state.charge_site)])<2.8:return choice("charge","Confirm isolated status / Recover excavation charge",1)
   var carrier=game.actor_by_id(charge_carrier)
   if state.bomb=="carried" and carrier!=null and near(carrier,"secure") and near(actor,"secure"):return choice("secure","Secure excavation charge in surviving locker",1)
-  for supply in ["ammo0","ammo1","ammo2","weapon"]:
+  for supply in ["ammo0","ammo1","ammo2","weapon","field0","field1","field2","field3","field4"]:
    if near(actor,supply):return choice(supply,"Collect Naki ammunition" if supply!="weapon" else "Collect approved Naki plasma rifle",.5)
  return {}
 func choice(id: String,text: String,seconds: float) -> Dictionary:return {"key":"campaign:"+id,"text":"Hold "+game.prefs.key_label("interact")+" • "+text,"seconds":seconds}
@@ -294,7 +332,10 @@ func interact(actor: NestActor,selected: Dictionary) -> bool:
  if current.is_empty() or current.key!=selected.key:return false
  var action=str(current.key).trim_prefix("campaign:");var id=str(actor.net_id)
  if action.begins_with("revive:"):return revive(actor,int(action.get_slice(":",1)))
- if action=="service":state.practice[id]["interact"]=true;radio_notice("Brutus","Equipment verified. Follow the marked service route, then calibrate your shield.")
+ if state.mission_index>1 and not action.begins_with("loot:"):return journey.interact(actor,action)
+ if action.begins_with("loot:"):
+  if not loot.take(actor,int(action.get_slice(":",1))):return false
+ elif action=="service":state.practice[id]["interact"]=true;radio_notice("Brutus","Equipment verified. Follow the marked service route, then calibrate your shield.")
  elif action=="calibrate":
   state.practice[id]["calibrating"]=true;actor.shield=actor.tuning.shield_capacity*.15;actor.last_damage=game.now;radio_notice("Brutus","The shield takes the first impact. Sustained fire will strip it. Break contact. Give the suit time to recover.")
  elif action=="manifest":
@@ -311,7 +352,10 @@ func interact(actor: NestActor,selected: Dictionary) -> bool:
  elif action=="radio":
   if not state.radio_ready():radio_notice("Brutus","The antenna link is damaged. I am restoring it. We must secure the charge and clear the perimeter first.");return false
   set_phase("ENDING");return true
- elif action.begins_with("ammo") or action=="weapon":
+ elif action in ["ship_sniper","ship_assault"]:
+  var weapon=NestWeaponCatalog.profile("plasma_sniper" if action=="ship_sniper" else "plasma_auto").duplicate()
+  actor.weapons[0]=weapon;actor.ammo[0]=weapon.magazine;actor.reserve[0]=weapon.reserve*2;actor.slot=0;actor.action_state="switching";actor.action_until=game.now+.6;actor.reset_aim();actor.update_weapon_art()
+ elif action.begins_with("ammo") or action.begins_with("field") or action=="weapon":
   if game.now<float(supply_at.get(action,0)):radio_notice("Brutus","Supply rack recharging. Another marked rack is available.");return false
   supply_at[action]=game.now+20
   for i in range(actor.reserve.size()):actor.reserve[i]=maxi(actor.reserve[i],actor.weapons[i].reserve*2)
@@ -333,19 +377,22 @@ func revive(helper: NestActor,slot: int) -> bool:
  if actor==null or helper.global_position.distance_to(actor.global_position)>2.4 or not helper.alive:return false
  var position=actor.global_position;var resources=equipment(actor);actor.respawn();loadout(actor,true);restore_equipment(actor,resources);actor.global_position=position;actor.health=maxf(actor.health,actor.tuning.health_capacity*.6);actor.shield=actor.tuning.shield_capacity*.4;downed.erase(slot);broadcast();return true
 func can_damage(actor: NestActor) -> bool:
- return active and not state.phase in ["INTRO","PREPARATION","BOARDING","DEPARTURE","CRASH","ENDING","COMPLETE","DEFEAT"] and (actor.faction!=0 or not downed.has(actor.net_id))
-func sprinting(actor: NestActor) -> bool:return actor.faction==0 and actor.alive and float(sprint_until.get(actor.net_id,0))>game.now and not actor.crouched
+ return active and not state.phase in ["INTRO","PREPARATION","BOARDING","DEPARTURE","CRASH","ENDING","COMPLETE","CHAPTER_COMPLETE","DEFEAT"] and (actor.faction!=0 or not downed.has(actor.net_id))
 func spawn_position(wave: int,index: int) -> Vector3:
- var gates=data.waves[wave].approaches;var gate=int(gates[index%gates.size()]);var origin=world.spawns[1][gate]
- for attempt in range(25):
-  var p=origin+Vector3((attempt%5-2)*1.7,.2,(attempt/5-2)*1.7)
-  if world.blocked_point(p) or world.route(p,Vector3(0,0,24)).is_empty():continue
+ var gates=world.maze.spawn_origins(wave)
+ for trial in range(gates.size()*25):
+  var origin=gates[(index+int(trial/25))%gates.size()];var attempt=trial%25
+  var p=origin+Vector3((attempt%5-2)*1.7,.2,(int(attempt/5)-2)*1.7)
+  if world.blocked_point(p) or world.route(p,world.maze.checkpoints[wave]).is_empty():continue
   var safe=true
   for slot in connected_slots():
    var actor=game.actor_by_id(slot)
    if actor==null or not actor.alive:continue
    var offset=p+Vector3.UP-actor.eye.global_position;var facing=actor.aim_direction().dot(offset.normalized())
    if offset.length()<12 or (offset.length()<24 and facing<-.5) or (facing>.45 and visible_between(actor.eye.global_position,p+Vector3.UP)):safe=false;break
+  if safe:
+   for other in game.actors:
+    if is_instance_valid(other) and other.faction==1 and other.alive and other.global_position.distance_to(p)<1.4:safe=false;break
   if safe:return p
  return Vector3.INF
 func update_wave():
@@ -357,7 +404,9 @@ func update_wave():
   if position.is_finite():
    var id=-1000-wave*100-total
    if state.register_enemy(id):
-    var actor=make_actor(id,false,0,"Annu Defender "+str(total+1));actor.global_position=position;actor.rotation.y=atan2(position.x,position.z);spawn_at=game.now+float(data.difficulties[state.difficulty].spawn_gap)/sqrt(maxi(1,connected_slots().size()));broadcast()
+    var actor=make_actor(id,false,0,"Annu Defender "+str(total+1),position);actor.rotation.y=atan2(position.x,position.z);
+    if total%3==1:actor.set_meta("ambush_wait",{"until":game.now+30,"health":actor.health,"shield":actor.shield})
+    spawn_at=game.now+minf(.35,float(data.difficulties[state.difficulty].spawn_gap))/sqrt(maxi(1,connected_slots().size()));broadcast()
   else:spawn_at=game.now+.5
  for id in state.enemies.keys():
   var enemy=game.actor_by_id(int(id))
@@ -370,8 +419,9 @@ func update_wave():
    for slot in members:members[slot].loaded=phase_epoch if int(slot)==local_slot else -1
    checkpoint_now();broadcast();present_phase()
 func enemy_goal(actor: NestActor) -> Vector3:
+ if state.mission_index>1:return journey.enemy_goal(actor)
  var seen=memory.get(actor.net_id,{})
- if seen.is_empty():return Vector3(-2,0,23)
+ if seen.is_empty():return world.maze.checkpoints[clampi(state.wave_index(),0,4)]
  var point: Vector3=seen.position;var profile=data.difficulties[state.difficulty];var wave=maxi(0,state.wave_index())
  var separation=actor.global_position.distance_to(point)
  if actor.target!=null and separation<8+(1-float(profile.aggression))*10:return actor.global_position
@@ -386,7 +436,18 @@ func enemy_goal(actor: NestActor) -> Vector3:
   return best
  return point
 func bot_intent(actor: NestActor,delta: float) -> Dictionary:
- if actor.faction==0 or state.phase in ["DEFEAT","COMPLETE","ENDING"]:return {"move":Vector2.ZERO,"jump":false}
+ if actor.faction==0 or state.phase in ["DEFEAT","COMPLETE","CHAPTER_COMPLETE","ENDING"]:return {"move":Vector2.ZERO,"jump":false}
+ if state.mission_index==2 and journey.motorcycles!=null:
+  var vehicle_intent=journey.motorcycles.bot_intent(actor,delta)
+  if not vehicle_intent.is_empty():return vehicle_intent
+ if actor.has_meta("ambush_wait"):
+  var waiting=actor.get_meta("ambush_wait");var spring=game.now>=float(waiting.until) or actor.health<float(waiting.health) or actor.shield<float(waiting.shield)
+  for slot in connected_slots():
+   var hero=game.actor_by_id(slot)
+   if hero!=null and hero.alive and hero.global_position.distance_to(actor.global_position)<22:spring=true
+  if not spring:return {"move":Vector2.ZERO,"jump":false}
+  actor.remove_meta("ambush_wait");actor.bot_target_ready=game.now+.45;actor.bot_fire=0
+  return {"move":Vector2.ZERO,"jump":true}
  var profile=data.difficulties[state.difficulty];var rules=game.bot_difficulty_rules.normal
  if game.now>=actor.bot_fire:
   actor.bot_fire=game.now+.18;var previous=actor.target;actor.target=game.nearest_bot_enemy(actor,float(profile.awareness))
@@ -396,7 +457,7 @@ func bot_intent(actor: NestActor,delta: float) -> Dictionary:
  if actor.target!=null and actor.target.alive and visible_between(actor.eye.global_position,actor.target.eye.global_position):
   var offset=actor.target.global_position+actor.bot_aim_offset-actor.eye.global_position;var blend=1-exp(-delta*float(profile.tracking));actor.rotation.y=lerp_angle(actor.rotation.y,atan2(-offset.x,-offset.z),blend);actor.eye.rotation.x=lerpf(actor.eye.rotation.x,atan2(offset.y,Vector2(offset.x,offset.z).length()),blend)
   var close=offset.length()<8
-  if actor.action_state=="ready" and actor.slot!=(1 if close else 0):actor.select_weapon(1 if close else 0)
+  if actor.action_state=="ready" and actor.slot!=(1 if close else 0):actor.select_weapon_slot(1 if close else 0)
   if actor.ammo[actor.slot]==0:actor.reload_weapon()
   var period=float(profile.burst_on)+float(profile.burst_off);var on=fmod(game.now+abs(actor.net_id)*.13,period)<float(profile.burst_on)
   if on and game.now>=actor.bot_target_ready and actor.aim_direction().dot(offset.normalized())>cos(deg_to_rad(5)) and randf()<float(profile.fire_chance):actor.fire_trigger()
@@ -408,12 +469,12 @@ func equipment(actor: NestActor) -> Dictionary:
  for weapon in actor.weapons:kinds.append(weapon.kind)
  return {"weapons":kinds,"ammo":actor.ammo.duplicate(),"reserve":actor.reserve.duplicate(),"health":actor.health,"shield":actor.shield,"slot":actor.slot}
 func restore_equipment(actor: NestActor,saved: Dictionary):
- if not saved.get("weapons") is Array or saved.weapons.size()!=2:return
+ if not saved.get("weapons") is Array or saved.weapons.size() not in [2,3]:return
  for i in range(2):
   var weapon=NestWeaponCatalog.profile(str(saved.weapons[i]))
   if weapon.kind=="none":return
   actor.weapons[i]=weapon.duplicate();actor.ammo[i]=clampi(int(saved.ammo[i]),0,weapon.magazine);actor.reserve[i]=clampi(int(saved.reserve[i]),0,weapon.reserve*4)
- actor.slot=clampi(int(saved.get("slot",0)),0,1);actor.health=clampf(float(saved.get("health",actor.tuning.health_capacity)),1,actor.tuning.health_capacity);actor.shield=clampf(float(saved.get("shield",actor.tuning.shield_capacity)),0,actor.tuning.shield_capacity);actor.update_weapon_art()
+ actor.slot=clampi(int(saved.get("slot",0)),0,actor.weapons.size()-1);actor.health=clampf(float(saved.get("health",actor.tuning.health_capacity)),1,actor.tuning.health_capacity);actor.shield=clampf(float(saved.get("shield",actor.tuning.shield_capacity)),0,actor.tuning.shield_capacity);actor.update_weapon_art()
 func checkpoint_now():
  if game.is_client() or state.phase=="INTRO":return
  state.equipment={}
@@ -442,11 +503,11 @@ func restore_checkpoint(saved: Dictionary):
  game.match_session=randi_range(1,2147483647);game.prepare_match_input()
  supply_at={}
  for key in state.supplies:supply_at[key]=game.now+float(state.supplies[key])
- set_world("preparation" if state.phase in ["PREPARATION","BOARDING"] else "forest");rebuild_heroes()
+ set_world("chapter_"+str(state.mission_index) if state.mission_index>1 else ("preparation" if state.phase in ["PREPARATION","BOARDING"] else "forest"));rebuild_heroes()
+ if state.mission_index>1:journey.restore()
  for slot in members:
   var actor=game.actor_by_id(int(slot))
   if actor!=null:restore_equipment(actor,state.equipment.get(str(slot),{}))
- if state.phase.begins_with("INTERMISSION_"):state.phase="WAVE_"+str(state.completed_waves+1)
  phase_elapsed=0;phase_epoch+=1;spawn_at=game.now+3
  load_deadline=game.local_clock()+45
  for slot in members:members[slot].loaded=phase_epoch if int(slot)==local_slot else -1
@@ -455,6 +516,7 @@ func replay():
  if game.is_client():return
  state.new_run(state.difficulty);checkpoint={};initialize_run();set_phase("INTRO")
 func objective() -> String:
+ if state.mission_index>1:return journey.objective()
  match state.phase:
   "INTRO":return "THE WORLD WE BUILT • CONNECTUCT"
   "PREPARATION":
@@ -468,14 +530,14 @@ func objective() -> String:
   "DEFEAT":return "SQUAD DOWN • RETRY CHECKPOINT"
  if state.phase.begins_with("WAVE_"):
   var index=state.wave_index();return "SURVIVE THE ANNU ASSAULT\nWave %d / 5 • %s • %d / %d defeated\nCharge: %s"%[index+1,data.waves[index].name,state.wave_kills(index),data.waves[index].count,state.bomb.to_upper()]
- if state.phase.begins_with("INTERMISSION_"):return "WAVE CLEAR • RECOVER / RESUPPLY\nNext wave in %d seconds • Charge: %s"%[maxi(0,int(float(data.recovery_seconds)-phase_elapsed)),state.bomb.to_upper()]
+ if state.phase.begins_with("INTERMISSION_"):return "WAVE CLEAR / FOLLOW THE DIRT TRAIL\nNext encounter: %s / Charge: %s"%[world.maze.names[state.completed_waves],state.bomb.to_upper()]
  return state.phase.replace("_"," ")
 func radio_notice(speaker: String,text: String):
  notice=speaker+": "+text;set_meta("notice_until",game.now+9);broadcast()
 func present_phase():
  if state.phase=="LOBBY":NestCampaignUI.lobby(self);return
  if state.phase=="DEFEAT":NestCampaignUI.defeat(self);return
- if state.phase=="COMPLETE":NestCampaignUI.complete(self);return
+ if state.phase in ["COMPLETE","CHAPTER_COMPLETE"]:NestCampaignUI.complete(self);return
  game.clear_screen();game.current_screen="campaign_playing";game.context="cinematic" if state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"] else "playing"
  if game.context=="cinematic" and guide!=null:guide.stop_voice();guide.spoken_step=""
  if game.context=="playing":
@@ -523,9 +585,6 @@ func apply_action(slot: int,action: String,extra: Dictionary):
   "flashlight":
    var actor=game.actor_by_id(slot)
    if actor!=null and actor.alive:flashlights[slot]=not bool(flashlights.get(slot,false));broadcast()
-  "sprint":
-   if bool(extra.get("held",false)):sprint_until[slot]=game.now+.5
-   else:sprint_until.erase(slot)
   "aim":
    if state.phase=="PREPARATION" and state.practice.has(str(slot)):state.practice[str(slot)].aim=true
 func descriptors() -> Array:
@@ -534,7 +593,8 @@ func descriptors() -> Array:
  return result
 func broadcast():
  if not active or game.is_client() or not game.network_active:return
- var packet={"state":state.pack(),"members":members,"epoch":phase_epoch,"elapsed":phase_elapsed,"now":game.now,"session":game.match_session,"region":world.region if world!=null else "","actors":descriptors(),"downed":downed,"flashlights":flashlights,"sprint":sprint_until,"carrier":charge_carrier,"skip":skip_votes,"notice":notice,"notice_until":float(get_meta("notice_until",0))}
+ var packet={"state":state.pack(),"members":members,"epoch":phase_epoch,"elapsed":phase_elapsed,"now":game.now,"session":game.match_session,"region":world.region if world!=null else "","actors":descriptors(),"downed":downed,"flashlights":flashlights,"carrier":charge_carrier,"skip":skip_votes,"drops":loot.pack(),"notice":notice,"notice_until":float(get_meta("notice_until",0))}
+ if state.mission_index>1:packet["journey"]=journey.pack()
  for slot in connected_slots():
   var peer=int(members[slot].peer)
   if peer>1:receive_state.rpc_id(peer,packet)
@@ -564,9 +624,10 @@ func receive_state(packet: Dictionary):
   if id==local_slot and not actor.local_player:actor.local_player=true
  for actor in game.actors.duplicate():
   if actor.net_id not in ids:game.actors.erase(actor);actor.queue_free()
+ if packet.get("drops",[]) is Array:loot.receive(packet.get("drops",[]))
  downed=packet.downed.duplicate(true);flashlights=packet.flashlights.duplicate(true);skip_votes=packet.skip.duplicate(true);notice=str(packet.notice);set_meta("notice_until",float(packet.notice_until));ensure_cinematic()
- sprint_until=packet.get("sprint",{}).duplicate(true)
  charge_carrier=int(packet.get("carrier",0))
+ if state.mission_index>1:journey.receive(packet.get("journey",{}))
  if old_phase!=state.phase or old_epoch!=phase_epoch:
   apply_difficulty();present_phase();send_action("loaded",{"epoch":phase_epoch})
 func _process(delta: float):
@@ -574,13 +635,11 @@ func _process(delta: float):
  if state.phase=="LOBBY":return
  if game.is_client():phase_elapsed+=delta if game.context!="pause" or game.network_active else 0
  if world!=null:world.animate(game.now)
+ if state.mission_index>1:journey.visual_update()
+ if state.mission_index==2 and journey.motorcycles!=null:journey.motorcycles.visual_update()
  if not game.is_client() and game.local_clock()>=sync_at:sync_at=game.local_clock()+.2;broadcast()
  if cinematic!=null:cinematic.present(phase_elapsed)
  if game.context=="playing" and game.player!=null and game.player.alive:
-  var held=Input.is_action_pressed("sprint") and game.player.input_captured()
-  if held:sprint_until[local_slot]=game.now+.5
-  else:sprint_until.erase(local_slot)
-  if held!=last_sprint or (held and game.now>=next_sprint):last_sprint=held;next_sprint=game.now+.2;send_action("sprint",{"held":held})
   if state.phase=="PREPARATION" and game.now>=next_aim and not state.practice.get(str(local_slot),{}).get("aim",false) and (Input.is_action_pressed("aim") or Input.is_action_pressed("zoom")):next_aim=game.now+.2;send_action("aim",{})
  update_flashlights();update_objective_ui()
  if guide!=null:guide.update()
@@ -608,10 +667,10 @@ func update_objective_ui():
  if is_instance_valid(game.hud_objective):game.hud_objective.visible=false
  objective_label.add_theme_color_override("font_outline_color",Color.BLACK);objective_label.add_theme_constant_override("outline_size",4)
  objective_label.offset_right=minf(620,game.get_viewport().get_visible_rect().size.x-22)
- objective_label.text="THE LAST DEPARTURE • Difficulty: "+state.difficulty+"\n"+objective()
+ objective_label.text=(journey.title() if state.mission_index>1 else "THE LAST DEPARTURE")+" • Difficulty: "+state.difficulty+"\n"+objective()
  if guide!=null and not guide.next_step().is_empty():
   objective_label.offset_top=132 if game.get_viewport().get_visible_rect().size.y>600 else 62
-  objective_label.text="THE LAST DEPARTURE • Difficulty: "+state.difficulty
+  objective_label.text=(journey.title() if state.mission_index>1 else "THE LAST DEPARTURE")+" • Difficulty: "+state.difficulty
  else:objective_label.offset_top=150
  if game.player!=null and not game.player.alive:objective_label.text+="\nDOWNED • Hold position for a teammate. Full squad down: checkpoint retry."
  if game.player!=null and not game.player.alive:
@@ -621,7 +680,7 @@ func update_objective_ui():
   var distance=game.player.global_position.distance_to(world.locations["charge"+str(state.charge_site)])
   if distance<18:objective_label.text+="\nEquipment locator: %d m"%int(distance)
  if game.hud_prompt!=null:game.hud_prompt.text=game.interaction_for(game.player).get("text","") if game.player!=null else ""
- if game.hud_objective!=null:game.hud_objective.text=notice if game.now<float(get_meta("notice_until",0)) else "Flashlight: "+game.prefs.key_label("flashlight")+" • Sprint: "+game.prefs.key_label("sprint")
+ if game.hud_objective!=null:game.hud_objective.text=notice if game.now<float(get_meta("notice_until",0)) else "Flashlight: "+game.prefs.key_label("flashlight")
  if not is_instance_valid(radio_subtitle):
   radio_subtitle=game.label("",19,Color("f1f0dc"));radio_subtitle.name="CampaignRadioSubtitles";radio_subtitle.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;radio_subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;radio_subtitle.mouse_filter=Control.MOUSE_FILTER_IGNORE;radio_subtitle.add_theme_color_override("font_outline_color",Color.BLACK);radio_subtitle.add_theme_constant_override("outline_size",5);game.hud.add_child(radio_subtitle);radio_subtitle.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE);radio_subtitle.offset_left=22;radio_subtitle.offset_right=-22;radio_subtitle.offset_top=-190;radio_subtitle.offset_bottom=-125
  radio_subtitle.text=notice if game.now<float(get_meta("notice_until",0)) else ""
@@ -639,6 +698,7 @@ func exit_campaign():
  var was_active=active
  if active and not game.is_client() and not checkpoint.is_empty():save_store.save(checkpoint)
  active=false
+ if journey!=null:journey.clear_runtime()
  if was_active:
   game.running=false;game.audio.stop_all();clear_actors();game.close_connection()
   if cinematic!=null:cinematic.queue_free();cinematic=null

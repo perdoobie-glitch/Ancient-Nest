@@ -28,6 +28,8 @@ try{
  await wait('Remote movement is accepted after the crash session reset',()=>{const p=state(0)?.positions[movingSlot];return p&&Math.hypot(p[0]-beforeMove[0],p[2]-beforeMove[2])>.7&&state(0).acknowledgements[movingSlot]>0;});
  command(0,'down',{slot:state(1).slot});await wait('Downed state replicates',()=>state(1)?.alive===false&&all(s=>s.downed===1));
  command(0,'revive',{slot:state(1).slot});await wait('Teammate revive restores shared downed state',()=>all(s=>s.downed===0)&&state(1)?.alive===true);
+ command(0,'drop_bot');await wait('Physical bot weapon drop replicates to every campaign client',()=>all(s=>s.loot_count===1));await pause(1400);
+ command(0,'place_at_loot',{slot:state(1).slot});await pause(700);command(1,'pickup_hold');await pause(1000);command(1,'stop_interact');await wait('Remote held interaction equips dropped AK-47 authoritatively',()=>state(1)?.weapon_kinds?.[0]==='ak47');await wait('Claimed physical loot disappears for the squad',()=>all(s=>s.loot_count===0));
  command(0,'charge');await wait('Shared charge recovery commits once',()=>all(s=>s.bomb==='carried')&&state(0)?.result.charge===true&&state(0)?.result.duplicate_charge===false);
  command(0,'secure');await wait('Charge security replicates independently of waves',()=>all(s=>s.bomb==='secured'));
  command(1,'disconnect');await wait('Disconnect removes readiness requirements',()=>state(0)?.connected===count-1&&!state(1)?.active);

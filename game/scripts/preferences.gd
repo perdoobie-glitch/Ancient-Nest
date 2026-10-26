@@ -2,7 +2,7 @@ class_name NestPreferences
 extends RefCounted
 const PATH = "user://preferences.cfg"
 const DEFAULTS = {"campaign_dialogue":0.85,"campaign_music":0.65,"campaign_effects":0.8,"record_films":true, "allow_host":true, "username":"Player", "sensitivity": 2.0, "aim_sensitivity": 1.0, "nu_sensitivity": 2.0, "nu_flight_assist": true, "zoom_feel_tweak": 1.0, "hover_sensitivity_multiplier": 0.7125, "invert_y": false, "fov": 90.0, "vsync": true, "graphics_quality": 0, "shadows": true, "fullscreen": true, "resolution_width":1920, "resolution_height":1080, "exclusive_fullscreen":false, "render_scale":1.0, "antialiasing":0, "aspect_ratio":0, "fps_limit": 120, "master": 0.65, "effects": 0.8, "hud_scale": 1.0, "hud_opacity": 0.95, "radar": true, "crosshair": true, "crosshair_color": 2, "crosshair_size": 7.0, "crosshair_gap": 3.0, "dynamic_crosshair": true, "chat": true, "naki_radar_size": 170.0, "annu_radar_size": 170.0, "naki_radar_corner": 0, "annu_radar_corner": 1, "radar_background_opacity": 0.65, "radar_sweep": false, "radar_colorblind": false}
-const KEYS = {"campaign_hint":KEY_H,"flashlight":KEY_T,"sprint":KEY_SHIFT,"film_previous":KEY_PAGEUP,"film_next":KEY_PAGEDOWN, "forward": KEY_W, "backward": KEY_S, "left": KEY_A, "right": KEY_D, "jump": KEY_SPACE, "crouch": KEY_CTRL, "reload": KEY_R, "zoom": KEY_Z, "interact": KEY_E, "melee": KEY_F, "grenade": KEY_G, "grenade_type": KEY_B, "nu_boost": KEY_SHIFT, "nu": KEY_Q, "sword": KEY_3, "scoreboard": KEY_TAB, "pause": KEY_ESCAPE, "chat": KEY_ENTER, "connections": KEY_O, "switch_weapon": KEY_C, "primary_weapon": KEY_1, "secondary_weapon": KEY_2}
+const KEYS = {"campaign_hint":KEY_H,"flashlight":KEY_T,"film_previous":KEY_PAGEUP,"film_next":KEY_PAGEDOWN, "forward": KEY_W, "backward": KEY_S, "left": KEY_A, "right": KEY_D, "jump": KEY_SPACE, "crouch": KEY_CTRL, "reload": KEY_R, "zoom": KEY_Z, "interact": KEY_E, "melee": KEY_F, "grenade": KEY_G, "grenade_type": KEY_B, "nu_boost": KEY_SHIFT, "nu": KEY_Q, "sword": KEY_3, "scoreboard": KEY_TAB, "pause": KEY_ESCAPE, "chat": KEY_ENTER, "connections": KEY_O, "switch_weapon": KEY_C, "primary_weapon": KEY_1, "secondary_weapon": KEY_2}
 var values: Dictionary = DEFAULTS.duplicate(true)
 var keys: Dictionary = KEYS.duplicate(true)
 var audio_buses: Array = []
@@ -80,6 +80,7 @@ func light_preset() -> void:
 	values.graphics_quality=0;values.shadows=false;values.antialiasing=1;values.render_scale=1.0;values.vsync=false;values.fps_limit=120
 	apply()
 func apply() -> void:
+	if InputMap.has_action("sprint"):InputMap.erase_action("sprint")
 	Input.use_accumulated_input=false
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if values.vsync else DisplayServer.VSYNC_DISABLED)
 	NestDisplaySettings.apply(values)

@@ -32,7 +32,7 @@ The source command from CMD is:
 ```
 
 Use existing movement/look, jump, crouch, aim, fire, reload and weapon bindings.
-Campaign adds configurable **Sprint** (Shift) and **Flashlight** (T) bindings in
+Campaign adds a configurable **Flashlight** (T) binding in
 Settings → Controls. **Interact** (E) is held for equipment checks, cargo, radio
 and revival. **Enter** votes to skip cinematics. **Esc** opens campaign pause;
 Difficulty remains visible and locked for the run. Separate dialogue/music/
@@ -46,7 +46,7 @@ simulation; a co-op player's local menu does not pause the squad.
    quiet synthesized engine ambience, subtitles and replaceable voice slots.
    The ship remains docked at the end. Film capture rates do not control it.
 2. **Departure readiness**: each player separately practices look, movement,
-   sprint, jump, crouch, interaction, aim, fire, reload, weapon switching,
+   jump, crouch, interaction, aim, fire, reload, weapon switching,
    flashlight and shield recovery. Follow numbered service terminals. The
    shield emitter reduces only shield strength; take cover behind the barrier
    and let the existing recharge rules restore it. Use the safe firing bay and
@@ -93,8 +93,9 @@ coordination and aggression are data-driven. Later waves tighten pressure
 modestly within the chosen profile. Health, armor and weapon damage retain
 the established normal-preset rules; enemies are not made into bullet sponges.
 The campaign uses the existing normal TDM physics/traits preset and restores
-the user's previous multiplayer/custom rules when exiting. Only campaign
-sprinting adds a 1.25 ground movement multiplier. Other modes are unchanged.
+the user's previous multiplayer/custom rules when exiting.
+Sprint was subsequently removed at the owner's request. No dedicated sprint
+binding, speed multiplier, tutorial requirement or replicated state remains.
 
 AI can acquire targets only through physical line of sight and smoke checks,
 then uses last-seen positions when contact is lost. It does not update hidden

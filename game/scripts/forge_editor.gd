@@ -48,10 +48,10 @@ var last_roster_signature=""
 var roster: VBoxContainer
 func open_editor() -> void:
  editing=true;edit_mode=game.mode
- camera=Camera3D.new();camera.name="ForgeCamera";camera.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF;add_child(camera);camera.position=Vector3(23,16,14);camera.look_at(Vector3(29,13,6));camera.fov=75;camera.current=true
+ camera=Camera3D.new();camera.name="ForgeCamera";camera.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF;add_child(camera);camera.position=Vector3(35,30,35);camera.look_at(Vector3(0,5,0));camera.fov=75;camera.current=true
  outline=MeshInstance3D.new();add_child(outline);outline.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
  var mat=StandardMaterial3D.new();mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;mat.albedo_color=Color("f4d181");outline.material_override=mat
- game.current_screen="forge";game.context="forge";game.clear_screen();game.hud.visible=false;game.menu_camera.current=false;build_ui();game.forge_session.model.set_editor_visible(true,edit_mode);release_mouse()
+ game.current_screen="forge";game.context="forge";game.clear_screen();game.get_viewport().disable_3d=false;game.hud.visible=false;game.menu_camera.current=false;build_ui();game.forge_session.model.set_editor_visible(true,edit_mode);release_mouse()
  tell("Shared Nest Forge · edits are validated by the host. Select from the world or searchable list.")
 func small_button(parent: Node,text: String,action: Callable,name: String="") -> Button:
  var b=Button.new();b.text=text;b.custom_minimum_size.y=30;b.size_flags_horizontal=Control.SIZE_EXPAND_FILL;b.pressed.connect(action)

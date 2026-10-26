@@ -14,4 +14,14 @@ func run():
   var labels=game.screen.find_children("*","Label",true,false)
   good=labels.any(func(label):return label.text=="Difficulty") and not labels.any(func(label):return label.text.contains("Bot Difficulty"))
   print(("PASS " if good else "FAIL ")+"Campaign uses Difficulty label");if not good:failures+=1
+  NestCampaignUI.mission_select(c)
+  for i in range(4):await process_frame
+  buttons=game.screen.find_children("*","Button",true,false);back=buttons.filter(func(b):return b.text=="Back")
+  good=buttons.filter(func(b):return b.text.contains("  /  ")).size()==8 and back.size()==1 and back[0].get_global_rect().end.y<=dimensions.y
+  print(("PASS " if good else "FAIL ")+"All eight new missions and pinned Back fit "+str(dimensions));if not good:failures+=1
+  c.selected_mission=2;NestCampaignUI.mission_launch(c)
+  for i in range(4):await process_frame
+  buttons=game.screen.find_children("*","Button",true,false);back=buttons.filter(func(b):return b.text=="Back")
+  good=buttons.any(func(b):return b.text=="Start Selected Mission / Solo") and buttons.any(func(b):return b.text=="Host Selected Mission / Co-op") and back[0].get_global_rect().end.y<=dimensions.y
+  print(("PASS " if good else "FAIL ")+"Chapter launch actions fit "+str(dimensions));if not good:failures+=1
  game.queue_free();await process_frame;print("CAMPAIGN UI failures=",failures);quit(1 if failures else 0)

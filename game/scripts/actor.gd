@@ -619,15 +619,19 @@ func _physics_process(delta: float) -> void:
 # One simulation tick of character movement. Used unchanged for offline play,
 # bots, host simulation of client commands and client replay after correction.
 func movement_step(move: Vector2, jump: bool, crouch_want: int, yaw: float, delta: float, replaying: bool=false) -> bool:
+	var motorcycle=campaign_motorcycle_controller()
+	if motorcycle!=null and motorcycle.handles(self):return motorcycle.movement_step(self,move,jump,yaw,delta,replaying)
 	if game.nu!=null and game.nu.blocked(self):move=Vector2.ZERO;jump=false;crouch_want=0
 	if crouch_want>=0: set_crouch(crouch_want==1)
 	var mult = tuning.carry_multiplier if carrying else 1.0
 	var rules = traits
 	var move_scale=rules.movement_speed_percent/100.0
-	if game.campaign!=null and game.campaign.active and game.campaign.sprinting(self):move_scale*=1.25
 	var wish = Basis(Vector3.UP,yaw)*Vector3(move.x,0,move.y)
 	var horizontal = Vector3(controlled.x,0,controlled.z)
 	var jumped=false
+	var supported=is_on_floor()
+	var support_normal=get_floor_normal() if supported else Vector3.UP
+	var support_velocity=get_platform_velocity() if supported else Vector3.ZERO
 	if (is_on_floor() or (jump and can_jump_from_support())) and not cannon_takeoff:
 		var stance_scale=rules.crouch_speed_percent/100.0 if crouched else rules.walk_speed_percent/100.0
 		var speed=(tuning.crouch_speed if crouched else tuning.ground_speed)*move_scale*stance_scale
@@ -635,7 +639,7 @@ func movement_step(move: Vector2, jump: bool, crouch_want: int, yaw: float, delt
 		horizontal=horizontal.move_toward(wish*speed*mult,accel*delta)
 		controlled.y=0
 		if jump:
-			controlled.y=tuning.jump_speed*sqrt(maxf(0.0,rules.jump_height_percent*rules.gravity_percent/10000.0)); external+=get_platform_velocity(); jumped=true
+			controlled.y=tuning.jump_speed*sqrt(maxf(0.0,rules.jump_height_percent*rules.gravity_percent/10000.0))+NestContactMomentum.slope_rise(horizontal,support_normal);external+=support_velocity.limit_length(NestContactMomentum.MAX_CONTACT_SPEED);jumped=true
 	else:
 		var air_multiplier=rules.air_control_percent/100.0
 		var old_horizontal=horizontal
@@ -656,6 +660,11 @@ func movement_step(move: Vector2, jump: bool, crouch_want: int, yaw: float, delt
 	step_up(delta)
 	move_and_slide()
 	update_crouch_shape()
+	if supported and not is_on_floor() and not jumped:
+		var rise=NestContactMomentum.slope_rise(horizontal,support_normal)
+		if rise>.01:controlled.y=maxf(controlled.y,rise)
+		external+=support_velocity.limit_length(NestContactMomentum.MAX_CONTACT_SPEED)
+	NestContactMomentum.contacts(self,replaying)
 	# Project both stored momentum channels out of blocked normals.
 	for i in range(get_slide_collision_count()):
 		var normal=get_slide_collision(i).get_normal()
@@ -670,6 +679,13 @@ func movement_step(move: Vector2, jump: bool, crouch_want: int, yaw: float, delt
 static func quantize(value: float) -> float:
 	# Commands carry 32-bit angles; predict with exactly what the host receives.
 	return PackedFloat32Array([value])[0]
+func campaign_motorcycle_controller():
+	if game==null or game.campaign==null or not game.campaign.active:return null
+	var journey=game.campaign.get("journey")
+	return journey.get("motorcycles") if journey!=null else null
+func is_motorcycle_rider() -> bool:
+	var motorcycle=campaign_motorcycle_controller()
+	return motorcycle!=null and motorcycle.handles(self)
 func capture_move_state() -> Dictionary:
 	return {"pos":global_position,"ctrl":controlled,"ext":external,"takeoff":cannon_takeoff,"crouched":crouched,"air_duck":air_duck,"grounded":is_on_floor(),"lunge_ticks":lunge_ticks,"lunge_v":lunge_velocity}
 # ---- Client: command history, acknowledgement and reconciliation ----
@@ -681,6 +697,15 @@ func record_client_command(move: Vector2, jumped: bool, crouch_want: int, intera
 	if NET_TRACE and game.command_sequence%30==0: print("TRACE c seq=",game.command_sequence," pos=",global_position," ack=",ack_seen," hist=",cmd_history.size()," alive=",alive," life=",life_id," pend=",not pending_reconcile.is_empty())
 	game.send_commands()
 func queue_reconcile(state: Dictionary, server_time: float) -> void:
+	var motorcycle=campaign_motorcycle_controller()
+	if motorcycle!=null and motorcycle.handles(self):
+		# Mounted guests send input normally; only the host integrates vehicle
+		# heading, suspension and falls. Keep normal on-foot replay unchanged.
+		var previous=global_position
+		global_position=state.pos;controlled=state.get("ctrl",state.velocity);velocity=state.velocity;external=Vector3.ZERO
+		pending_reconcile={};cmd_history.clear();ack_seen=int(state.ack)
+		view_correction=(view_correction+previous-global_position).limit_length(1.5)
+		reset_physics_interpolation();return
 	var s={"ack":int(state.ack),"pos":state.pos,"ctrl":state.get("ctrl",state.velocity),"ext":state.get("ext",Vector3.ZERO),"takeoff":state.get("takeoff",false),"grounded":state.grounded,"crouch":state.crouch,"air_duck":state.get("air_duck",false),"jbuf":int(state.get("jbuf",0)),"alive":state.alive,"server_time":server_time,"lunge_ticks":int(state.get("lunge_t",0)),"lunge_v":state.get("lunge_v",Vector3.ZERO)}
 	# Before the host has simulated any of our commands, or while it has stopped
 	# simulating them (stalled stream, frozen body), there is no prediction to
@@ -929,6 +954,7 @@ func damage_model() -> String:
 	var model=game.active_damage_model()
 	return NestCharacterCatalog.by_index(character).damage_model if model=="faction" else model
 func toggle_scope() -> void:
+	if is_motorcycle_rider():return
 	if not input_active() or action_state!="ready" or weapons.is_empty(): return
 	var config=NestWeaponCatalog.for_kind(weapons[slot].kind)
 	var levels=maxi(config.get("scope_fov",[]).size(),config.get("zoom_factors",[]).size())
@@ -938,7 +964,7 @@ func toggle_scope() -> void:
 func cancel_scope() -> void:
 	if scope_level>0 and combat_audio!=null: combat_audio.weapon_event("zoom_out_sound","zoom")
 	scope_level=0
-	if weapon_view!=null: weapon_view.visible=true
+	if weapon_view!=null: weapon_view.visible=not is_motorcycle_rider()
 func reset_aim() -> void:
 	cancel_scope(); combat_recovery_at=game.now;fire_pending_until=-INF;aim_punch=Vector2.ZERO; accuracy_penalty=0; shots_in_sequence=0; last_shot_at=-100;last_shot_kind=""; recoil=0; ignore_fire_until_release=false
 	if camera!=null:
@@ -959,7 +985,7 @@ func update_aim(delta: float) -> void:
 		if not fixed.is_empty() and float(fixed[scope_level-1])>0: target_fov=float(fixed[scope_level-1])
 		else: target_fov=rad_to_deg(2*atan(tan(deg_to_rad(game.prefs.values.fov)*.5)/float(config.zoom_factors[scope_level-1])))
 	camera.fov=lerpf(camera.fov,target_fov,1-exp(-delta*float(config.get("scope_transition",22))))
-	if weapon_view!=null: weapon_view.visible=not scoped_overlay() and weapons[slot].kind!="none"
+	if weapon_view!=null: weapon_view.visible=not is_motorcycle_rider() and not scoped_overlay() and weapons[slot].kind!="none"
 func advance_combat_recovery() -> void:
 	var recoil_dt=maxf(0,game.now-maxf(combat_recovery_at,last_shot_at+.10))
 	var spread_dt=maxf(0,game.now-maxf(combat_recovery_at,last_shot_at+.15))
@@ -1073,6 +1099,8 @@ func insert_shell() -> void:
 		ammo[slot]+=1
 		if traits.infinite_ammo==0:reserve[slot]-=1
 func fire_trigger() -> bool:
+	var motorcycle=campaign_motorcycle_controller()
+	if motorcycle!=null and motorcycle.handles(self):return false
 	if bomb_equipped:return false
 	if game.matchmaking.blocks_simulation():return false
 	if game.nu!=null and game.nu.blocked(self):return false
@@ -1473,6 +1501,8 @@ func bot_intent(delta: float) -> Dictionary:
 	game.bot_interact(self,delta)
 	return intent
 func locomotion_grounded() -> bool:
+	var motorcycle=campaign_motorcycle_controller()
+	if motorcycle!=null and motorcycle.handles(self):return false
 	return net_grounded if game.is_client() and not local_player else is_on_floor() and controlled.y<=.01
 func update_visual(delta: float) -> void:
 	if belt_sword!=null:belt_sword.visible=alive and (weapons.is_empty() or weapons[slot].kind!="plasma_sword") and action_state!="melee"
@@ -1493,9 +1523,13 @@ func update_visual(delta: float) -> void:
 			else: wanted="walk_forward" if local_velocity.z<0 else "walk_backward"
 		if crouched: wanted="crouch_idle" if wanted=="idle" else "crouch_"+wanted.trim_prefix("walk_")
 	if not clips.has(wanted): wanted="idle"
+	var motorcycle=campaign_motorcycle_controller()
+	if motorcycle!=null and motorcycle.handles(self) and clips.has("crouch_idle"):wanted="crouch_idle"
 	if clips.has(wanted) and animation.current_animation!=clips[wanted]: animation.play(clips[wanted],0.0 if wanted=="jump_air" else 0.12)
 	animation.advance(delta)
 	if presentation!=null: presentation.pose_upper_body()
+	if motorcycle!=null:motorcycle.pose_rider(self)
+	if weapon_view!=null and is_motorcycle_rider():weapon_view.visible=false
 	if skeleton!=null:
 		# Same authoritative bone poses, expressed directly in the hitbox parent's space.
 		var model_to_skeleton=model.global_transform.affine_inverse()*skeleton.global_transform
