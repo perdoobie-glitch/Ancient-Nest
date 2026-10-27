@@ -1,14 +1,14 @@
 # Ancient Nest — unified development source
 
-**Nine-mission campaign expansion, 2026-10-26:** levels 2–9 continue the City-Ambush build with four motorcycles, a 7.9 km escape, seven distinct mission environments, optional archive records and Ancient AI's three-stage machinery boss. Open **Play Expanded Campaign.cmd**, then **Mission Select / Play Levels 2–9**, or continue from Mission 1. [Campaign details](docs/CAMPAIGN_NINE_MISSIONS.md) · [Validation](docs/CAMPAIGN_NINE_VALIDATION.md).
+**Campaign terrain and story update, 2026-10-26:** levels 2–9 now include 62 randomized weapon cases, substantial elevation changes, staged encounters along the route, destination defenses, and 15-second opening/ending scenes. Level 2 adds 966 collision trees, branch jumps and mounted crouching to the four-bike escape. Open **Play Expanded Campaign.cmd**, then **Mission Select / Play Levels 2–9**, or continue from Mission 1. [Current design and verification](docs/CAMPAIGN_TERRAIN_STORY_AND_CACHES.md) · [Initial nine-mission expansion](docs/CAMPAIGN_NINE_MISSIONS.md).
 
-Working folder: `C:\Users\Corey\Games\AncientNest-Campaign-2-9-20261026`. Base is the exact City-Ambush source `59f005c3dcf3caed2f938c9d44098776c426d7e4`. The original City-Ambush build and checkout remain intact. New progress uses `campaign/nine_missions.json`; an existing Mission 1 checkpoint is read only for initial migration and is preserved. All co-op peers need `campaign-5-nine-missions`.
+Working folder: `C:\Users\Corey\Games\AncientNest-Campaign-2-9-20261026`. Base is the exact City-Ambush source `59f005c3dcf3caed2f938c9d44098776c426d7e4`. The original City-Ambush build and checkout remain intact. New progress uses `campaign/nine_missions.json`; an existing Mission 1 checkpoint is read only for initial migration and is preserved. All co-op peers need `campaign-6-relief-caches`. The current private export is under `builds/windows-relief`; the previous export remains under `builds/windows`.
 
-Newest private update: eight-round Naki pistol, richer city/army departure base, forest trail props and concealed Annu ambushes. [Details and local checks](docs/CAMPAIGN_CITY_AND_AMBUSH.md). Build: `C:\Users\Corey\Games\AncientNest-City-Ambush-20261025`; reopen **Ancient Nest - Take back Home** after export.
+Previous City-Ambush update: eight-round Naki pistol, richer city/army departure base, forest trail props and concealed Annu ambushes. [Historical details and local checks](docs/CAMPAIGN_CITY_AND_AMBUSH.md). Preserved build: `C:\Users\Corey\Games\AncientNest-City-Ambush-20261025`.
 
-Latest private update expands the base and landing pad, builds a larger single-route maze with climbing gardens and staged encounters, and adds physical bot weapon pickups. Floating labels are smaller; plasma carbine shots travel twice as fast. See [current expansion and checks](docs/CAMPAIGN_EXPANSION_AND_LOOT.md).
+The earlier route update expands the base and landing pad, builds a larger single-route maze with climbing gardens and staged encounters, and adds physical bot weapon pickups. Floating labels are smaller; plasma carbine shots travel twice as fast. See [that expansion and its checks](docs/CAMPAIGN_EXPANSION_AND_LOOT.md).
 
-Current private update adds the forest checkpoint campaign, curved expedition ship, plasma weapon racks, contact momentum, visible lobby map selection, Forge rendering and concluded Film previews/playback. Matchmaking includes account-timing and reconnect fixes; live coordinator connectivity remains unverified. See [current implementation and checks](docs/CAMPAIGN_FOREST_AND_GAMEPLAY_FIXES.md).
+The earlier forest update adds the checkpoint campaign, curved expedition ship, plasma weapon racks, contact momentum, visible lobby map selection, Forge rendering and concluded Film previews/playback. Matchmaking includes account-timing and reconnect fixes; live coordinator connectivity remains unverified. See [that implementation and its checks](docs/CAMPAIGN_FOREST_AND_GAMEPLAY_FIXES.md).
 
 **10.5-dev**, protocol **10.5-discord2**. Displayed game name: Ancient Nest. Project identity: AncientNest-Reforged-2026-10-23.
 
@@ -30,7 +30,7 @@ Current source adds host-only master scheduling, queue recovery, bounded retries
 Campaign entry: run **Play Ancient Nest Campaign.cmd**, choose **Campaign • Play
 offline** after the age notice or enter Campaign from the main menu. Choose
 **Difficulty** (Easy, Medium, Hard, Angel), then New Campaign. Mission 1 includes
-the 120-second Connectuct intro, personal preparation, boarding, forest crash,
+the 15-second Connectuct intro, personal preparation, boarding, forest crash,
 charge recovery, five Annu waves and radio ending, with solo saves and direct
 1–4 player co-op. Environment art is a functional blockout; recorded narration
 is missing and uses subtitles/replaceable slots. See

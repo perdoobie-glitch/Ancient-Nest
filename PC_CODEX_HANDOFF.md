@@ -2,7 +2,7 @@
 
 ## Current nine-mission expansion — 2026-10-26
 
-Work only in `C:\Users\Corey\Games\AncientNest-Campaign-2-9-20261026`, branch `feature/campaign-nine-missions-2026-10-26`, based exactly on City-Ambush `59f005c`. This separate worktree preserves the original build and source. Use `Play Expanded Campaign.cmd`; private compiled files are under `builds/windows/`. Read [campaign design](docs/CAMPAIGN_NINE_MISSIONS.md) and [actual verification](docs/CAMPAIGN_NINE_VALIDATION.md). New co-op protocol is `campaign-5-nine-missions`; competitive protocol and services are unchanged.
+Work only in `C:\Users\Corey\Games\AncientNest-Campaign-2-9-20261026`, branch `feature/campaign-nine-missions-2026-10-26`, based exactly on City-Ambush `59f005c`. This separate worktree preserves the original build and source. Use `Play Expanded Campaign.cmd`; the current private compiled files are under `builds/windows-relief/`, with the previous export retained under `builds/windows/`. Read the [current terrain, caches, staged combat and story update](docs/CAMPAIGN_TERRAIN_STORY_AND_CACHES.md), [original campaign design](docs/CAMPAIGN_NINE_MISSIONS.md) and [original expansion verification](docs/CAMPAIGN_NINE_VALIDATION.md). Co-op protocol is `campaign-6-relief-caches`; competitive protocol and services are unchanged. Save format 3 accepts existing version-1 and version-2 saves. The separate **Ancient Nest - Nine Missions** desktop shortcut opens the new private build.
 
 The entries below are historical. New saves use `campaign/nine_missions.json` with backup, preserving legacy Mission 1 save files. No public executable release or production-service deployment is part of this expansion.
 

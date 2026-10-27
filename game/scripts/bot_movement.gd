@@ -26,7 +26,10 @@ var repath_earliest=0.0
 var contact_probe_at=0.0
 var contact_normal=Vector3.ZERO
 func vulnerable() -> bool:
-	return actor.health<actor.tuning.health_capacity*.38 or (actor.tuning.shield_capacity>0 and actor.shield<actor.tuning.shield_capacity*.15)
+	# Annu use body armour and always spawn with zero energy shield. The shared
+	# tuning still contains the Naki shield capacity, so it is not an Annu injury.
+	var depleted_shield=actor.damage_model()=="naki" and actor.tuning.shield_capacity>0 and actor.shield<actor.tuning.shield_capacity*.15
+	return actor.health<actor.tuning.health_capacity*.38 or depleted_shield
 func holding_objective() -> bool:
 	if actor.game.mode not in [0,actor.game.MODE_CS]:return false
 	var action=actor.game.interaction_for(actor)

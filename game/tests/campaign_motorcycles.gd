@@ -6,7 +6,7 @@ func check(value: bool,message: String):
  if not value:failures+=1
 func run():
  var game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await process_frame;game.sandbox_mode=true
- var c=game.campaign;c.save_store.path="user://motorcycle-qa.json";c.begin_solo(false);c.journey.start_standalone(2);await physics_frame;await process_frame
+ var c=game.campaign;c.save_store.path="user://motorcycle-qa.json";c.begin_solo(false);c.journey.start_standalone(2);c.journey.finish_cinematic();await physics_frame
  var bikes=c.journey.motorcycles;var actor=game.player;game.running=false
  check(bikes!=null and bikes.bikes.size()==4 and bikes.visuals.size()==4,"Exactly four physical motorcycle models / no companion riders")
  check(game.actors.filter(func(a):return a.faction==0).size()==1,"Solo retains exactly one existing Naki actor")
@@ -55,4 +55,14 @@ func run():
  check(NestCampaignMotorcycleWorld.encounter_spawns(0).size()==8,"Each sector has authored Annu ambush positions")
  var at=NestCampaignMotorcycleWorld.point(180);var ramp=NestCampaignMotorcycleWorld.ramp_info(-at.z)
  check(not ramp.is_empty() and float(ramp.crest)>float(ramp.start),"Marked ramp has a physical approach and crest launch region")
+ b.mounted=false;b.crashed=true;b.crash_until=0;b.position=NestCampaignMotorcycleWorld.point(6100)+Vector3.UP*.25;actor.global_position=b.position
+ check(bikes.interact(actor,"bike:recover:1") and float(b.position.y)>95,"Overturned bike recovery preserves the actual high-ridge terrain elevation")
+ bikes.setup(4)
+ check(c.world.get_children().filter(func(node):return str(node.name).begins_with("ExpeditionMotorcycle_")).size()==4,"Checkpoint retry still leaves exactly four motorcycle models")
+ check(absf(bikes.bikes[1].position.y-NestCampaignMotorcycleWorld.surface_height(bikes.bikes[1].position)-.25)<.01,"Checkpoint bike spawn matches elevated physical road")
+ var anchors=NestCampaignMotorcycleWorld.weapon_cache_points();var grounded=0
+ for cache in anchors:
+  var hit=game.trace(cache+Vector3.UP*8,cache-Vector3.UP*4,1)
+  if not hit.is_empty() and absf(hit.position.y-cache.y)<.4:grounded+=1
+ check(anchors.size()==8 and grounded==8,"Eight optional weapon-cache anchors are grounded on reachable hilly laybys")
  c.exit_campaign();game.queue_free();await process_frame;quit(1 if failures else 0)

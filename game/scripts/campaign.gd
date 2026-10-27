@@ -1,6 +1,6 @@
 class_name NestCampaign
 extends Node
-const PROTOCOL="campaign-5-nine-missions"
+const PROTOCOL="campaign-6-relief-caches"
 const PRACTICE=["look","walk","jump","crouch","interact","aim","fire","reload","switch","flashlight","shield"]
 var game
 var active=false
@@ -47,7 +47,7 @@ var last_flash=false
 var next_aim=0.0
 var load_deadline=0.0
 func paused() -> bool:return active and not game.network_active and (game.context=="pause" or not game.input_window_focused)
-func frozen_actors() -> bool:return paused() or (active and (state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","COMPLETE","CHAPTER_COMPLETE","DEFEAT"] or not all_loaded()))
+func frozen_actors() -> bool:return paused() or (active and (state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","CHAPTER_INTRO","CHAPTER_OUTRO","COMPLETE","CHAPTER_COMPLETE","DEFEAT"] or not all_loaded()))
 func _ready():
  process_priority=1100;data=JSON.parse_string(FileAccess.get_file_as_string("res://data/campaign_mission1.json"))
  loot=NestCampaignLoot.new();loot.campaign=self;add_child(loot)
@@ -92,7 +92,14 @@ func open_coop(hosting: bool,address: String,port: int):
  if hosting:members[1]=local_member(1,1,game.current_username());members[1].loaded=0
  NestCampaignUI.lobby(self)
 func connected():
- game.disable_unreliable_throttle(1);game.network_status="Connected • registering expedition member";enroll.rpc_id(1,game.current_username(),token,PROTOCOL)
+ game.disable_unreliable_throttle(1);configure_transport_peer(1);game.network_status="Connected • registering expedition member";enroll.rpc_id(1,game.current_username(),token,PROTOCOL)
+func configure_transport_peer(peer_id: int):
+ # Chapter construction briefly blocks main-thread ENet polling. Four clients
+ # sharing one PC can exceed ENet's short RTT-based minimum during that work.
+ # Keep a bounded campaign-only grace; the loaded-seat deadline still applies.
+ if not active or not game.multiplayer.multiplayer_peer is ENetMultiplayerPeer:return
+ var peer=(game.multiplayer.multiplayer_peer as ENetMultiplayerPeer).get_peer(peer_id)
+ if peer!=null:peer.set_timeout(32,15000,45000)
 @rpc("any_peer","call_remote","reliable")
 func enroll(alias: String,key: String,protocol: String):
  if not active or game.is_client():return
@@ -108,6 +115,7 @@ func enroll(alias: String,key: String,protocol: String):
   if slot==0:deny.rpc_id(peer,"Expedition is full (four players).");return
   credentials[key]=slot;members[slot]=local_member(slot,peer,game.clean_alias(alias))
  members[slot].peer=peer;members[slot].connected=true;members[slot].loaded=-1;members[slot].ready=false
+ configure_transport_peer(peer)
  var actor=game.actor_by_id(slot)
  if actor!=null:
   actor.remote_peer=peer;actor.cmd_last_seq=0;actor.cmd_queue.clear();actor.net_last_command=game.now;actor.capsule.set_deferred("disabled",not actor.alive)
@@ -240,6 +248,10 @@ func tick(delta: float):
      var peer=int(members[slot].peer);disconnected(peer);game.multiplayer.multiplayer_peer.disconnect_peer(peer)
   return
  if state.mission_index>1:
+  if state.phase in ["CHAPTER_INTRO","CHAPTER_OUTRO"]:
+   phase_elapsed+=delta
+   if phase_elapsed>=15.0 or skip_votes.size()>=connected_slots().size():finish_cinematic()
+   return
   if state.phase=="CHAPTER":
    phase_elapsed+=delta;journey.tick(delta)
    if state.phase=="CHAPTER" and not connected_slots().any(func(slot):var hero=game.actor_by_id(slot);return hero!=null and hero.alive):set_phase("DEFEAT")
@@ -247,10 +259,10 @@ func tick(delta: float):
    for slot in downed:
     if game.now-float(downed[slot].at)>float(data.bleedout_seconds):downed[slot].expired=true
   return
- var is_cinematic=state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"]
+ var is_cinematic=state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","CHAPTER_INTRO","CHAPTER_OUTRO"]
  if not is_cinematic or all_loaded():phase_elapsed+=delta
  if is_cinematic:
-  var duration={"INTRO":120.0,"DEPARTURE":20.0,"CRASH":24.0,"ENDING":45.0}[state.phase]
+  var duration={"INTRO":15.0,"DEPARTURE":20.0,"CRASH":24.0,"ENDING":15.0}[state.phase]
   if all_loaded() and (phase_elapsed>=duration-.00001 or skip_votes.size()>=connected_slots().size()):finish_cinematic()
   return
  if state.phase in ["DEFEAT","COMPLETE"]:return
@@ -273,6 +285,7 @@ func tick(delta: float):
   if game.now-float(downed[slot].at)>float(data.bleedout_seconds):downed[slot].expired=true
 func finish_cinematic():
  if game.is_client():return
+ if state.phase in ["CHAPTER_INTRO","CHAPTER_OUTRO"]:journey.finish_cinematic();return
  match state.phase:
   "INTRO":set_phase("PREPARATION")
   "DEPARTURE":set_phase("CRASH")
@@ -377,7 +390,8 @@ func revive(helper: NestActor,slot: int) -> bool:
  if actor==null or helper.global_position.distance_to(actor.global_position)>2.4 or not helper.alive:return false
  var position=actor.global_position;var resources=equipment(actor);actor.respawn();loadout(actor,true);restore_equipment(actor,resources);actor.global_position=position;actor.health=maxf(actor.health,actor.tuning.health_capacity*.6);actor.shield=actor.tuning.shield_capacity*.4;downed.erase(slot);broadcast();return true
 func can_damage(actor: NestActor) -> bool:
- return active and not state.phase in ["INTRO","PREPARATION","BOARDING","DEPARTURE","CRASH","ENDING","COMPLETE","CHAPTER_COMPLETE","DEFEAT"] and (actor.faction!=0 or not downed.has(actor.net_id))
+ if paused() or not all_loaded():return false
+ return active and not state.phase in ["INTRO","PREPARATION","BOARDING","DEPARTURE","CRASH","ENDING","CHAPTER_INTRO","CHAPTER_OUTRO","COMPLETE","CHAPTER_COMPLETE","DEFEAT"] and (actor.faction!=0 or not downed.has(actor.net_id))
 func spawn_position(wave: int,index: int) -> Vector3:
  var gates=world.maze.spawn_origins(wave)
  for trial in range(gates.size()*25):
@@ -436,7 +450,7 @@ func enemy_goal(actor: NestActor) -> Vector3:
   return best
  return point
 func bot_intent(actor: NestActor,delta: float) -> Dictionary:
- if actor.faction==0 or state.phase in ["DEFEAT","COMPLETE","CHAPTER_COMPLETE","ENDING"]:return {"move":Vector2.ZERO,"jump":false}
+ if actor.faction==0 or state.phase in ["DEFEAT","COMPLETE","CHAPTER_INTRO","CHAPTER_OUTRO","CHAPTER_COMPLETE","ENDING"]:return {"move":Vector2.ZERO,"jump":false}
  if state.mission_index==2 and journey.motorcycles!=null:
   var vehicle_intent=journey.motorcycles.bot_intent(actor,delta)
   if not vehicle_intent.is_empty():return vehicle_intent
@@ -491,6 +505,16 @@ func merge_durable_charge():
  if checkpoint.is_empty():return
  checkpoint.bomb="secured";checkpoint.revision=state.revision+1
  save_store.save(checkpoint)
+func persist_weapon_cache_pickup(actor: NestActor):
+ # Preserve the safe stage entrance while committing both the consumed case and
+ # its gun. A retry must neither duplicate the cache nor lose the acquired weapon.
+ if game.is_client() or checkpoint.is_empty() or checkpoint.get("run","")!=state.run_id or int(checkpoint.get("mission_index",1))!=state.mission_index:return
+ var id=str(actor.net_id);var current=equipment(actor)
+ var saved=checkpoint.equipment.get(id,current).duplicate(true)
+ for field in ["weapons","ammo","reserve","slot"]:saved[field]=current[field]
+ checkpoint.equipment[id]=saved;state.equipment[id]=current
+ checkpoint.weapon_caches=state.weapon_caches.duplicate(true);checkpoint.version=NestCampaignState.SAVE_VERSION;checkpoint.revision=state.revision
+ if not save_store.save(checkpoint):notice=save_store.error
 func retry_checkpoint():
  if game.is_client() or state.phase!="DEFEAT":return
  var saved=checkpoint.duplicate(true)
@@ -538,7 +562,7 @@ func present_phase():
  if state.phase=="LOBBY":NestCampaignUI.lobby(self);return
  if state.phase=="DEFEAT":NestCampaignUI.defeat(self);return
  if state.phase in ["COMPLETE","CHAPTER_COMPLETE"]:NestCampaignUI.complete(self);return
- game.clear_screen();game.current_screen="campaign_playing";game.context="cinematic" if state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"] else "playing"
+ game.clear_screen();game.current_screen="campaign_playing";game.context="cinematic" if state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","CHAPTER_INTRO","CHAPTER_OUTRO"] else "playing"
  if game.context=="cinematic" and guide!=null:guide.stop_voice();guide.spoken_step=""
  if game.context=="playing":
   game.create_hud();game.hud.visible=true
@@ -556,7 +580,7 @@ func handle_input(event: InputEvent) -> bool:
   elif game.running:NestCampaignUI.pause(self)
   else:exit_campaign()
   return true
- if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_ENTER and state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"]:send_action("skip",{});return true
+ if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_ENTER and state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","CHAPTER_INTRO","CHAPTER_OUTRO"]:send_action("skip",{});return true
  if game.context=="playing" and event.is_action_pressed("flashlight"):send_action("flashlight",{});return true
  if game.context=="playing" and event.is_action_pressed("campaign_hint"):
   if guide!=null:guide.repeat_current()
@@ -581,7 +605,7 @@ func apply_action(slot: int,action: String,extra: Dictionary):
   "loaded":
    if int(extra.get("epoch",-1))==phase_epoch:members[slot].loaded=phase_epoch
   "skip":
-   if state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"]:skip_votes[slot]=true;broadcast()
+   if state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","CHAPTER_INTRO","CHAPTER_OUTRO"]:skip_votes[slot]=true;broadcast()
   "flashlight":
    var actor=game.actor_by_id(slot)
    if actor!=null and actor.alive:flashlights[slot]=not bool(flashlights.get(slot,false));broadcast()
@@ -646,7 +670,7 @@ func _process(delta: float):
  if world!=null and world.region=="forest":
   var carrier=game.actor_by_id(charge_carrier)
   world.charge_mesh.position=(carrier.global_position+Vector3(.4,.6,0)) if state.bomb=="carried" and carrier!=null else world.locations["charge"+str(state.charge_site)]+Vector3.UP*.45;world.charge_mesh.visible=state.bomb!="secured";world.secure_mesh.visible=state.bomb=="secured";world.ancient_light.visible=state.phase in ["ENDING","COMPLETE"]
-  world.charge_sign.position=world.locations["charge"+str(state.charge_site)]+Vector3.UP*1.6;world.charge_sign.visible=state.bomb=="missing";world.ancient_light.visible=state.phase=="COMPLETE" or (state.phase=="ENDING" and phase_elapsed>=35)
+  world.charge_sign.position=world.locations["charge"+str(state.charge_site)]+Vector3.UP*1.6;world.charge_sign.visible=state.bomb=="missing";world.ancient_light.visible=state.phase=="COMPLETE" or (state.phase=="ENDING" and phase_elapsed>=5)
 func update_flashlights():
  for actor in game.actors:
   if actor.faction!=0:continue

@@ -19,7 +19,7 @@ func setup(stage=0):
  var prior=float(campaign.state.chapter_progress.get("ride_seconds",0))
  for slot in range(1,5):
   var at=NestCampaignMotorcycleWorld.spawn(stage_saved,slot)
-  bikes[slot]={"slot":slot,"mounted":false,"crashed":false,"position":at,"heading":NestCampaignMotorcycleWorld.heading(-at.z),"speed":0.0,"pitch":0.0,"roll":0.0,"vertical":0.0,"airtime":0.0,"ride_seconds":prior,"distance":-at.z,"jump_lock":0.0,"crash_until":0.0,"last_ramp":-1.0,"jumps":0,"crashes":0,"interaction_needs_release":false}
+  bikes[slot]={"slot":slot,"mounted":false,"crashed":false,"duck":false,"position":at,"heading":NestCampaignMotorcycleWorld.heading(-at.z),"speed":0.0,"pitch":0.0,"roll":0.0,"vertical":0.0,"airtime":0.0,"ride_seconds":prior,"distance":-at.z,"jump_lock":0.0,"crash_until":0.0,"last_ramp":-1.0,"jumps":0,"crashes":0,"interaction_needs_release":false}
   create_visual(slot)
  visual_update()
 func create_visual(slot: int):
@@ -69,11 +69,13 @@ func pose_rider(actor):
  if handles(actor):
   actor.set_meta("motorcycle_pose",true)
   actor.model.rotation.y=wrapf(float(bikes[actor.net_id].heading)-actor.rotation.y,-PI,PI)
+  actor.model.position.y=0.0 if bikes[actor.net_id].get("duck",false) else .16
   if actor.presentation!=null:
-   actor.presentation.arm_ik("l",Vector3(-.39,1.07,-.65));actor.presentation.arm_ik("r",Vector3(.39,1.07,-.65))
+   var hand_y=(1.35-actor.model.position.y)/actor.model.scale.y
+   actor.presentation.arm_ik("l",Vector3(-.39,hand_y,-.65));actor.presentation.arm_ik("r",Vector3(.39,hand_y,-.65))
   if actor.remote_weapon!=null:actor.remote_weapon.visible=false
  elif actor.has_meta("motorcycle_pose"):
-  actor.remove_meta("motorcycle_pose");actor.model.rotation.y=0
+  actor.remove_meta("motorcycle_pose");actor.model.rotation.y=0;actor.model.position.y=0
   if actor.remote_weapon!=null:actor.remote_weapon.visible=true
 func handles(actor) -> bool:
  return campaign!=null and campaign.active and campaign.state.mission_index==2 and bikes.has(actor.net_id) and bool(bikes[actor.net_id].mounted) and actor.alive
@@ -100,7 +102,7 @@ func interact(actor,action: String) -> bool:
  if b.mounted or actor.global_position.distance_to(b.position)>3:return false
  if parts[1]=="recover" and b.crashed:
   if campaign.game.now<float(b.crash_until):return false
-  b.crashed=false;b.interaction_needs_release=true;b.pitch=0;b.roll=0;b.speed=0;b.position.y=.25;b.heading=NestCampaignMotorcycleWorld.heading(-b.position.z);campaign.broadcast();return true
+  b.crashed=false;b.interaction_needs_release=true;b.pitch=0;b.roll=0;b.speed=0;b.position.y=NestCampaignMotorcycleWorld.recovery_height(b.position)+.25;b.heading=NestCampaignMotorcycleWorld.heading(-b.position.z);campaign.broadcast();return true
  if parts[1]=="mount" and not b.crashed:
   b.mounted=true;b.interaction_needs_release=true;b.speed=0;b.pitch=0;b.airtime=0;actor.global_position=b.position;actor.controlled=Vector3.ZERO;actor.external=Vector3.ZERO;actor.velocity=Vector3.ZERO;actor.reset_crouch();actor.rotation.y=b.heading;actor.eye.rotation.x=0;actor.reset_aim();campaign.broadcast();return true
  return false
@@ -110,12 +112,20 @@ func crash(actor,b: Dictionary,reason: String):
  actor.controlled=Vector3.ZERO;actor.velocity=Vector3.ZERO;actor.external=Vector3.ZERO;actor.reset_crouch()
  actor.take_damage(18,"torso","explosion",false,null,campaign.game.next_event()*16)
  campaign.radio_notice("Brutus",reason+" Find cover, then hold Interact to right your motorcycle. Annu have a clear shot when you stop.")
-func movement_step(actor,move: Vector2,jump: bool,_yaw: float,delta: float,replaying=false) -> bool:
+func apply_duck_state(actor,wanted: bool,check_clearance=true):
+ if not bikes.has(actor.net_id):return
+ if not wanted and actor.crouched and check_clearance:
+  var shape=CapsuleShape3D.new();shape.radius=NestActor.BODY_RADIUS;shape.height=NestActor.STAND_HEIGHT
+  var query=PhysicsShapeQueryParameters3D.new();query.shape=shape;query.transform=Transform3D(Basis.IDENTITY,actor.global_position+Vector3.UP*NestActor.STAND_CENTER);query.collision_mask=1;query.exclude=actor.ray_exclusions()
+  if not actor.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty():wanted=true
+ actor.crouched=wanted;actor.air_duck=false;actor.update_crouch_shape(false);bikes[actor.net_id].duck=wanted
+func movement_step(actor,move: Vector2,jump: bool,_yaw: float,delta: float,replaying=false,crouch_want=-1) -> bool:
  if not handles(actor):return false
+ if crouch_want>=0:apply_duck_state(actor,crouch_want==1)
  # Vehicle physics is host authoritative. Guests transmit ordinary command input
  # and follow authoritative actor transforms, never replay a stale crash state.
  if campaign.game.is_client():
-  var predicted=bikes[actor.net_id];var steering_rate=lerpf(1.5,.72,clampf(float(predicted.speed)/max_speed(actor),0,1));var steering_delta=-move.x*steering_rate*delta*clampf(float(predicted.speed)/3,0,1)
+  var predicted=bikes[actor.net_id];var steering_rate=lerpf(1.65,1.15,clampf(float(predicted.speed)/max_speed(actor),0,1));var steering_delta=-move.x*steering_rate*delta*clampf(float(predicted.speed)/3,0,1)
   predicted.heading+=steering_delta;actor.rotation.y+=steering_delta
   return jump
  var b=bikes[actor.net_id];var top=max_speed(actor);var supported=actor.is_on_floor();var before=actor.global_position
@@ -125,7 +135,8 @@ func movement_step(actor,move: Vector2,jump: bool,_yaw: float,delta: float,repla
  if brake>0:b.speed=maxf(0,float(b.speed)-32*brake*delta)
  var lateral=absf(actor.global_position.x-NestCampaignMotorcycleWorld.center_x(-actor.global_position.z))
  if lateral>11.5:b.speed=move_toward(float(b.speed),top*.34,16*delta)
- var turn_rate=lerpf(1.5,.72,clampf(float(b.speed)/top,0,1))
+ if supported:b.speed=clampf(float(b.speed)-NestCampaignMotorcycleWorld.road_grade(-actor.global_position.z)*cos(float(b.heading))*9.5*delta,0,top)
+ var turn_rate=lerpf(1.65,1.15,clampf(float(b.speed)/top,0,1))
  var heading_delta=-move.x*turn_rate*delta*clampf(float(b.speed)/3,0,1)
  b.heading+=heading_delta
  if actor.local_player:actor.rotation.y+=heading_delta
@@ -135,9 +146,10 @@ func movement_step(actor,move: Vector2,jump: bool,_yaw: float,delta: float,repla
   if float(b.airtime)>.22:
    if absf(float(b.pitch))>.87 and b.speed>top*.35:crash(actor,b,"Bad landing: the bike flipped.");return false
    if float(b.airtime)>.35:b.jumps+=1
-  b.airtime=0;b.pitch=move_toward(float(b.pitch),0,delta*3);actor.controlled.y=-.4
-  if jump and b.jump_lock<=0 and b.speed>4:
-   actor.controlled.y=5.8;b.jump_lock=.6;jumped=true
+  b.airtime=0;b.pitch=move_toward(float(b.pitch),0,delta*3)
+  actor.controlled.y=NestCampaignMotorcycleWorld.road_grade(-actor.global_position.z)*float(b.speed)*cos(float(b.heading))-.4
+  if jump and not b.get("duck",false) and b.jump_lock<=0 and b.speed>4:
+   actor.controlled.y=5.8+NestCampaignMotorcycleWorld.road_grade(-actor.global_position.z)*float(b.speed)*cos(float(b.heading));b.jump_lock=.6;jumped=true
  else:
   b.airtime+=delta;b.pitch=clampf(float(b.pitch)+move.y*1.35*delta,-2.4,2.4)
   if absf(move.y)<.05:b.pitch=move_toward(float(b.pitch),0,delta*1.8)
@@ -146,7 +158,7 @@ func movement_step(actor,move: Vector2,jump: bool,_yaw: float,delta: float,repla
  # mesh also supports ordinary on-foot traversal and can be taken or bypassed.
  var ramp=NestCampaignMotorcycleWorld.ramp_info(-actor.global_position.z)
  if not ramp.is_empty() and absf(actor.global_position.x-float(ramp.x))<float(ramp.width)*.5 and -actor.global_position.z>=float(ramp.crest) and float(b.last_ramp)!=float(ramp.start) and b.speed>top*.4:
-  b.last_ramp=ramp.start;actor.controlled.y=maxf(actor.controlled.y,6.7);b.airtime=.02;b.pitch=-.12;jumped=true
+  b.last_ramp=ramp.start;actor.controlled.y=maxf(actor.controlled.y,6.7+NestCampaignMotorcycleWorld.road_grade(-actor.global_position.z)*float(b.speed)*cos(float(b.heading)));b.airtime=.02;b.pitch=-.12;jumped=true
  var direction=Vector3(-sin(float(b.heading)),0,-cos(float(b.heading)))
  actor.controlled.x=direction.x*float(b.speed);actor.controlled.z=direction.z*float(b.speed);actor.external=Vector3.ZERO;actor.velocity=actor.controlled
  actor.move_and_slide()
@@ -218,7 +230,9 @@ func objective() -> String:
  var distance=maxf(0,NestCampaignMotorcycleWorld.ROAD_LENGTH-float(b.distance));var actor=campaign.game.actor_by_id(campaign.local_slot)
  var top=max_speed(actor) if actor!=null else 26.0
  var status="OVERTURNED / HOLD INTERACT TO RECOVER" if b.crashed else "HOLD INTERACT TO MOUNT" if not b.mounted else "THROTTLE / STEER / BRAKE FOR LANDINGS"
- return "BROKEN CANOPY / %s\n%.1f KM REMAIN / %.0f KM/H / TOP %.0f KM/H (4x)\n%s\nW throttle / S brake / A D steer / Space hop. Release W in air to level.\nAnnu punish slow or fallen riders. Four bikes; one per expedition member."%[NestCampaignMotorcycleWorld.SECTOR_NAMES[clampi(floori(float(b.distance)/NestCampaignMotorcycleWorld.SECTOR_LENGTH),0,5)],distance/1000,float(b.speed)*3.6,top*3.6,status]
+ var duck_key=campaign.game.prefs.key_label("crouch")
+ var keys=campaign.game.prefs
+ return "BROKEN CANOPY / %s\n%.1f KM REMAIN / %.0f KM/H / TOP %.0f KM/H (4x)\n%s%s\n%s throttle / %s brake / %s %s steer / %s hop / %s DUCK.\nGold gaps mark tree slaloms. Release throttle in air. Duck high branches; hop low timber.\nAnnu punish slow or fallen riders."%[NestCampaignMotorcycleWorld.SECTOR_NAMES[clampi(floori(float(b.distance)/NestCampaignMotorcycleWorld.SECTOR_LENGTH),0,5)],distance/1000,float(b.speed)*3.6,top*3.6,status," / HEAD LOWERED" if b.get("duck",false) else "",keys.key_label("forward"),keys.key_label("backward"),keys.key_label("left"),keys.key_label("right"),keys.key_label("jump"),duck_key]
 func pack() -> Dictionary:
  return {"bikes":bikes.duplicate(true),"stage":stage_saved}
 func receive(packet: Dictionary):
@@ -238,7 +252,8 @@ func visual_update():
   var b=bikes[slot];var visual=visuals[slot];var actor=campaign.game.actor_by_id(slot)
   var at=actor.global_position if b.mounted and actor!=null else b.position
   visual.visible=not (b.mounted and actor!=null and actor.local_player)
-  visual.position=at;visual.rotation=Vector3(float(b.pitch),float(b.heading),float(b.roll))
+  var grade_angle=atan(NestCampaignMotorcycleWorld.road_grade(-at.z))*cos(float(b.heading)) if b.mounted and float(b.airtime)<.12 else 0.0
+  visual.position=at;visual.rotation=Vector3(float(b.pitch)+grade_angle,float(b.heading),float(b.roll))
   for label in visual.find_children("*","Label3D",true,false):label.visible=not b.mounted
   if actor!=null and actor.weapon_view!=null:actor.weapon_view.visible=not b.mounted
   var engine=visual.get_node_or_null("MotorcycleEngine")

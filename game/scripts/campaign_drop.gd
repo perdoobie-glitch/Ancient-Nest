@@ -8,6 +8,7 @@ var reserve=0
 var born=0.0
 var claimed_by=0
 var claimed_at=0.0
+var cache_key=""
 var grip_center=Vector3.ZERO
 var visual: Node3D
 var target=Transform3D.IDENTITY
@@ -30,7 +31,7 @@ func _ready():
  freeze=campaign.game.is_client();physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF if freeze else Node.PHYSICS_INTERPOLATION_MODE_ON;target=global_transform
 func pickup_point() -> Vector3:return to_global(grip_center)+Vector3.UP*.12
 func pack() -> Dictionary:
- return {"id":drop_id,"kind":kind,"rounds":rounds,"reserve":reserve,"born":born,"xf":global_transform,"v":linear_velocity,"claimed":claimed_by,"claim_at":claimed_at}
+ return {"id":drop_id,"kind":kind,"rounds":rounds,"reserve":reserve,"born":born,"xf":global_transform,"v":linear_velocity,"claimed":claimed_by,"claim_at":claimed_at,"cache_key":cache_key}
 func animate_pickup(slot: int):
  if claimed_by>0:return
  claimed_by=slot;claimed_at=campaign.game.now;freeze=true;collision_mask=0

@@ -1,9 +1,10 @@
 class_name NestCampaignState
 extends RefCounted
-const SAVE_VERSION=2
+const SAVE_VERSION=3
+const CACHE_WEAPONS=["rifle","plasma_pistol","plasma_br","plasma_auto","plasma_sniper","ak47","sidearm","burst_scoped","shotgun","sniper","rocket","smg","plasma_smg"]
 const DIFFICULTIES=["Easy","Medium","Hard","Angel"]
 const COUNTS=[3,5,6,8,12]
-const PHASES=["LOBBY","INTRO","PREPARATION","BOARDING","DEPARTURE","CRASH","CRASH_ORIENTATION","WAVE_1","INTERMISSION_1","WAVE_2","INTERMISSION_2","WAVE_3","INTERMISSION_3","WAVE_4","INTERMISSION_4","WAVE_5","RADIO_READY","ENDING","COMPLETE","DEFEAT","CHAPTER","CHAPTER_COMPLETE"]
+const PHASES=["LOBBY","INTRO","PREPARATION","BOARDING","DEPARTURE","CRASH","CRASH_ORIENTATION","WAVE_1","INTERMISSION_1","WAVE_2","INTERMISSION_2","WAVE_3","INTERMISSION_3","WAVE_4","INTERMISSION_4","WAVE_5","RADIO_READY","ENDING","COMPLETE","DEFEAT","CHAPTER_INTRO","CHAPTER","CHAPTER_OUTRO","CHAPTER_COMPLETE"]
 var run_id=""
 var difficulty="Medium"
 var phase="LOBBY"
@@ -29,9 +30,10 @@ var chapter_spawned={}
 var chapter_defeated={}
 var chapter_flags={}
 var chapter_progress={}
+var weapon_caches={}
 func new_run(selected: String):
  run_id=Crypto.new().generate_random_bytes(16).hex_encode();difficulty=selected if selected in DIFFICULTIES else "Medium";phase="INTRO";revision=1;completed_waves=0;bomb="missing";enemies.clear();defeated.clear();spawned.clear();completion_count=0;supplies.clear();equipment.clear();practice.clear();charge_site=randi_range(0,2)
- mission_index=1;campaign_entry=1;chapters_completed=0;chapter_stage=0;chapter_stage_count=0;chapter_expected=0;chapter_enemies.clear();chapter_spawned.clear();chapter_defeated.clear();chapter_flags.clear();chapter_progress.clear()
+ mission_index=1;campaign_entry=1;chapters_completed=0;chapter_stage=0;chapter_stage_count=0;chapter_expected=0;chapter_enemies.clear();chapter_spawned.clear();chapter_defeated.clear();chapter_flags.clear();chapter_progress.clear();weapon_caches.clear()
 func begin_chapter(index: int, stages: int, standalone=false) -> bool:
  if index<2 or index>9 or stages<1 or stages>8:return false
  if not standalone:
@@ -41,7 +43,7 @@ func begin_chapter(index: int, stages: int, standalone=false) -> bool:
  else:
   campaign_entry=index;chapters_completed=index-1
  mission_index=index;phase="CHAPTER";chapter_stage=0;chapter_stage_count=stages;chapter_expected=0
- chapter_enemies.clear();chapter_spawned.clear();chapter_defeated.clear();chapter_flags.clear();chapter_progress.clear();revision+=1
+ chapter_enemies.clear();chapter_spawned.clear();chapter_defeated.clear();chapter_flags.clear();chapter_progress.clear();weapon_caches.clear();revision+=1
  return true
 func prepare_chapter_stage(expected: int) -> bool:
  if phase!="CHAPTER" or expected<0 or expected>16 or not chapter_enemies.is_empty():return false
@@ -55,11 +57,14 @@ func defeat_chapter_enemy(id: int) -> bool:
  chapter_defeated[id]=chapter_stage;chapter_enemies.erase(id);revision+=1;return true
 func chapter_clear() -> bool:
  return chapter_enemies.is_empty() and chapter_spawned.size()==chapter_expected and chapter_defeated.size()==chapter_expected
-func finish_chapter_stage() -> bool:
- if phase!="CHAPTER" or not chapter_clear() or not chapter_flags.get("objective",false):return false
+func finish_chapter_stage(require_clear=true) -> bool:
+ if phase!="CHAPTER" or (require_clear and not chapter_clear()) or not chapter_flags.get("objective",false):return false
  if chapter_stage+1<chapter_stage_count:
-  chapter_stage+=1;chapter_expected=0;chapter_spawned.clear();chapter_defeated.clear();chapter_flags.clear();chapter_progress.clear()
+  chapter_stage+=1;chapter_expected=0;chapter_enemies.clear();chapter_spawned.clear();chapter_defeated.clear();chapter_flags.clear();chapter_progress.clear()
  else:
+  if not require_clear:
+   chapter_progress["defenders_defeated"]=chapter_defeated.size();chapter_progress["defenders_evaded"]=chapter_enemies.size();chapter_flags["extracted"]=true
+   chapter_expected=0;chapter_enemies.clear();chapter_spawned.clear();chapter_defeated.clear()
   phase="CHAPTER_COMPLETE";chapters_completed=mission_index
  revision+=1;return true
 func transition(next: String) -> bool:
@@ -95,11 +100,12 @@ func finish_wave() -> bool:
  return transition("RADIO_READY" if wave==4 and bomb=="secured" else "CRASH_ORIENTATION" if wave==4 else "INTERMISSION_"+str(wave+1))
 func radio_ready() -> bool:return completed_waves==5 and defeated.size()==34 and enemies.is_empty() and bomb=="secured"
 func pack() -> Dictionary:
- return {"version":SAVE_VERSION,"mission":"the_last_departure","run":run_id,"difficulty":difficulty,"phase":phase,"revision":revision,"completed_waves":completed_waves,"bomb":bomb,"enemies":enemies.duplicate(),"defeated":defeated.duplicate(),"spawned":spawned.duplicate(),"completion_count":completion_count,"supplies":supplies.duplicate(true),"equipment":equipment.duplicate(true),"practice":practice.duplicate(true),"charge_site":charge_site,"mission_index":mission_index,"campaign_entry":campaign_entry,"chapters_completed":chapters_completed,"chapter_stage":chapter_stage,"chapter_stage_count":chapter_stage_count,"chapter_expected":chapter_expected,"chapter_enemies":chapter_enemies.duplicate(),"chapter_spawned":chapter_spawned.duplicate(),"chapter_defeated":chapter_defeated.duplicate(),"chapter_flags":chapter_flags.duplicate(),"chapter_progress":chapter_progress.duplicate()}
+ return {"version":SAVE_VERSION,"mission":"the_last_departure","run":run_id,"difficulty":difficulty,"phase":phase,"revision":revision,"completed_waves":completed_waves,"bomb":bomb,"enemies":enemies.duplicate(),"defeated":defeated.duplicate(),"spawned":spawned.duplicate(),"completion_count":completion_count,"supplies":supplies.duplicate(true),"equipment":equipment.duplicate(true),"practice":practice.duplicate(true),"charge_site":charge_site,"mission_index":mission_index,"campaign_entry":campaign_entry,"chapters_completed":chapters_completed,"chapter_stage":chapter_stage,"chapter_stage_count":chapter_stage_count,"chapter_expected":chapter_expected,"chapter_enemies":chapter_enemies.duplicate(),"chapter_spawned":chapter_spawned.duplicate(),"chapter_defeated":chapter_defeated.duplicate(),"chapter_flags":chapter_flags.duplicate(),"chapter_progress":chapter_progress.duplicate(),"weapon_caches":weapon_caches.duplicate(true)}
 static func valid(data) -> bool:
- if not data is Dictionary or int(data.get("version",0)) not in [1,SAVE_VERSION] or data.get("mission","")!="the_last_departure":return false
+ if not data is Dictionary or int(data.get("version",0)) not in [1,2,SAVE_VERSION] or data.get("mission","")!="the_last_departure":return false
  if not data.get("difficulty","") in DIFFICULTIES or not data.get("phase","") in PHASES:return false
  if not valid_chapter(data):return false
+ if not valid_weapon_caches(data):return false
  if not data.get("bomb","") in ["missing","carried","secured"]:return false
  if not data.get("run","") is String or data.run.length()!=32 or not data.run.is_valid_hex_number(false):return false
  for name in ["enemies","defeated","spawned","supplies","equipment","practice"]:
@@ -157,11 +163,23 @@ static func valid(data) -> bool:
   for field in data.practice[key]:
    if not field in ["look","walk","sprint","jump","crouch","interact","aim","fire","reload","switch","flashlight","shield","calibrating","manifest","boarded"] or not data.practice[key][field] is bool:return false
  return true
+static func valid_weapon_caches(value: Dictionary) -> bool:
+ var records=value.get("weapon_caches",{})
+ if not records is Dictionary or records.size()>16:return false
+ for key in records:
+  if not key is String or key.length()>8 or key.get_slice_count(":")!=2:return false
+  var mission=key.get_slice(":",0);var index=key.get_slice(":",1)
+  if not mission.is_valid_int() or int(mission)!=int(value.get("mission_index",1)) or int(mission)<2 or not index.is_valid_int() or int(index)<0 or int(index)>=16:return false
+  var record=records[key]
+  if not record is Dictionary or record.size()!=2 or record.get("kind","") not in CACHE_WEAPONS:return false
+  var claimed=record.get("claimed_by",-1)
+  if typeof(claimed) not in [TYPE_FLOAT,TYPE_INT] or not is_finite(float(claimed)) or float(claimed)!=floorf(float(claimed)) or claimed<0 or claimed>4:return false
+ return true
 static func valid_chapter(value: Dictionary) -> bool:
  var index=int(value.get("mission_index",1));var entry=int(value.get("campaign_entry",1));var completed=int(value.get("chapters_completed",1 if value.get("phase")=="COMPLETE" else 0))
  if index<1 or index>9 or entry<1 or entry>index or completed<entry-1 or completed>index:return false
- if index==1:return value.get("phase") not in ["CHAPTER","CHAPTER_COMPLETE"]
- if int(value.get("version",0))!=SAVE_VERSION or value.get("phase") not in ["CHAPTER","CHAPTER_COMPLETE","DEFEAT"]:return false
+ if index==1:return value.get("phase") not in ["CHAPTER_INTRO","CHAPTER","CHAPTER_OUTRO","CHAPTER_COMPLETE"]
+ if int(value.get("version",0)) not in [2,SAVE_VERSION] or value.get("phase") not in ["CHAPTER_INTRO","CHAPTER","CHAPTER_OUTRO","CHAPTER_COMPLETE","DEFEAT"]:return false
  var stage=int(value.get("chapter_stage",-1));var count=int(value.get("chapter_stage_count",0));var expected=int(value.get("chapter_expected",-1))
  if count<1 or count>8 or stage<0 or stage>=count or expected<0 or expected>16:return false
  for key in ["chapter_enemies","chapter_spawned","chapter_defeated","chapter_flags","chapter_progress"]:
@@ -181,13 +199,15 @@ static func valid_chapter(value: Dictionary) -> bool:
  for key in value.chapter_progress:
   var amount=value.chapter_progress[key]
   if not key is String or key.length()>40 or typeof(amount) not in [TYPE_FLOAT,TYPE_INT] or not is_finite(float(amount)) or float(amount)<0 or float(amount)>1000000:return false
- if value.phase=="CHAPTER_COMPLETE" and (stage!=count-1 or not value.chapter_flags.get("objective",false) or not living.is_empty() or defeated_enemies.size()!=expected or completed!=index):return false
+ if value.phase=="CHAPTER_INTRO" and (stage!=0 or not spawned.is_empty()):return false
+ if value.phase in ["CHAPTER_OUTRO","CHAPTER_COMPLETE"] and (stage!=count-1 or not value.chapter_flags.get("objective",false) or not living.is_empty() or defeated_enemies.size()!=expected or completed!=index):return false
  return true
 func restore(data: Dictionary) -> bool:
  if not valid(data):return false
  run_id=data.run;difficulty=data.difficulty;phase=data.phase;revision=int(data.revision);completed_waves=int(data.completed_waves);bomb=data.bomb;completion_count=int(data.completion_count);charge_site=int(data.charge_site)
  mission_index=int(data.get("mission_index",1));campaign_entry=int(data.get("campaign_entry",1));chapters_completed=int(data.get("chapters_completed",1 if phase=="COMPLETE" else 0));chapter_stage=int(data.get("chapter_stage",0));chapter_stage_count=int(data.get("chapter_stage_count",0));chapter_expected=int(data.get("chapter_expected",0))
  chapter_flags=data.get("chapter_flags",{}).duplicate();chapter_progress=data.get("chapter_progress",{}).duplicate();chapter_enemies={};chapter_spawned={};chapter_defeated={}
+ weapon_caches=data.get("weapon_caches",{}).duplicate(true)
  for key in data.get("chapter_enemies",{}):chapter_enemies[int(key)]=int(data.chapter_enemies[key])
  for key in data.get("chapter_spawned",{}):chapter_spawned[int(key)]=int(data.chapter_spawned[key])
  for key in data.get("chapter_defeated",{}):chapter_defeated[int(key)]=int(data.chapter_defeated[key])

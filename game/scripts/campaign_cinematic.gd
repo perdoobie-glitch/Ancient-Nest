@@ -13,7 +13,17 @@ var subtitle_override=""
 var speech_cue=""
 var speaking_os=false
 var last_volumes={}
+var chapter_director=preload("res://scripts/campaign_chapter_cinematic.gd").new()
+const MISSION_ONE_INTRO=[
+ ["Narrator","Connectuct's protective atmosphere is failing. Its repairs need gold our world can no longer spare."],
+ ["Brutus","Old Earth's records promise gold and an Ancient AI entrusted with its care."],
+ ["Anki","We are Naki. We return to the Ancient Nest, and bring a future home."]]
+const MISSION_ONE_ENDING=[
+ ["Relay","Your position is marked. Follow the service road to the floodgate."],
+ ["Ancient AI","Your arrival has been recorded. Ancestral maintenance passage reopened."],
+ ["Brutus","That was not the relay. Four bikes survived. Move before the Annu return."]]
 func _ready():
+ chapter_director.presenter=self
  camera=Camera3D.new();camera.name="CampaignCamera";camera.near=.1;camera.fov=62;camera.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF;add_child(camera)
  for bus in ["Campaign_Dialogue","Campaign_Music","Campaign_Effects"]:
   if AudioServer.get_bus_index(bus)<0:AudioServer.add_bus();AudioServer.set_bus_name(AudioServer.bus_count-1,bus)
@@ -28,7 +38,7 @@ func _ready():
  var back=PanelContainer.new();back.name="SubtitleBacking";overlay.add_child(back);back.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE);back.offset_left=25;back.offset_right=-25;back.offset_top=-150;back.offset_bottom=-25;back.mouse_filter=Control.MOUSE_FILTER_IGNORE
  var style=StyleBoxFlat.new();style.bg_color=Color(0,0,0,.86);style.content_margin_left=18;style.content_margin_right=18;style.content_margin_top=10;style.content_margin_bottom=10;back.add_theme_stylebox_override("panel",style)
  subtitle=game.label("",20,Color("f4f5e7"));subtitle.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;subtitle.vertical_alignment=VERTICAL_ALIGNMENT_CENTER;back.add_child(subtitle)
-func active() -> bool:return campaign.state.phase in ["INTRO","DEPARTURE","CRASH","ENDING"]
+func active() -> bool:return campaign.state.phase in ["INTRO","DEPARTURE","CRASH","ENDING","CHAPTER_INTRO","CHAPTER_OUTRO"]
 func engine_track() -> AudioStreamWAV:
  var bytes=PackedByteArray();bytes.resize(22050*2)
  for i in range(22050):
@@ -47,6 +57,7 @@ func apply_volumes():
 func present(elapsed: float):
  apply_volumes()
  if not active():
+  chapter_director.release_actors()
   overlay.visible=false;camera.current=false
   if not last_slot.is_empty() or voice.playing or music.playing or effects.playing:stop_tracks()
   return
@@ -54,19 +65,16 @@ func present(elapsed: float):
  if not music.playing and DisplayServer.get_name()!="headless":music.play()
  if not effects.playing and DisplayServer.get_name()!="headless":effects.play()
  effects.volume_db=-34 if phase=="INTRO" else -24
- if phase=="INTRO":
-  var index=clampi(int(elapsed/20),0,5);var u=clampf(fmod(elapsed,20)/20,0,1);var cue=campaign.data.intro[index]
-  var starts=[Vector3(44,30,38),Vector3(-39,4,4),Vector3(4,26,36),Vector3(29,13,-4),Vector3(-16,5,-5),Vector3(19,7,21)]
-  var ends=[Vector3(34,38,14),Vector3(-30,4,0),Vector3(-6,23,27),Vector3(-25,11,-3),Vector3(-8,4,-9),Vector3(8,5,10)]
-  var aims=[Vector3(0,12,-38),Vector3(-34,1,-7),Vector3(0,3,-26),Vector3(-34,2,-7),Vector3(-7,2,-8),Vector3(-2,2,-17)]
-  camera.position=starts[index].lerp(ends[index],smoothstep(0,1,u));camera.look_at(aims[index]);title.text="THE WORLD WE BUILT • CONNECTUCT"
-  if index==2:camera.look_at(Vector3(0,48,-90))
-  # Short, complete phrases replace a single unreadable paragraph at the bottom.
-  var phrases=str(cue.text).split("\n\n",false);var part=phrase_index(phrases,u)
-  subtitle.text="NARRATOR: "+phrases[part]
-  if campaign.all_loaded():
-   play_slot("intro_"+str(index),str(cue.audio),elapsed-index*20)
-   if not ResourceLoader.exists(str(cue.audio)) and not ResourceLoader.exists(str(cue.audio).get_basename()+".wav"):speak_fallback("intro_%d_%d"%[index,part],phrases[part],.84)
+ if phase in ["CHAPTER_INTRO","CHAPTER_OUTRO"]:
+  effects.volume_db=-35;chapter_director.present(elapsed,phase=="CHAPTER_OUTRO")
+ elif phase=="INTRO":
+  var index=clampi(int(elapsed/5),0,2);var u=clampf(fmod(elapsed,5)/5,0,1)
+  var starts=[Vector3(44,30,38),Vector3(-16,5,-5),Vector3(19,7,21)]
+  var ends=[Vector3(34,38,14),Vector3(-8,4,-9),Vector3(8,5,10)]
+  var aims=[Vector3(0,12,-38),Vector3(-7,2,-8),Vector3(-2,2,-17)]
+  camera.position=starts[index].lerp(ends[index],smoothstep(0,1,u));camera.look_at(aims[index]);title.text="THE WORLD WE BUILT / CONNECTUCT"
+  var cue=MISSION_ONE_INTRO[index];subtitle.text=str(cue[0]).to_upper()+": "+str(cue[1])
+  if campaign.all_loaded():speak_fallback("mission1_short_intro_"+str(index),str(cue[1]),.84 if index==0 else .9)
  elif phase=="DEPARTURE":
   campaign.world.ship_root.position=Vector3(0,maxf(0,elapsed-3)*2.6,-maxf(0,elapsed-5)*1.1)
   var u=clampf(elapsed/20,0,1);camera.position=Vector3(4+u*30,6+u*32,5+u*23);camera.look_at(Vector3(-2,1,-17));title.text="DEPARTURE • CONNECTUCT"
@@ -78,8 +86,12 @@ func present(elapsed: float):
   title.text="OLD EARTH • EXPEDITION DAY 46";subtitle.text=dialogue_line("crash",elapsed,6)
   speak_dialogue("crash",elapsed,6)
  else:
-  var relay=campaign.world.locations.radio;camera.position=relay+Vector3(-5+sin(elapsed*.07)*2,4,9);camera.look_at(relay+Vector3.UP*1.5);title.text="THE LAST DEPARTURE • EXPEDITION RELAY";subtitle.text=dialogue_line("ending",elapsed,5)
-  speak_dialogue("ending",elapsed,5)
+  var index=clampi(int(elapsed/5),0,2);var u=clampf(fmod(elapsed,5)/5,0,1);var relay=campaign.world.locations.radio
+  var starts=[relay+Vector3(-6,4,9),relay+Vector3(7,6,6),relay+Vector3(-8,5,14)]
+  var ends=[relay+Vector3(-4,3,7),relay+Vector3(4,5,4),relay+Vector3(-4,4,10)]
+  camera.position=starts[index].lerp(ends[index],smoothstep(0,1,u));camera.look_at(relay+Vector3.UP*1.5);title.text="THE LAST DEPARTURE / EXPEDITION RELAY"
+  var cue=MISSION_ONE_ENDING[index];subtitle.text=str(cue[0]).to_upper()+": "+str(cue[1])
+  if campaign.all_loaded():speak_fallback("mission1_short_ending_"+str(index),str(cue[1]),.8 if str(cue[0])=="Ancient AI" else .9)
  var votes=campaign.skip_votes.size();var people=campaign.connected_slots().size()
  title.text+="   •   ENTER: SKIP %d/%d"%[votes,people]
  if not campaign.all_loaded():subtitle.text="Waiting for connected squad members to finish loading…"
@@ -119,5 +131,6 @@ func play_slot(id: String,path: String,offset: float):
   voice.stream=load(path)
   if DisplayServer.get_name()!="headless":voice.play(offset)
 func _exit_tree():
+ chapter_director.release_actors()
  stop_tracks()
  if is_instance_valid(overlay):overlay.queue_free()

@@ -4,7 +4,7 @@ const DEFAULT_PATH="user://campaign/nine_missions.json"
 const LEGACY_PATH="user://campaign/mission1.json"
 var path=DEFAULT_PATH
 var error=""
-const SAFE_PHASES=["PREPARATION","BOARDING","CRASH_ORIENTATION","INTERMISSION_1","INTERMISSION_2","INTERMISSION_3","INTERMISSION_4","RADIO_READY","COMPLETE","CHAPTER","CHAPTER_COMPLETE"]
+const SAFE_PHASES=["PREPARATION","BOARDING","CRASH_ORIENTATION","INTERMISSION_1","INTERMISSION_2","INTERMISSION_3","INTERMISSION_4","RADIO_READY","COMPLETE","CHAPTER_INTRO","CHAPTER","CHAPTER_OUTRO","CHAPTER_COMPLETE"]
 func read_valid(file: String) -> Dictionary:
  if not FileAccess.file_exists(file):return {}
  var input=FileAccess.open(file,FileAccess.READ)

@@ -150,8 +150,10 @@ func update(force=false):
  var target=c.world.locations[current.target]+Vector3.UP*1.8;var camera=game.player.camera;var distance=game.player.global_position.distance_to(target)
  var point=camera.unproject_position(target) if not camera.is_position_behind(target) else Vector2(size.x-150,size.y*.55)
  var upper=minf(panel.position.y+panel.size.y+18,size.y-170);var lower=maxf(upper,size.y-240 if size.y>600 else size.y-155)
- point.x=clampf(point.x,28,size.x-220);point.y=clampf(point.y,upper,lower)
- marker.position=point;marker.text="◈ "+str(current.get("target_label",str(current.target).replace("_"," "))).to_upper()+"  %d m"%roundi(distance);marker.visible=true
+ marker.text="◈ "+str(current.get("target_label",str(current.target).replace("_"," "))).to_upper()+"  %d m"%roundi(distance)
+ marker.reset_size()
+ point.x=clampf(point.x,28,maxf(28,size.x-marker.get_minimum_size().x-28));point.y=clampf(point.y,upper,lower)
+ marker.position=point;marker.visible=true
 func _exit_tree():
  stop_voice()
  for node in [panel,marker,narration]:

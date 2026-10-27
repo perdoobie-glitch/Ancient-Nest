@@ -3,7 +3,7 @@
     "mission":  "the_last_departure",
     "title":  "THE LAST DEPARTURE",
     "campaign_missions":  9,
-    "intro_seconds":  120,
+    "intro_seconds":  15,
     "recovery_seconds":  18,
     "preparation_seconds":  25,
     "revive_seconds":  3,

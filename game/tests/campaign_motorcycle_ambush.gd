@@ -3,7 +3,7 @@ func _initialize():call_deferred("run")
 func run():
  seed(260026)
  var game=load("res://scenes/main.tscn").instantiate();root.add_child(game);await process_frame;game.sandbox_mode=true
- var c=game.campaign;c.save_store.path="user://motorcycle-ambush-qa.json";c.begin_solo(false);c.journey.start_standalone(2);await physics_frame
+ var c=game.campaign;c.save_store.path="user://motorcycle-ambush-qa.json";c.begin_solo(false);c.journey.start_standalone(2);c.journey.finish_cinematic();await physics_frame
  var controller=c.journey.motorcycles;var actor=game.player
  actor.global_position=NestCampaignMotorcycleWorld.point(110)+Vector3.UP*.25;controller.bikes[1].position=actor.global_position
  game.input_window_focused=true;game.game_type.bots_dont_shoot=false;game.context="playing";controller.tick(.1)

@@ -7,8 +7,12 @@ for(const name of fixtures){
  if(!/^[a-z_][a-z_0-9]*$/.test(name))throw Error('Invalid fixture name');
  const file=path.join(out,name+'.log'),fd=fs.openSync(file,'w');
  const child=spawn(engine,['--headless',...(name==='campaign_maze'?['--fixed-fps','60']:[]),'--path',path.join(root,'game'),'--script','res://tests/'+name+'.gd'],{cwd:root,env:{...process.env,APPDATA:path.join(out,name+'-user'),NEST_ISOLATED_QA:'1'},stdio:['ignore',fd,fd],windowsHide:true});
- let timedOut=false;const timeout=setTimeout(()=>{timedOut=true;child.kill();},name==='campaign_maze'?240000:90000);
- const code=await new Promise(resolve=>{child.once('exit',resolve);child.once('error',()=>resolve(-1));});clearTimeout(timeout);fs.closeSync(fd);
+ const extended={campaign_maze:240000,campaign_journey:240000,campaign_chapter_cinematics:240000,campaign_chapter_routes:300000,campaign_weapon_caches:180000,campaign_cache_access:240000,campaign_route_pressure:180000};
+ let timedOut=false;const timeout=setTimeout(()=>{timedOut=true;child.kill();},extended[name]||90000);
+ // Godot can keep its main loop alive after a GDScript exception aborts a fixture.
+ // Stop that known child promptly; assertion failures still finish their full report.
+ const exceptionWatch=setInterval(()=>{try{if(/SCRIPT ERROR|Parse Error|Compile Error/.test(fs.readFileSync(file,'utf8')))child.kill();}catch{}},1000);
+ const code=await new Promise(resolve=>{child.once('exit',resolve);child.once('error',()=>resolve(-1));});clearTimeout(timeout);clearInterval(exceptionWatch);fs.closeSync(fd);
  const log=fs.readFileSync(file,'utf8');const scriptErrors=/SCRIPT ERROR|Parse Error|Compile Error|(?:^|\n)FAIL[: ]/m.test(log);const passed=code===0&&!timedOut&&!scriptErrors;
  results.push({fixture:name,passed,code,timedOut,scriptErrors});console.log((passed?'PASS ':'FAIL ')+name);
  if(!passed)console.log(log.split('\n').filter(l=>/SCRIPT ERROR|Parse Error|FAIL|res:\/\//.test(l)).slice(0,12).join('\n'));

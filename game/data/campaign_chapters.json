@@ -1,22 +1,22 @@
 {
-  "version": 1,
-  "canon": "Continuation of The Last Departure; existing Anki, Brutus, Ancient AI, Relay, Naki and Annu only.",
+  "version": 2,
+  "canon": "Existing Anki, Brutus, Ancient AI, Relay, Naki and unnamed Annu only. Ancient AI safeguards and obsolete orders shape the route; no new cast.",
   "chapters": [
     {
       "index": 2,
       "title": "Broken Canopy",
       "briefing": [
         [
-          "Relay",
-          "The extraction corridor is closed. Reach the floodgate transmitter and we can trace a safe approach."
+          "Annu guard",
+          "Foreign riders! The sky wreck has survivors."
+        ],
+        [
+          "Annu sentry",
+          "Cut the road. Keep them away from our water."
         ],
         [
           "Brutus",
-          "Four expedition motorcycles survived in the sealed cargo cradle. Take one. Keep your speed up: Annu have the service road covered."
-        ],
-        [
-          "Anki",
-          "The charge comes with us. We are not leaving a weapon in their forest."
+          "The Ancient AI opened this passage. Four bikes. Ride hard; duck under the branches."
         ]
       ],
       "stages": [
@@ -29,6 +29,20 @@
           "dialogue": [
             "Brutus",
             "Throttle forward, steer early. Four times walking speed means less time to correct."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "The aliens are taking the service road!"
+            ],
+            [
+              "Annu guard",
+              "Aim where they slow down!"
+            ],
+            [
+              "Annu guard",
+              "Guard the floodgate approach!"
+            ]
           ]
         },
         {
@@ -40,6 +54,20 @@
           "dialogue": [
             "Brutus",
             "Read the open lane beyond the next trunk. Keep the motorcycle upright."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Foreign riders under the canopy!"
+            ],
+            [
+              "Annu guard",
+              "The fallen trees will slow them!"
+            ],
+            [
+              "Annu guard",
+              "Watch the open shoulder!"
+            ]
           ]
         },
         {
@@ -51,6 +79,20 @@
           "dialogue": [
             "Brutus",
             "Build speed before the ramp. Level the motorcycle before you land."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "They are jumping the broken spans!"
+            ],
+            [
+              "Annu guard",
+              "Wait for a bad landing!"
+            ],
+            [
+              "Annu guard",
+              "Keep the sky people off the ridge!"
+            ]
           ]
         },
         {
@@ -62,6 +104,20 @@
           "dialogue": [
             "Brutus",
             "They are tracking slow targets. A clean landing is better protection than stopping here."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Foreigners on the observation line!"
+            ],
+            [
+              "Annu guard",
+              "Do not chase the fast ones!"
+            ],
+            [
+              "Annu guard",
+              "They are heading toward our water!"
+            ]
           ]
         },
         {
@@ -73,6 +129,20 @@
           "dialogue": [
             "Brutus",
             "Brake before the bend, accelerate as it opens."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "The aliens reached the haul road!"
+            ],
+            [
+              "Annu guard",
+              "Take cover by the old freight bays!"
+            ],
+            [
+              "Annu guard",
+              "Hold the next bend!"
+            ]
           ]
         },
         {
@@ -84,32 +154,56 @@
           "dialogue": [
             "Brutus",
             "The pumping station is ahead. Leave the bikes in cover; we continue on foot."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Bikes at the floodgate!"
+            ],
+            [
+              "Annu guard",
+              "Keep them away from the reservoir controls!"
+            ],
+            [
+              "Annu guard",
+              "The old machinery is answering them!"
+            ]
           ]
         }
       ],
       "ending": [
         [
-          "Anki",
-          "Why does the road lead into a reservoir?"
+          "Annu guard",
+          "Those foreigners are heading for the pumps. Guard the reservoir!"
         ],
         [
-          "Brutus",
-          "It did not when our maps were drawn. The floodgate can lower the freight channel."
+          "Ancient AI",
+          "Hydraulic access granted. Preserve residential supply."
+        ],
+        [
+          "Anki",
+          "We drain the freight channel, and leave their water alone."
         ]
       ],
-      "duration_target_seconds": 300
+      "duration_target_seconds": 300,
+      "intro_seconds": 15,
+      "outro_seconds": 15
     },
     {
       "index": 3,
       "title": "The Floodgate",
       "briefing": [
         [
-          "Brutus",
-          "The drowned freight causeway is our route inland. Restore the intake, open the bypass, and drain the lower basin."
+          "Ancient AI",
+          "Ancestral maintenance route located. Hydraulic controls remain protected."
         ],
         [
-          "Anki",
-          "That water feeds their settlements. Lower the channel, not the reservoir."
+          "Annu guard",
+          "The sky people opened the old road. Hold the floodgate!"
+        ],
+        [
+          "Brutus",
+          "Reach the freight relay. Keep their upper reservoir alive."
         ]
       ],
       "stages": [
@@ -118,10 +212,24 @@
           "action": "Turn the intake isolation valve",
           "seconds": 2.5,
           "enemies": 6,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "Open the valve slowly; the old bearings are still carrying pressure."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Aliens by the intake!"
+            ],
+            [
+              "Annu guard",
+              "They are following the service terraces!"
+            ],
+            [
+              "Annu guard",
+              "Hold the road to the relay!"
+            ]
           ]
         },
         {
@@ -129,48 +237,90 @@
           "action": "Hold the bypass valve open",
           "seconds": 2.5,
           "enemies": 7,
-          "mode": "hold",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
-            "Keep the bypass open while pressure equalizes. The upper reservoir must stay full."
+            "Open the bypass and keep climbing. The upper reservoir must stay full."
           ],
-          "hold_seconds": 14
+          "overheard": [
+            [
+              "Annu guard",
+              "The sky people opened the bypass!"
+            ],
+            [
+              "Annu guard",
+              "Keep the upper reservoir safe!"
+            ],
+            [
+              "Annu guard",
+              "Watch the raised maintenance deck!"
+            ]
+          ]
         },
         {
           "title": "Lower the freight basin",
           "action": "Engage the channel pumps",
           "seconds": 2.5,
           "enemies": 8,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "The lower channel is draining. We have a route without cutting off their water."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Foreigners at the channel pumps!"
+            ],
+            [
+              "Annu guard",
+              "They are draining only the freight basin!"
+            ],
+            [
+              "Annu guard",
+              "Do not let them reach the transmitter!"
+            ]
           ]
         },
         {
-          "title": "Recover the ancient route",
-          "action": "Read the freight relay",
+          "title": "Hold the floodgate transmitter",
+          "action": "Authorize safe freight-channel passage",
           "seconds": 2.5,
-          "enemies": 7,
-          "mode": "assault",
+          "enemies": 12,
+          "mode": "extraction",
           "dialogue": [
             "Brutus",
-            "This route terminates at Sanctuary. The gold network is still responding."
-          ]
+            "Keep the transmitter powered while the Ancient AI releases the freight channel. They are converging on this relay."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Hold this relay!"
+            ],
+            [
+              "Annu guard",
+              "The aliens are sending orders to the old machine!"
+            ],
+            [
+              "Annu guard",
+              "Cover the terminal approach!"
+            ]
+          ],
+          "hold_seconds": 45
         }
       ],
       "ending": [
         [
           "Ancient AI",
-          "Hydraulic balance preserved. Returning survey party acknowledged."
+          "Hydraulic balance preserved. Sanctuary archive access restored."
+        ],
+        [
+          "Annu guard",
+          "They left our water running. Why are they climbing toward the archive?"
         ],
         [
           "Anki",
-          "It noticed what we chose to protect."
-        ],
-        [
-          "Brutus",
-          "Then we should keep giving it reasons to listen."
+          "Because we need to know what this gold is keeping alive."
         ]
       ],
       "evidence": [
@@ -182,19 +332,25 @@
           "Ancient AI",
           "Upper basin: residential supply. Lower basin: freight overflow. Do not conflate custodial functions."
         ]
-      ]
+      ],
+      "intro_seconds": 15,
+      "outro_seconds": 15
     },
     {
       "index": 4,
       "title": "Sanctuary of Records",
       "briefing": [
         [
-          "Anki",
-          "Our oldest drawings showed this place empty."
+          "Annu guard",
+          "Those visitors can read the ancestors' script. How?"
         ],
         [
-          "Brutus",
-          "The Annu rebuilt around the old machines. Align the archive circuits; we need to know what the reserves sustain."
+          "Annu sentry",
+          "Then they know where our grid draws gold. Keep them out."
+        ],
+        [
+          "Anki",
+          "The Ancient AI preserved these records. Find the abandoned reserve, leave their power alive."
         ]
       ],
       "stages": [
@@ -203,10 +359,24 @@
           "action": "Align the western archive ring",
           "seconds": 3,
           "enemies": 6,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "This circuit records our ancestors leaving. We were not the last people to live here."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Foreigners at the western ring!"
+            ],
+            [
+              "Annu guard",
+              "Those are our records!"
+            ],
+            [
+              "Annu guard",
+              "Hold the archive stairs!"
+            ]
           ]
         },
         {
@@ -214,10 +384,24 @@
           "action": "Align the eastern archive ring",
           "seconds": 3,
           "enemies": 7,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "These conductors regulate water and hospitals. Extracting them would endanger the people here."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "The aliens are reading the living-grid ledger!"
+            ],
+            [
+              "Annu guard",
+              "Protect the conductors!"
+            ],
+            [
+              "Annu guard",
+              "Watch the upper walk!"
+            ]
           ]
         },
         {
@@ -225,33 +409,65 @@
           "action": "Align the reserve ledger",
           "seconds": 2.5,
           "enemies": 8,
-          "mode": "hold",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
-            "There is another stockpile: retired conductors. Protect the archive while I recover its inventory."
+            "Retired conductors. This ledger points to material we can reclaim without stripping the living grid."
           ],
-          "hold_seconds": 16
+          "overheard": [
+            [
+              "Annu guard",
+              "They found the retired-stock register!"
+            ],
+            [
+              "Annu guard",
+              "The sky people are climbing again!"
+            ],
+            [
+              "Annu guard",
+              "Guard the transmission hall!"
+            ]
+          ]
         },
         {
-          "title": "A different objective",
-          "action": "Transmit reclamation coordinates",
+          "title": "Complete the archive transfer",
+          "action": "Authorize reclamation coordinates",
           "seconds": 2.5,
-          "enemies": 6,
-          "mode": "assault",
+          "enemies": 13,
+          "mode": "extraction",
           "dialogue": [
             "Brutus",
-            "The foundry can reclaim abandoned stock without stripping their active grid."
-          ]
+            "The reserve ledger is transmitting. Hold this destination until the AI verifies the reclamation route."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "They are transmitting our archive!"
+            ],
+            [
+              "Annu guard",
+              "Hold the destination platform!"
+            ],
+            [
+              "Annu guard",
+              "Keep the foreigners off that console!"
+            ]
+          ],
+          "hold_seconds": 50
         }
       ],
       "ending": [
         [
-          "Anki",
-          "We came for enough gold to save Connectuct. Not permission to take someone else's home."
+          "Ancient AI",
+          "Retired stock located. Reclamation route authorized; active conductors remain protected."
         ],
         [
-          "Ancient AI",
-          "Custodial restriction retained. Reclamation route available."
+          "Annu guard",
+          "They copied the old ledger. The sky people are going to the foundry."
+        ],
+        [
+          "Brutus",
+          "Gold for Connectuct, without tearing out another home. That is our route."
         ]
       ],
       "evidence": [
@@ -263,19 +479,25 @@
           "Ancient AI",
           "Retired conductors: awaiting reclamation. Active conductors: protected. Resource allocation must preserve the living."
         ]
-      ]
+      ],
+      "intro_seconds": 15,
+      "outro_seconds": 15
     },
     {
       "index": 5,
       "title": "The Hollow Foundry",
       "briefing": [
         [
-          "Brutus",
-          "Cooling, sorting, refinement, freight: restore this foundry in that order."
+          "Ancient AI",
+          "Reclamation suspended. Cooling and freight controls require local confirmation."
         ],
         [
-          "Anki",
-          "Only retired stock. Leave every live conductor connected."
+          "Annu guard",
+          "Aliens at the furnaces! Keep those foreigners away from the live grid!"
+        ],
+        [
+          "Brutus",
+          "Restore the service line. We take retired material, nothing still in use."
         ]
       ],
       "stages": [
@@ -284,10 +506,24 @@
           "action": "Restore the coolant flywheel",
           "seconds": 3,
           "enemies": 7,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "Cooling first. The furnaces reject a restart while the return loop is dry."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Aliens at the coolant wheel!"
+            ],
+            [
+              "Annu guard",
+              "Guard the service ramp!"
+            ],
+            [
+              "Annu guard",
+              "Keep them away from the live plant!"
+            ]
           ]
         },
         {
@@ -295,44 +531,90 @@
           "action": "Start the salvage separator",
           "seconds": 2.5,
           "enemies": 8,
-          "mode": "hold",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
-            "The separator is freeing gold components from retired equipment. Hold this floor."
+            "The separator is freeing retired gold components. Follow its service line toward the freight controls."
           ],
-          "hold_seconds": 18
+          "overheard": [
+            [
+              "Annu guard",
+              "The foreigners started the scrap separator!"
+            ],
+            [
+              "Annu guard",
+              "Their weapons came from the old field cases!"
+            ],
+            [
+              "Annu guard",
+              "Watch both foundry terraces!"
+            ]
+          ]
         },
         {
           "title": "The first usable gold",
           "action": "Stabilize refining controls",
           "seconds": 3,
           "enemies": 9,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "Refined conductors are coming off the line. Gold is the control material, not the fuel."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "They are collecting retired conductors!"
+            ],
+            [
+              "Annu guard",
+              "Cover the freight approach!"
+            ],
+            [
+              "Annu guard",
+              "Do not fire into the active control banks!"
+            ]
           ]
         },
         {
-          "title": "Freight for Connectuct",
-          "action": "Seal recovered conductor crates",
-          "seconds": 3,
-          "enemies": 8,
-          "mode": "assault",
+          "title": "Protect the recovered cargo",
+          "action": "Release sealed conductor crates",
+          "seconds": 2.5,
+          "enemies": 14,
+          "mode": "extraction",
           "dialogue": [
             "Brutus",
-            "Crates sealed. The rail yard can move the load to the orbital relay."
-          ]
+            "Stay with the sealed cargo. The AI is releasing the freight interlock; the Annu are moving to retake it."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Sky people at the cargo interlock!"
+            ],
+            [
+              "Annu guard",
+              "Take back the sealed crates!"
+            ],
+            [
+              "Annu guard",
+              "Hold the loading platform!"
+            ]
+          ],
+          "hold_seconds": 55
         }
       ],
       "ending": [
         [
-          "Anki",
-          "A district could keep its lights on with this."
+          "Ancient AI",
+          "Recovered stock verified. Freight release requested."
         ],
         [
-          "Brutus",
-          "If we can get it home. The freight signals just went dark."
+          "Annu guard",
+          "Their crates came from the scrap line. Stop them at the railway!"
+        ],
+        [
+          "Anki",
+          "Enough to start the repairs. Now we get it home."
         ]
       ],
       "evidence": [
@@ -344,19 +626,25 @@
           "Anki",
           "Every crate is marked retired equipment. We can account for every piece we take."
         ]
-      ]
+      ],
+      "intro_seconds": 15,
+      "outro_seconds": 15
     },
     {
       "index": 6,
       "title": "Blackout Rail",
       "briefing": [
         [
-          "Brutus",
-          "Annu defenders isolated the freight yard. Restore its signals and switch heaters before moving the recovered stock."
+          "Annu guard",
+          "I heard the foreigners left our water running."
         ],
         [
-          "Anki",
-          "We need the line, not their city."
+          "Annu sentry",
+          "They still came from space with guns. Hold this rail."
+        ],
+        [
+          "Brutus",
+          "The Ancient AI has our freight trapped in quarantine. Reach the departure signal."
         ]
       ],
       "stages": [
@@ -365,10 +653,24 @@
           "action": "Reconnect the first signal breaker",
           "seconds": 2.5,
           "enemies": 7,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "Signal power is back. Follow the lit service lane."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Foreigners under the dead signals!"
+            ],
+            [
+              "Annu guard",
+              "Keep the passenger branch clear!"
+            ],
+            [
+              "Annu guard",
+              "Guard the service rails!"
+            ]
           ]
         },
         {
@@ -376,44 +678,90 @@
           "action": "Energize the rail-switch heater",
           "seconds": 2.5,
           "enemies": 8,
-          "mode": "hold",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
-            "The turnout is seized. Hold the heater current until the rails release."
+            "The turnout is seized. Energize its heater, then follow the service route to the freight interlock."
           ],
-          "hold_seconds": 15
+          "overheard": [
+            [
+              "Annu guard",
+              "The aliens are heating the seized switch!"
+            ],
+            [
+              "Annu guard",
+              "They are taking the freight lane!"
+            ],
+            [
+              "Annu guard",
+              "Watch the raised signal deck!"
+            ]
+          ]
         },
         {
           "title": "Reserve the freight line",
           "action": "Set the transfer interlock",
           "seconds": 2.5,
-          "enemies": 10,
-          "mode": "assault",
+          "enemies": 9,
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "Cargo route secured. The passenger branch remains isolated from us."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Sky people at the transfer interlock!"
+            ],
+            [
+              "Annu guard",
+              "They have left the passenger circuit alone!"
+            ],
+            [
+              "Annu guard",
+              "Cover the climb to the last signal!"
+            ]
           ]
         },
         {
-          "title": "The orbital feed",
-          "action": "Restore power to the sky relay",
-          "seconds": 3,
-          "enemies": 9,
-          "mode": "assault",
+          "title": "Hold the outbound signal",
+          "action": "Authorize freight departure",
+          "seconds": 2.5,
+          "enemies": 14,
+          "mode": "extraction",
           "dialogue": [
             "Brutus",
-            "Its approach registry still thinks the last expedition never left."
-          ]
+            "Keep the departure signal alive. The cargo must clear this yard before we can climb to the mirror."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "They are calling for departure!"
+            ],
+            [
+              "Annu guard",
+              "Hold the freight destination!"
+            ],
+            [
+              "Annu guard",
+              "The ancient signal is turning green!"
+            ]
+          ],
+          "hold_seconds": 60
         }
       ],
       "ending": [
         [
           "Ancient AI",
-          "Arrival record incomplete. Airspace remains quarantined."
+          "Freight route restored. Departure record still contradicts orbital quarantine."
+        ],
+        [
+          "Annu guard",
+          "The old signals are answering them. They are climbing to the sky mirror!"
         ],
         [
           "Brutus",
-          "The same response we heard before the crash. The registry may be the fault."
+          "That same quarantine spoke before our crash. We need the flight record."
         ]
       ],
       "evidence": [
@@ -425,19 +773,25 @@
           "Brutus",
           "The orbital feed and the freight interlock share a much older control network. Reconnecting one woke the other."
         ]
-      ]
+      ],
+      "intro_seconds": 15,
+      "outro_seconds": 15
     },
     {
       "index": 7,
       "title": "The Sky Mirror",
       "briefing": [
         [
-          "Brutus",
-          "The orbital mirror carries the ancient approach registry. Align the dishes and compare its orders with our flight recorder."
+          "Ancient AI",
+          "Approach registry unchanged. Returning vessels must accept historical flight-control handoff."
+        ],
+        [
+          "Annu guard",
+          "The aliens are turning our mirrors toward space. Hold the upper terraces!"
         ],
         [
           "Anki",
-          "Find out what happened before another ship comes through."
+          "Compare the recorder. Find out what brought our ship down."
         ]
       ],
       "stages": [
@@ -446,10 +800,24 @@
           "action": "Rotate the western sky mirror",
           "seconds": 3,
           "enemies": 8,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "The old beacon is transmitting a flight-control handoff that predates our ship."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Aliens on the lower mirror terrace!"
+            ],
+            [
+              "Annu guard",
+              "They are turning the western dish!"
+            ],
+            [
+              "Annu guard",
+              "Guard the higher stairs!"
+            ]
           ]
         },
         {
@@ -457,10 +825,24 @@
           "action": "Rotate the eastern sky mirror",
           "seconds": 3,
           "enemies": 9,
-          "mode": "assault",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "The flight recorder matches an incompatible quarantine handoff. An obsolete system triggered the fault, not an Annu weapon."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "The foreigners have a recorder from the wreck!"
+            ],
+            [
+              "Annu guard",
+              "The old beacon is answering them!"
+            ],
+            [
+              "Annu guard",
+              "Hold the eastern mirror!"
+            ]
           ]
         },
         {
@@ -468,37 +850,65 @@
           "action": "Power the corrected approach channel",
           "seconds": 2.5,
           "enemies": 10,
-          "mode": "hold",
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
-            "Hold the antenna while I transmit a compatible flight profile. No one repeats our landing."
+            "Power the corrected approach channel. We transmit the full flight profile from the destination terrace."
           ],
-          "hold_seconds": 20
+          "overheard": [
+            [
+              "Annu guard",
+              "They are rewriting the approach channel!"
+            ],
+            [
+              "Annu guard",
+              "Sky people near the last transmitter!"
+            ],
+            [
+              "Annu guard",
+              "Watch the upper maintenance bridge!"
+            ]
+          ]
         },
         {
-          "title": "Open the sky",
-          "action": "Broadcast the safe return corridor",
-          "seconds": 3,
-          "enemies": 9,
-          "mode": "assault",
+          "title": "Hold the corrected sky corridor",
+          "action": "Confirm safe orbital approach",
+          "seconds": 2.5,
+          "enemies": 15,
+          "mode": "extraction",
           "dialogue": [
             "Brutus",
-            "We have a safe corridor. The reclamation engine still will not release the reserve."
-          ]
+            "Protect this transmitter while the corrected flight profile reaches the relay. No one repeats our landing."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Keep them off the broadcast console!"
+            ],
+            [
+              "Annu guard",
+              "The foreigners opened a path through the sky!"
+            ],
+            [
+              "Annu guard",
+              "Hold the relay terrace!"
+            ]
+          ],
+          "hold_seconds": 65
         }
       ],
       "ending": [
         [
-          "Relay",
-          "Approach record received. A safe return window is opening."
-        ],
-        [
           "Ancient AI",
-          "Reserve transfer denied. Quarantine interlock remains engaged."
+          "Obsolete flight handoff replaced. Safe return corridor confirmed."
         ],
         [
-          "Anki",
-          "Then we go to the lock itself."
+          "Annu guard",
+          "It was the old machine that brought them down. They repaired its sky signal."
+        ],
+        [
+          "Brutus",
+          "The sky is open. The reserve lock is the last thing between us and home."
         ]
       ],
       "evidence": [
@@ -510,19 +920,25 @@
           "Ancient AI",
           "Departure register incomplete. Quarantine duration exceeds original maintenance interval. Custodial review overdue."
         ]
-      ]
+      ],
+      "intro_seconds": 15,
+      "outro_seconds": 15
     },
     {
       "index": 8,
       "title": "The Last Reserve",
       "briefing": [
         [
-          "Brutus",
-          "The reserve gallery was sealed centuries ago. Our recovered excavation charge can open its obsolete access wall."
+          "Ancient AI",
+          "Reserve retention and reclamation orders conflict. Custodial review required."
+        ],
+        [
+          "Annu guard",
+          "Foreigners below the vault! They brought the charge from their fallen ship!"
         ],
         [
           "Anki",
-          "Verify the gallery is empty. The charge opens stone, not the living grid."
+          "The gallery is empty. We open the stone, and leave the living grid intact."
         ]
       ],
       "stages": [
@@ -530,60 +946,116 @@
           "title": "Open the sealed gallery",
           "action": "Place the recovered excavation charge",
           "seconds": 4,
-          "enemies": 9,
-          "mode": "assault",
+          "enemies": 8,
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "The gallery is clear. Set the charge in the old survey recess and stand behind stone cover."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Foreigners with a charge!"
+            ],
+            [
+              "Annu guard",
+              "Clear the old survey recess!"
+            ],
+            [
+              "Annu guard",
+              "They are opening the abandoned gallery!"
+            ]
           ]
         },
         {
           "title": "Verify the reserve",
           "action": "Read the retired-stock register",
           "seconds": 3,
-          "enemies": 10,
-          "mode": "assault",
+          "enemies": 9,
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "This stock was removed from service before the Annu rebuilt the surface."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Aliens below the reserve ledger!"
+            ],
+            [
+              "Annu guard",
+              "They are descending into the retired stores!"
+            ],
+            [
+              "Annu guard",
+              "Watch the service platform!"
+            ]
           ]
         },
         {
           "title": "Isolate the transport cradle",
           "action": "Disconnect the obsolete transfer lock",
           "seconds": 3,
-          "enemies": 11,
-          "mode": "assault",
+          "enemies": 10,
+          "mode": "traverse",
           "dialogue": [
             "Brutus",
             "The engine mistakes an obsolete transport lock for a life-support circuit."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "The foreigners found the transport lock!"
+            ],
+            [
+              "Annu guard",
+              "The machine is issuing two orders at once!"
+            ],
+            [
+              "Annu guard",
+              "Hold the descent to the transfer controls!"
+            ]
           ]
         },
         {
-          "title": "Protect the transfer",
-          "action": "Hold reserve transfer controls",
+          "title": "Protect the reserve transfer",
+          "action": "Isolate the obsolete reserve lock",
           "seconds": 2.5,
-          "enemies": 12,
-          "mode": "hold",
+          "enemies": 16,
+          "mode": "extraction",
           "dialogue": [
             "Brutus",
-            "Keep the controls powered. The reclamation engine is waking; protect the reserve."
+            "Hold the transfer controls while the obsolete lock disconnects. The reserve engine is answering the old orders."
           ],
-          "hold_seconds": 24
+          "hold_seconds": 70,
+          "overheard": [
+            [
+              "Annu guard",
+              "Sky people at the reserve cradle!"
+            ],
+            [
+              "Annu guard",
+              "The engine is drawing current!"
+            ],
+            [
+              "Annu guard",
+              "Stay clear of the old discharge channels!"
+            ]
+          ]
         }
       ],
       "ending": [
         [
           "Ancient AI",
-          "Conflicting custodial orders. Reclamation defense engaged."
+          "Obsolete transport lock isolated. Reclamation defense remains engaged."
         ],
         [
-          "Anki",
-          "We are here to finish the repair."
+          "Annu guard",
+          "The reserve engine is waking! Get clear of its sweep!"
         ],
         [
           "Brutus",
-          "Three mechanical interlocks. Break their actuators, then restore the original custodial priorities."
+          "Three mechanical interlocks. Disable the actuators, then restore the original priorities."
         ]
       ],
       "evidence": [
@@ -595,23 +1067,25 @@
           "Brutus",
           "Both instructions are valid separately: preserve the reserve, and reclaim unused stock. The obsolete transport lock prevents the machine distinguishing them."
         ]
-      ]
+      ],
+      "intro_seconds": 15,
+      "outro_seconds": 15
     },
     {
       "index": 9,
       "title": "Ancient Nest",
       "briefing": [
         [
-          "Brutus",
-          "The reclamation engine is enforcing incompatible orders. Arm each maintenance bypass, then destroy its exposed actuator."
+          "Ancient AI",
+          "Custodial conflict unresolved. Reclamation sweep armed."
+        ],
+        [
+          "Annu guard",
+          "The sky foreigners reached the engine! Do not let them tear out the reserve!"
         ],
         [
           "Anki",
-          "Keep the reserve intact. We stop the machinery, not the intelligence inside it."
-        ],
-        [
-          "Ancient AI",
-          "Custodial conflict unresolved. Stand clear of reclamation sweep."
+          "We stop the machinery, not the intelligence. Keep the living systems online."
         ]
       ],
       "stages": [
@@ -626,7 +1100,21 @@
             "Fire at the amber actuator. When the floor turns amber, move into a dark lane."
           ],
           "boss_health": 350,
-          "hazard": "sweep"
+          "hazard": "sweep",
+          "overheard": [
+            [
+              "Annu guard",
+              "Foreigners at the western bypass!"
+            ],
+            [
+              "Annu guard",
+              "The engine is sweeping the floor!"
+            ],
+            [
+              "Annu guard",
+              "Stay behind the stone baffles!"
+            ]
+          ]
         },
         {
           "title": "Break the second interlock",
@@ -639,7 +1127,21 @@
             "Use the stone baffles between sweeps. The next lock is carrying the load."
           ],
           "boss_health": 450,
-          "hazard": "sweep"
+          "hazard": "sweep",
+          "overheard": [
+            [
+              "Annu guard",
+              "The aliens broke one of the actuators!"
+            ],
+            [
+              "Annu guard",
+              "The eastern lock is carrying the load!"
+            ],
+            [
+              "Annu guard",
+              "Keep clear of the glowing lane!"
+            ]
+          ]
         },
         {
           "title": "Break the final interlock",
@@ -652,40 +1154,61 @@
             "Break the last mechanical lock, then reach the custodial console."
           ],
           "boss_health": 550,
-          "hazard": "sweep"
+          "hazard": "sweep",
+          "overheard": [
+            [
+              "Annu guard",
+              "They are disabling the last mechanical lock!"
+            ],
+            [
+              "Annu guard",
+              "The old machine is still speaking!"
+            ],
+            [
+              "Annu guard",
+              "Guard the departure apron!"
+            ]
+          ]
         },
         {
           "title": "Bring the gold home",
           "action": "Restore custodial priorities and authorize departure",
-          "seconds": 5,
-          "enemies": 0,
-          "mode": "traverse",
+          "seconds": 2.5,
+          "enemies": 16,
+          "mode": "extraction",
           "dialogue": [
-            "Anki",
-            "Protect the living. Reclaim what was abandoned. Let us keep another world alive."
-          ]
+            "Brutus",
+            "The actuators are disabled. Hold the departure console while the AI verifies the living grid and releases our cargo."
+          ],
+          "overheard": [
+            [
+              "Annu guard",
+              "Sky people at the departure console!"
+            ],
+            [
+              "Annu guard",
+              "They are asking the machine to protect the living grid!"
+            ],
+            [
+              "Annu guard",
+              "The engine has stopped sweeping!"
+            ]
+          ],
+          "hold_seconds": 45
         }
       ],
       "ending": [
         [
-          "Ancient AI",
-          "Conflict resolved. Living infrastructure preserved. Reclaimed reserve released."
+          "Annu guard",
+          "The grid is still alive. They took only the reclaimed gold."
         ],
         [
-          "Relay",
-          "Extraction ship docked. Cargo verified. Return corridor clear. Connectuct is waiting."
-        ],
-        [
-          "Anki",
-          "Home is also what we choose to protect."
+          "Annu sentry",
+          "The old machine released their ship. Let them leave."
         ],
         [
           "Brutus",
-          "Gold for the repairs. The engineering archive for what comes after. Departure authorized."
-        ],
-        [
-          "",
-          "The expedition returns with reclaimed gold and a shared history. The first restoration district comes back into light."
+          "Gold for Connectuct. The archive for our people. At last, a way home."
         ]
       ],
       "evidence": [
@@ -697,7 +1220,9 @@
           "Anki",
           "There is enough here for the repairs, if we bring back the knowledge to keep repairing."
         ]
-      ]
+      ],
+      "intro_seconds": 15,
+      "outro_seconds": 15
     }
   ]
 }

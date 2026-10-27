@@ -620,7 +620,7 @@ func _physics_process(delta: float) -> void:
 # bots, host simulation of client commands and client replay after correction.
 func movement_step(move: Vector2, jump: bool, crouch_want: int, yaw: float, delta: float, replaying: bool=false) -> bool:
 	var motorcycle=campaign_motorcycle_controller()
-	if motorcycle!=null and motorcycle.handles(self):return motorcycle.movement_step(self,move,jump,yaw,delta,replaying)
+	if motorcycle!=null and motorcycle.handles(self):return motorcycle.movement_step(self,move,jump,yaw,delta,replaying,crouch_want)
 	if game.nu!=null and game.nu.blocked(self):move=Vector2.ZERO;jump=false;crouch_want=0
 	if crouch_want>=0: set_crouch(crouch_want==1)
 	var mult = tuning.carry_multiplier if carrying else 1.0
@@ -703,6 +703,7 @@ func queue_reconcile(state: Dictionary, server_time: float) -> void:
 		# heading, suspension and falls. Keep normal on-foot replay unchanged.
 		var previous=global_position
 		global_position=state.pos;controlled=state.get("ctrl",state.velocity);velocity=state.velocity;external=Vector3.ZERO
+		motorcycle.apply_duck_state(self,bool(state.crouch),false)
 		pending_reconcile={};cmd_history.clear();ack_seen=int(state.ack)
 		view_correction=(view_correction+previous-global_position).limit_length(1.5)
 		reset_physics_interpolation();return

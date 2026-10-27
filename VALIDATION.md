@@ -1,6 +1,6 @@
 # Unified integration validation — 2026-10-23
 
-Current expansion: [nine-mission campaign validation, 2026-10-26](docs/CAMPAIGN_NINE_VALIDATION.md). Separate City-Ambush-based worktree, eight new playable missions, full physical motorcycle course, chapter/boss integration, traversal, save migration, and two/four native-client checks. Earlier entries below remain historical evidence.
+Current update: [terrain, weapon caches, staged combat and story verification, 2026-10-26](docs/CAMPAIGN_TERRAIN_STORY_AND_CACHES.md). Separate City-Ambush-based worktree, denser motorcycle hazards and mounted ducking, physical elevation throughout levels 3–9, durable randomized weapon pickups, and 15-second opening/ending scenes. The [initial nine-mission validation](docs/CAMPAIGN_NINE_VALIDATION.md) and entries below remain historical evidence.
 
 Newest private update: eight-round Naki pistol, richer city/army departure base, forest trail props and concealed Annu ambushes. [Details and local checks](docs/CAMPAIGN_CITY_AND_AMBUSH.md). Build: `C:\Users\Corey\Games\AncientNest-City-Ambush-20261025`; reopen **Ancient Nest - Take back Home** after export.
 

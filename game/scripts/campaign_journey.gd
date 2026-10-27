@@ -61,7 +61,7 @@ func _start(index: int,standalone: bool) -> bool:
  clear_runtime();c.downed.clear();c.memory.clear();c.personal.clear();c.supply_at.clear();c.charge_carrier=0
  c.game.match_session=randi_range(1,2147483647);c.game.prepare_match_input()
  c.set_world("chapter_"+str(index));c.rebuild_heroes();c.apply_difficulty()
- _begin_stage();say(spec.get("briefing",""))
+ _begin_stage(false,true)
  return true
 func _clear_weakpoint():
  if is_instance_valid(weakpoint):
@@ -77,17 +77,32 @@ func clear_runtime():
     if visual.get_parent()!=null:visual.get_parent().remove_child(visual)
     visual.queue_free()
  weakpoint=null;weakpoint_visual=null;motorcycles=null;stage_spawned=false;clock=0;dialogue_queue.clear();hit_events.clear();hazard_hits.clear();last_visual_stage=-1
-func _begin_stage():
+func _begin_stage(preserve_hostiles=false,intro=false):
  var c=campaign
  clock=0;stage_spawned=false;hit_events.clear();hazard_hits.clear()
  _clear_weakpoint()
- _remove_enemies()
+ if preserve_hostiles:_prune_hostiles()
+ else:_remove_enemies()
  c.state.prepare_chapter_stage(0 if c.state.mission_index==2 else int(stage_data().get("enemies",4)))
  c.world.set_stage(c.state.chapter_stage)
  if c.state.mission_index==2:
   motorcycles=NestCampaignMotorcycles.new();motorcycles.campaign=c;motorcycles.setup(c.state.chapter_stage)
+ c.loot.ensure_weapon_caches()
+ if intro:c.state.phase="CHAPTER_INTRO";c.state.revision+=1;_stage_cinematic_annu()
  _new_epoch();c.checkpoint_now();c.broadcast();c.present_phase()
- say(stage_data().get("dialogue",""))
+ if not intro:say(stage_data().get("dialogue",""))
+func finish_cinematic():
+ var c=campaign
+ if c.game.is_client():return
+ if c.state.phase=="CHAPTER_INTRO":
+  _remove_enemies();c.state.phase="CHAPTER";c.state.revision+=1;_new_epoch();c.checkpoint_now();c.broadcast();c.present_phase();say(stage_data().get("dialogue",""))
+ elif c.state.phase=="CHAPTER_OUTRO":
+  _remove_enemies();c.state.phase="CHAPTER_COMPLETE";c.state.revision+=1;_new_epoch();c.checkpoint_now();c.broadcast();c.present_phase()
+func _stage_cinematic_annu():
+ var c=campaign;var points=c.world.encounter_spawns(c.state.chapter_stage)
+ for i in range(mini(2,points.size())):
+  var actor=c.make_actor(-90000-c.state.mission_index*10-i,false,0,"Annu Sentry",points[i]+Vector3.UP*.25)
+  actor.set_meta("cinematic_annu",true);actor.rotation.y=PI*.25 if i==0 else -PI*.25
 func _new_epoch():
  var c=campaign
  if c.guide!=null:
@@ -99,9 +114,21 @@ func _remove_enemies():
  for actor in c.game.actors.duplicate():
   if actor.faction==1:c.game.actors.erase(actor);actor.queue_free()
  c.memory.clear()
+func _prune_hostiles():
+ var c=campaign
+ for actor in c.game.actors.duplicate():
+  if actor.faction!=1:continue
+  var distance=INF
+  for slot in c.connected_slots():
+   var hero=c.game.actor_by_id(slot)
+   if hero!=null and hero.alive:distance=minf(distance,hero.global_position.distance_to(actor.global_position))
+  if not actor.alive or distance>135:
+   c.memory.erase(actor.net_id);c.game.actors.erase(actor);actor.queue_free()
 func restore():
  var c=campaign
  clear_runtime();c.world.set_stage(c.state.chapter_stage);c.apply_difficulty()
+ c.loot.ensure_weapon_caches()
+ if c.state.phase in ["CHAPTER_INTRO","CHAPTER_OUTRO"]:_stage_cinematic_annu()
  if c.state.mission_index==2:
   motorcycles=NestCampaignMotorcycles.new();motorcycles.campaign=c;motorcycles.setup(c.state.chapter_stage)
  else:
@@ -117,13 +144,13 @@ func tick(delta: float):
   motorcycles.tick(delta)
   if motorcycles.completed():chapter_complete()
   return
- if not stage_spawned:_spawn_stage()
+ _spawn_stage()
  for id in c.state.chapter_enemies.keys():
   var enemy=c.game.actor_by_id(int(id))
   if enemy!=null and not enemy.alive:enemy.respawn_at=INF;c.state.defeat_chapter_enemy(int(id))
  var spec=stage_data()
  if c.state.chapter_flags.get("armed",false):
-  if str(spec.get("mode","assault"))=="hold":
+  if str(spec.get("mode","assault")) in ["hold","extraction"]:
    var at: Vector3=c.world.locations.get("objective"+str(c.state.chapter_stage),Vector3.ZERO)
    var guarding=false
    for slot in c.connected_slots():
@@ -133,16 +160,45 @@ func tick(delta: float):
   if c.state.mission_index==9 and c.state.chapter_stage<3:_boss_hazards()
  visual_update()
 func _spawn_stage():
- var c=campaign;var points=c.world.encounter_spawns(c.state.chapter_stage)
+ var c=campaign;var spec=stage_data();var mode=str(spec.get("mode","assault"));var points=c.world.encounter_spawns(c.state.chapter_stage)
  if points.is_empty() and c.state.chapter_expected>0:return
+ var nearest=INF;var destination=c.world.locations.get("objective"+str(c.state.chapter_stage),Vector3.ZERO)
+ for slot in c.connected_slots():
+  var hero=c.game.actor_by_id(slot)
+  if hero!=null and hero.alive:nearest=minf(nearest,hero.global_position.distance_to(destination))
+ var active=0
+ for actor in c.game.actors:
+  if actor.faction==1 and actor.alive:active+=1
+ var cap=12+c.connected_slots().size()*2
+ var group_size=maxi(1,ceili(c.state.chapter_expected/3.0))
  for i in range(c.state.chapter_expected):
   var id=-20000-c.state.mission_index*1000-c.state.chapter_stage*100-i
+  if c.state.chapter_spawned.has(id):continue
+  var band=mini(2,i/group_size)
+  if mode in ["traverse","boss"]:
+   if band==1 and nearest>38:continue
+   if band==2 and nearest>22 and not c.state.chapter_flags.get("armed",false):continue
+  elif mode=="extraction":
+   if band>0 and not c.state.chapter_flags.get("armed",false):continue
+   if band==1 and float(c.state.chapter_progress.get("hold_seconds",0))<float(spec.get("hold_seconds",60))*.22:continue
+   if band==2 and float(c.state.chapter_progress.get("hold_seconds",0))<float(spec.get("hold_seconds",60))*.55:continue
+  if active>=cap:continue
+  if c.world.has_method("route_encounter_spawns"):
+   var band_points=c.world.route_encounter_spawns(c.state.chapter_stage,band)
+   if not band_points.is_empty():points=band_points
   if not c.state.register_chapter_enemy(id):continue
   var point: Vector3=points[i%points.size()]+Vector3.UP*.25
   var actor=c.make_actor(id,false,0,"Annu Defender",point)
-  if i%3==1:actor.set_meta("ambush_wait",{"until":c.game.now+18,"health":actor.health,"shield":actor.shield})
-  actor.rotation.y=0
- stage_spawned=true;c.broadcast()
+  if mode=="traverse" and band==0:actor.set_meta("ambush_wait",{"until":c.game.now+10,"health":actor.health,"shield":actor.shield})
+  actor.rotation.y=0;active+=1
+  if band==1 and not c.state.chapter_flags.get("overheard",false) and spec.get("overheard",[]) is Array and not spec.get("overheard",[]).is_empty():
+   c.state.chapter_flags["overheard"]=true
+   if spec.overheard.size()==2 and spec.overheard[0] is String:dialogue_queue.append(spec.overheard)
+   else:
+    for line in spec.overheard:
+     if line is Array and line.size()==2:dialogue_queue.append(line)
+   if dialogue_at<c.game.now:dialogue_at=c.game.now
+ stage_spawned=c.state.chapter_spawned.size()==c.state.chapter_expected
 func interaction(actor: NestActor) -> Dictionary:
  var c=campaign
  if c.state.phase!="CHAPTER" or actor==null or not actor.alive:return {}
@@ -155,12 +211,12 @@ func interaction(actor: NestActor) -> Dictionary:
  var key="objective"+str(c.state.chapter_stage)
  if not c.near(actor,key):return {}
  var spec=stage_data();var mode=str(spec.get("mode","assault"))
- if mode=="hold" and not c.state.chapter_flags.get("armed",false):return c.choice("journey:arm",str(spec.get("action","Activate relay")),float(spec.get("seconds",1.5)))
- if not c.state.chapter_clear():return {}
+ if mode in ["hold","extraction"] and not c.state.chapter_flags.get("armed",false):return c.choice("journey:arm",str(spec.get("action","Activate relay")),float(spec.get("seconds",1.5)))
+ if mode not in ["traverse","boss","extraction"] and not c.state.chapter_clear():return {}
  if c.state.mission_index==9 and c.state.chapter_stage<3:
   if not c.state.chapter_flags.get("armed",false):return c.choice("journey:arm","Vent protective housing / expose machinery core",1.6)
   if float(c.state.chapter_progress.get("core_health",1))>0:return {}
- if mode=="hold" and float(c.state.chapter_progress.get("hold_seconds",0))<float(spec.get("hold_seconds",30)):return {}
+ if mode in ["hold","extraction"] and float(c.state.chapter_progress.get("hold_seconds",0))<float(spec.get("hold_seconds",30)):return {}
  return c.choice("journey:objective",str(spec.get("action","Secure route")),clampf(float(spec.get("seconds",1.5)),.5,12))
 func interact(actor: NestActor,action: String) -> bool:
  var c=campaign
@@ -186,9 +242,9 @@ func interact(actor: NestActor,action: String) -> bool:
   else:c.radio_notice("Brutus","Connection active. Stay within ten metres of the terminal while the transfer runs; the Annu must not hold this route.")
  elif action=="journey:objective":
   c.state.chapter_flags["objective"]=true
-  if not c.state.finish_chapter_stage():return false
+  if not c.state.finish_chapter_stage(str(stage_data().get("mode","assault")) not in ["traverse","boss","extraction"]):return false
   if c.state.phase=="CHAPTER_COMPLETE":_finish_presentation()
-  else:_begin_stage()
+  else:_begin_stage(true)
   return true
  else:return false
  c.state.revision+=1;c.broadcast();return true
@@ -202,7 +258,7 @@ func chapter_complete() -> bool:
  _finish_presentation();return true
 func _finish_presentation():
  var c=campaign
- _remove_enemies();_new_epoch();c.checkpoint_now();c.broadcast();c.present_phase()
+ _remove_enemies();c.state.phase="CHAPTER_OUTRO";c.state.revision+=1;_stage_cinematic_annu();_new_epoch();c.checkpoint_now();c.broadcast();c.present_phase()
 func ride_checkpoint(sector: int,seconds: float,distance: float):
  var c=campaign
  if c.game.is_client() or c.state.mission_index!=2 or c.state.phase!="CHAPTER" or sector<=c.state.chapter_stage or sector>=6:return
@@ -216,8 +272,10 @@ func objective() -> String:
  if c.state.mission_index==9 and c.state.chapter_stage<3 and c.state.chapter_flags.get("armed",false):
   instruction="SHOOT EXPOSED CORE / %d integrity"%int(c.state.chapter_progress.get("core_health",0))
   if float(c.state.chapter_progress.get("core_health",0))<=0:instruction="CORE DISABLED / confirm at marked terminal"
- elif str(spec.get("mode","assault"))=="hold" and c.state.chapter_flags.get("armed",false):instruction="HOLD NEAR RELAY / %d / %d seconds"%[int(c.state.chapter_progress.get("hold_seconds",0)),int(spec.get("hold_seconds",30))]
- elif not c.state.chapter_clear():instruction="CLEAR ANNU DEFENDERS / %d remaining"%maxi(0,c.state.chapter_expected-c.state.chapter_defeated.size())
+ elif str(spec.get("mode","assault")) in ["hold","extraction"] and c.state.chapter_flags.get("armed",false):instruction="DEFEND THE DEPARTURE POINT / %d / %d seconds"%[int(c.state.chapter_progress.get("hold_seconds",0)),int(spec.get("hold_seconds",30))]
+ elif str(spec.get("mode","assault"))=="traverse":instruction="ADVANCE UNDER FIRE / "+instruction
+ elif str(spec.get("mode","assault"))=="extraction":instruction="REACH THE DESTINATION / "+instruction
+ elif str(spec.get("mode","assault"))!="boss" and not c.state.chapter_clear():instruction="CLEAR ANNU DEFENDERS / %d remaining"%maxi(0,c.state.chapter_expected-c.state.chapter_defeated.size())
  return "MISSION %d / %s\n%d / %d: %s\n%s"%[c.state.mission_index,title().to_upper(),c.state.chapter_stage+1,c.state.chapter_stage_count,str(spec.get("title","Route")),instruction]
 func guidance() -> Dictionary:
  var c=campaign
@@ -227,8 +285,13 @@ func guidance() -> Dictionary:
  return {"id":"chapter_%d_%d"%[c.state.mission_index,c.state.chapter_stage],"title":title(),"text":objective(),"keys":c.game.prefs.key_label("jump")+" / jump    "+c.game.prefs.key_label("interact")+" / interact","voice":voice,"target":target,"target_label":str(stage_data().get("title","Next checkpoint"))}
 func enemy_goal(actor: NestActor) -> Vector3:
  var seen=campaign.memory.get(actor.net_id,{})
- if not seen.is_empty():return seen.get("position",actor.global_position)
- return campaign.world.locations.get("objective"+str(campaign.state.chapter_stage),actor.global_position)
+ var target: Vector3=seen.get("position",actor.global_position) if not seen.is_empty() else campaign.world.locations.get("objective"+str(campaign.state.chapter_stage),actor.global_position)
+ # Terminals are solid. An unalerted patrol needs a reachable approach, not the
+ # terminal's occupied centre; otherwise it cannot advance far enough to see us.
+ for offset in [Vector3.ZERO,Vector3(0,0,3.2),Vector3(3.2,0,0),Vector3(-3.2,0,0),Vector3(0,0,-3.2),Vector3(0,0,5)]:
+  var point=target+offset;point.y=campaign.world.surface_height(point)
+  if point.y> -100 and not campaign.world.blocked_point(point):return point
+ return actor.global_position
 func _ensure_weakpoint():
  var c=campaign
  if c.state.mission_index!=9 or c.state.chapter_stage>=3 or is_instance_valid(weakpoint):return
@@ -250,6 +313,7 @@ func _boss_hazards():
  var c=campaign;var cycle=fmod(clock,6.0);var beat=int(clock/6)
  if cycle<5.2:return
  var center=Vector3(-24+posmod(beat,3)*24,0,-55)
+ center.y=c.world.surface_height(center)
  for slot in c.connected_slots():
   var actor=c.game.actor_by_id(slot)
   if actor==null or not actor.alive:continue
@@ -257,7 +321,7 @@ func _boss_hazards():
   # Alternating floor lanes leave clear side pockets and solid cover protects.
   var in_lane=absf(offset.x)<6.5 and absf(offset.z)<33
   var event="%d:%d"%[beat,slot]
-  if in_lane and not hazard_hits.has(event) and c.visible_between(Vector3(0,8,-55),actor.global_position+Vector3.UP*.7):
+  if in_lane and not hazard_hits.has(event) and c.visible_between(c.world.boss_attack_origin(),actor.global_position+Vector3.UP*.7):
    hazard_hits[event]=true;actor.take_damage(35 if c.state.difficulty=="Easy" else 55,"torso","heavy",false,null,700000+c.state.chapter_stage*10000+beat*10+slot,center+Vector3.UP*3,"",0,actor.global_position)
 func visual_update():
  var c=campaign
@@ -277,6 +341,7 @@ func receive(packet: Dictionary):
  var world_id=c.world.get_instance_id()
  if runtime_mission!=c.state.mission_index or runtime_session!=c.game.match_session or runtime_world!=world_id:
   clear_runtime();runtime_mission=c.state.mission_index;runtime_session=c.game.match_session;runtime_world=world_id
+  c.loot.ensure_weapon_caches()
  clock=maxf(0,float(packet.get("clock",0)))
  if c.state.mission_index==2:
   if motorcycles==null:motorcycles=NestCampaignMotorcycles.new();motorcycles.campaign=c;motorcycles.setup(c.state.chapter_stage)

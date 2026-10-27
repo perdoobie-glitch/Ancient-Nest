@@ -17,9 +17,9 @@ func run():
  campaign.selected_difficulty="Easy";campaign.begin_solo(false);await frames()
  check(campaign.active and game.running and game.player!=null,"New Campaign creates a playable Anki actor")
  check(game.player.weapons[0].kind=="plasma_br" and game.player.weapons[1].kind=="plasma_pistol","Starting plasma carbine and plasma pistol use requested definitions")
- check(campaign.state.phase=="INTRO" and campaign.data.intro_seconds==120,"Introduction uses the exact 120-second timeline")
- campaign.phase_elapsed=119;campaign.tick(.5);check(campaign.state.phase=="INTRO","Intro does not hand off before 120 seconds")
- campaign.tick(.5);await frames();check(campaign.state.phase=="PREPARATION" and game.context=="playing","Normal 120-second handoff restores playable preparation")
+ check(campaign.state.phase=="INTRO" and campaign.data.intro_seconds==15,"Introduction uses the requested 15-second story timeline")
+ campaign.phase_elapsed=14;campaign.tick(.5);check(campaign.state.phase=="INTRO","Intro does not hand off before 15 seconds")
+ campaign.tick(.5);await frames();check(campaign.state.phase=="PREPARATION" and game.context=="playing","Normal 15-second handoff restores playable preparation")
  check(not campaign.checkpoint.is_empty() and campaign.checkpoint.difficulty=="Easy","Preparation milestone saves Difficulty offline")
  var actor=game.player
  actor.global_position=campaign.world.locations.service+Vector3(0,0,2);await frames()
